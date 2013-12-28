@@ -12,6 +12,7 @@ module MemManager (
             base_addr,
             command_word,
             
+            is_bus_busy,
             addr,
             read_q,
             write_q,
@@ -77,12 +78,21 @@ module MemManager (
   input wire [`ADDR_SIZE0:0] base_addr;
   reg [`ADDR_SIZE0:0] base_addr_r;
   
-  output reg [`ADDR_SIZE0:0] addr;
+  inout [`ADDR_SIZE0:0] addr;
+  reg [`ADDR_SIZE0:0] addr_r;
+  wire [`ADDR_SIZE0:0] addr = addr_r;
+  
   output reg read_q;
   output reg write_q;
+
+  inout is_bus_busy;
+  reg is_bus_busy_r;
+  wire is_bus_busy = is_bus_busy_r;
   
-  inout  wire [`DATA_SIZE0:0] data;
-  assign data = write_q==1 ? dst_r : 32'h z;
+  inout [`DATA_SIZE0:0] data;
+  reg [`DATA_SIZE0:0] data_r;
+  wire [`DATA_SIZE0:0] data = data_r;
+//  assign data = write_q==1 ? dst_r : 32'h z;
   
   input  wire read_dn;
   input  wire write_dn;
@@ -91,24 +101,28 @@ module MemManager (
   
 
   inout  wire [`DATA_SIZE0:0] src1;
-  reg [`DATA_SIZE0:0] src1_r_aux;
+  reg [`DATA_SIZE0:0] src1_r_adr;
   reg [`DATA_SIZE0:0] src1_r;
   assign src1 = src1_r;
+  reg src1_waiting;
 
   inout  wire [`DATA_SIZE0:0] src0;
-  reg [`DATA_SIZE0:0] src0_r_aux;
+  reg [`DATA_SIZE0:0] src0_r_adr;
   reg [`DATA_SIZE0:0] src0_r;
   assign src0 = src0_r;
+  reg src0_waiting;
 
   inout  wire [`DATA_SIZE0:0] dst;
-  reg [`DATA_SIZE0:0] dst_r_aux;
+  reg [`DATA_SIZE0:0] dst_r_adr;
   reg [`DATA_SIZE0:0] dst_r;
   assign dst = dst_r;
+  reg dst_waiting;
 
   inout  wire [`DATA_SIZE0:0] cond;
-  reg [`DATA_SIZE0:0] cond_r_aux;
+  reg [`DATA_SIZE0:0] cond_r_adr;
   reg [`DATA_SIZE0:0] cond_r;
   assign cond = cond_r;
+  reg cond_waiting;
   
   output reg next_state;
   
@@ -119,6 +133,7 @@ module MemManager (
 
 
   always @(posedge clk) begin
+    addr_r = 32'h zzzzzzzz;
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
   if(rst == 1) begin
@@ -127,11 +142,16 @@ module MemManager (
     read_e = 0;
     write_e = 0;
     progress = `MEM_BEGIN;
-    addr = 0;
+    addr_r = 32'h zzzzzzzz;
     base_addr_r = 0;
     next_state = 1'b z;
     
     dst_r = 32'h55;
+    
+    data_r = 32'h zzzzzzzz;
+    is_bus_busy_r = 1'b z;
+    
+    src1_waiting = 0; src0_waiting = 0; dst_waiting = 0; cond_waiting = 0; 
   end
   else begin
      
@@ -154,7 +174,8 @@ module MemManager (
             cond_r = 1;
             progress = `MEM_RD_SRC1_BEGIN;
           end else begin
-            addr = base_addr_r + regNumCnd * ((`DATA_SIZE0+1)/8);
+            cond_r_adr = base_addr_r + regNumCnd * ((`DATA_SIZE0+1)/8);
+            addr_r = cond_r_adr;
             read_q = 1;
             progress = `MEM_REG_COND_TRAP;
           end
@@ -165,8 +186,8 @@ module MemManager (
           if(read_dn == 1) begin
             
             if(isRegCondPtr==1) begin
-              cond_r_aux = data;
-              addr = data; //cond_r_aux;
+              cond_r_adr = data;
+              addr_r = data; //cond_r_aux;
               read_q = 1;
                progress = `MEM_REG_COND_PTR_TRAP;
             end else begin
@@ -195,7 +216,8 @@ module MemManager (
             src1_r = 1;
             progress = `MEM_RD_SRC0_BEGIN;
           end else begin
-            addr = base_addr_r + regNumS1 * ((`DATA_SIZE0+1)/8);
+            src1_r_adr = base_addr_r + regNumS1 * ((`DATA_SIZE0+1)/8);
+            addr_r = src1_r_adr;
             read_q = 1;
             progress = `MEM_REG_SRC1_TRAP;
           end
@@ -205,8 +227,8 @@ module MemManager (
           read_q = 0;
           if(read_dn == 1) begin
             if(isRegS1Ptr==1) begin
-              src1_r_aux = data;
-              addr = data;
+              src1_r_adr = data;
+              addr_r = data;
               read_q = 1;
               progress = `MEM_REG_SRC1_PTR_TRAP;
             end else begin
@@ -234,7 +256,8 @@ module MemManager (
             src0_r = 1;
             progress = `MEM_BEGIN;
           end else begin
-            addr = base_addr_r + regNumS0 * ((`DATA_SIZE0+1)/8);
+            src0_r_adr = base_addr_r + regNumS0 * ((`DATA_SIZE0+1)/8);
+            addr_r = src0_r_adr;
             read_q = 1;
             progress = `MEM_REG_SRC0_TRAP;
           end
@@ -244,8 +267,8 @@ module MemManager (
           read_q = 0;
           if(read_dn == 1) begin
             if(isRegS0Ptr == 1) begin
-              src0_r_aux = data;
-              addr = data;
+              src0_r_adr = data;
+              addr_r = data;
               read_q = 1;
               
               next_state = 1'b z;
@@ -278,8 +301,8 @@ module MemManager (
       `WRITE_DATA: begin
         case(progress)
         `MEM_BEGIN: begin
-          addr = base_addr_r + regNumD * ((`DATA_SIZE0+1)/8);
-          //data = dst_r;
+          addr_r = base_addr_r + regNumD * ((`DATA_SIZE0+1)/8);
+          data_r = dst_r;
           write_q = 1;
           progress = 1;
         end
@@ -289,6 +312,7 @@ module MemManager (
           progress = `MEM_BEGIN;
           next_state = 1;
           write_e = 1;
+          data_r = 32'h zzzzzzzz;
         end
         
         endcase

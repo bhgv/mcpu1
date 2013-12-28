@@ -55,7 +55,7 @@ module test;
   reg  CLK;
   reg RESET;
 
-  reg [31:0] Q;
+//  reg [31:0] Q;
   
   
   wire [`ADDR_SIZE0:0] addr_out;
@@ -107,7 +107,7 @@ module test;
   
   
   
-	reg [31:0] mem [100:0]; 
+	reg [31:0] mem [0:100]; 
   initial $readmemh("mem.txt", mem);
   
  // assign data_wire = mem[addr_out];
@@ -167,7 +167,7 @@ MemManager mem_mng (
 
 
 initial begin
- $monitor("RESET=%b  CLK=%b  Q=%b",RESET,CLK,Q);
+// $monitor("RESET=%b  CLK=%b  Q=%b",RESET,CLK,Q);
                       RESET = 1'b0;
            #(STEP*5)  RESET = 1'b1;
            #STEP      RESET = 1'b0;
@@ -186,7 +186,7 @@ always begin
 
 
 always @(posedge CLK) begin
-          Q = Q+1;
+//          Q = Q+1;
           
        end
 
@@ -203,6 +203,8 @@ always @(negedge CLK) begin
           if(read_q == 1) begin
             data_wire_r = mem[addr_out];
             read_dn = 1;
+          end else /*if(read_e == 1)*/ begin
+            data_wire_r = 32'h zzzzzzzz;
           end
   
        end
@@ -210,7 +212,7 @@ always @(negedge CLK) begin
 
 
 always @(negedge RESET) begin
-          Q = 0;
+//          Q = 0;
        end
        
 endmodule
