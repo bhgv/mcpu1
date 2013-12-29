@@ -3,6 +3,7 @@
 `define BASE_ADDR_SET 0
 
 `define READ_DATA  1
+
 //`define READ_COND  2
 //`define READ_CONDP 3
 //`define READ_S1    4
@@ -23,6 +24,8 @@
 `define MEM_RD_SRC0_BEGIN 4
 `define MEM_REG_SRC0_TRAP 5
 `define MEM_REG_SRC0_PTR_TRAP 15
+
+`define MEM_WAIT_FOR_READ_REGS 20
 
 
 

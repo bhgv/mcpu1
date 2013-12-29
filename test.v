@@ -58,7 +58,8 @@ module test;
 //  reg [31:0] Q;
   
   
-  wire [`ADDR_SIZE0:0] addr_out;
+  reg [`ADDR_SIZE0:0] addr_out_r;
+  wire [`ADDR_SIZE0:0] addr_out = addr_out_r;
   
   wire read_q;
   wire write_q;
@@ -83,11 +84,15 @@ module test;
   wire [`STATE_SIZE0:0] state;
   wire nxt_state;
   
+  reg bus_busy_r;
+  wire bus_busy = bus_busy_r;
+  
+  
  
   reg [31:0] command = {
                     4'b 0000,  //command code
                     
-                    2'b 11,    //flags Cond: 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
+                    2'b 00,    //flags Cond: 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
                     2'b 00,    //flags D   : 00 - as is, 01 - post inc, 10 - post dec, 11 - unused 
                     2'b 01,    //flags S0  : 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
                     2'b 10,    //flags S1  : 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
@@ -142,6 +147,7 @@ MemManager mem_mng (
             .command_word(command),
 //            .ifPtr(ifPtr_wire),
             
+            .is_bus_busy(bus_busy),
             .addr(addr_out),
             .read_q(read_q),
             .write_q(write_q),
@@ -174,7 +180,7 @@ initial begin
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
            //#(STEP*20)
-           #(STEP*12)
+           #(STEP*17)
           $finish;
         end
 
@@ -199,11 +205,16 @@ always @(negedge CLK) begin
   
   
           read_dn = 0;
+          bus_busy_r = 1'b z;
           
           if(read_q == 1) begin
+            addr_out_r = 32'h zzzzzzzz;
+            addr_out_r = addr_out;
             data_wire_r = mem[addr_out];
             read_dn = 1;
+            bus_busy_r = 1;
           end else /*if(read_e == 1)*/ begin
+            addr_out_r = 32'h zzzzzzzz;
             data_wire_r = 32'h zzzzzzzz;
           end
   
@@ -212,6 +223,8 @@ always @(negedge CLK) begin
 
 
 always @(negedge RESET) begin
+           addr_out_r = 32'h zzzzzzzz;
+           bus_busy_r = 1'b z;
 //          Q = 0;
        end
        
