@@ -23,6 +23,9 @@ module StateManager(
     end
     else if(next_state == 1) begin
       state = state + 1;
-    end
+    end 
+//    else if(state == 0) begin
+//      state = 1;
+//    end
   end
 endmodule

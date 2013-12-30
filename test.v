@@ -53,10 +53,9 @@
 module test;
 
   reg  CLK;
-  reg RESET;
+  reg RESET_r;
+  wire RESET = RESET_r;
 
-//  reg [31:0] Q;
-  
   
   reg [`ADDR_SIZE0:0] addr_out_r;
   wire [`ADDR_SIZE0:0] addr_out = addr_out_r;
@@ -69,14 +68,8 @@ module test;
   wire write_e;
   
   
-//  reg [`DATA_SIZE0:0] mem;
-  wire [`DATA_SIZE0:0] data_wire;
   reg [`DATA_SIZE0:0] data_wire_r;
-  assign data_wire = data_wire_r;
-  
-//  reg [`DATA_SIZE0:0] reg_block [15:0];
-//  reg ifPtr_block [3:0];
-//  wire ifptr_wire;
+  wire [`DATA_SIZE0:0] data_wire = data_wire_r;
   
    
   wire [`DATA_SIZE0:0] src1;
@@ -120,19 +113,8 @@ module test;
 	reg [31:0] mem [0:100]; 
   initial $readmemh("mem.txt", mem);
   
- // assign data_wire = mem[addr_out];
-
-
-//RIPPL0 DUT(
-//           .Q     ( Q ),
-//           .CLK   ( CLK ),
-//           .RESET ( RESET )
-//          );=0;
-
 
 parameter STEP = 20;
-
-//RIPPL0 DUT(RESET,CLK,Q);
 
 
 
@@ -159,6 +141,23 @@ StartManager start_mng(
             );
 
 
+FinishManager finish_mng(
+            .clk(CLK), 
+            .state(state),
+            
+            .base_addr(base_addr),
+            .command(command),
+            
+            .is_bus_busy(bus_busy),
+            .addr(addr_out),
+            .data(data_wire),
+            
+            .next_state(nxt_state),
+            
+            .rst(RESET)
+            );
+
+
 StateManager states_mng(
             .clk(CLK),
             .state(state),
@@ -168,13 +167,13 @@ StateManager states_mng(
             .rst(RESET)
             );
             
-            
+
+
 MemManager mem_mng (
             .clk(CLK), 
             .state(state),
             .base_addr(base_addr),
             .command_word(command),
-//            .ifPtr(ifPtr_wire),
             
             .is_bus_busy(bus_busy),
             .addr(addr_out),
@@ -196,6 +195,7 @@ MemManager mem_mng (
             
             .rst(RESET)
             );
+
 
 Alu alu_1 (
         .clk(CLK),
@@ -221,13 +221,13 @@ Alu alu_1 (
 
 initial begin
 // $monitor("RESET=%b  CLK=%b  Q=%b",RESET,CLK,Q);
-                      RESET = 1'b0;
-           #(STEP*5)  RESET = 1'b1;
-           #STEP      RESET = 1'b0;
+                      RESET_r = 1'bz;
+           #(STEP*5)  RESET_r = 1'b1;
+           #STEP      RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
            //#(STEP*20)
-           #(STEP*23)
+           #(STEP*44)
           $finish;
         end
 
@@ -247,49 +247,57 @@ always @(posedge CLK) begin
 
 always @(negedge CLK) begin
 
-  data_wire_r = 32'h zzzzzzzz;
-  addr_out_r = 32'h zzzzzzzz;
-  
-  read_dn = 0;
-  write_dn = 0;
-  bus_busy_r = 1'b z;
-  
-  case(state)
-    `START_BEGIN: begin
-      data_wire_r = 0; //Q;
-    end
-
-    default: begin
-      if(read_q == 1) begin
-        //addr_out_r = 32'h zzzzzzzz;
-        addr_out_r = addr_out;
-        data_wire_r = mem[addr_out];
-        read_dn = 1;
-        bus_busy_r = 1;
-      end else /*if(read_e == 1)*/ begin
-     //            data_wire_r = 32'h zzzzzzzz;
-      end
-      
-      if(write_q == 1) begin
-        addr_out_r = addr_out;
-        mem[addr_out] = data_wire;
-        $monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
-        write_dn = 1;
-      end
-      
-    end
+    addr_out_r = 32'h zzzzzzzz;
     
-  endcase
+    read_dn = 0;
+    write_dn = 0;
+    bus_busy_r = 1'b z;
+    
+  if(RESET == 1) begin
+    data_wire_r = 32'h zzzzzzzz;
+    //addr_out_r = 32'h zzzzzzzz;
+    //bus_busy_r = 1'b z;
+    //read_dn = 0;
+    //write_dn = 0;
+  end else begin
 
+    case(state)
+      `START_BEGIN: begin
+        data_wire_r = 0; //Q;
+        read_dn = 1;
+      end
+  
+      default: begin
+        data_wire_r = 32'h zzzzzzzz;
+        if(read_q == 1) begin
+          //addr_out_r = 32'h zzzzzzzz;
+          addr_out_r = addr_out;
+          data_wire_r = mem[addr_out];
+          read_dn = 1;
+          bus_busy_r = 1;
+        end else /*if(read_e == 1)*/ begin
+       //            data_wire_r = 32'h zzzzzzzz;
+        end
+        
+        if(write_q == 1) begin
+          addr_out_r = addr_out;
+          mem[addr_out] = data_wire;
+          $monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
+          write_dn = 1;
+        end
+        
+      end
+    endcase
+  end
+  
 end
 
 
 
-always @(negedge RESET) begin
-  data_wire_r = 32'h zzzzzzzz;
-  addr_out_r = 32'h zzzzzzzz;
-  bus_busy_r = 1'b z;
-//          Q = 0;
-       end
+//always @(negedge RESET) begin
+//  data_wire_r = 32'h zzzzzzzz;
+//  addr_out_r = 32'h zzzzzzzz;
+//  bus_busy_r = 1'b z;
+//end
        
 endmodule

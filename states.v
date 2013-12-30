@@ -5,13 +5,16 @@
 `define WRITE_REG_IP 2
 
 
-`define BASE_ADDR_SET 3
+//`define BASE_ADDR_SET 3
 
-`define READ_DATA  4
+`define READ_DATA  3
 
-`define ALU_BEGIN 5
+`define ALU_BEGIN 4
 
-`define WRITE_DATA 6
+`define WRITE_DATA 5
+
+
+`define FINISH_BEGIN 6
 
 
 

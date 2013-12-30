@@ -77,7 +77,7 @@ module MemManager (
 //  wire ifPtr;
   
   input wire [`ADDR_SIZE0:0] base_addr;
-  reg [`ADDR_SIZE0:0] base_addr_r;
+//  reg [`ADDR_SIZE0:0] base_addr_r;
   
   inout [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
@@ -151,7 +151,7 @@ module MemManager (
     write_e = 1'b z;
     progress = `MEM_BEGIN;
     addr_r = 32'h zzzzzzzz;
-    base_addr_r = 0;
+//    base_addr_r = 0;
     next_state = 1'b z;
     
     dst_r = 32'h zzzzzzzz;
@@ -222,11 +222,11 @@ module MemManager (
     end else begin
      
       case(state)
-        `BASE_ADDR_SET: begin
-          base_addr_r = base_addr;
-          progress = `MEM_BEGIN;
-          next_state = 1;
-        end
+//        `BASE_ADDR_SET: begin
+//          base_addr_r = base_addr;
+//          progress = `MEM_BEGIN;
+//          next_state = 1;
+//        end
         
         `READ_DATA: begin
 //          $monitor("progress=%b",progress);
@@ -236,91 +236,33 @@ module MemManager (
               cond_r = 1;
               progress = `MEM_RD_SRC1_BEGIN;
             end else begin
-              cond_r_adr = base_addr_r + regNumCnd /* `DATA_SIZE*/;
+              cond_r_adr = base_addr + regNumCnd /* `DATA_SIZE*/;
               addr_r = cond_r_adr;
               read_q = 1;
               cond_waiting = 1;
               progress = `MEM_RD_SRC1_BEGIN; //MEM_REG_COND_TRAP;
             end
           end
-/*          
-          `MEM_REG_COND_TRAP: begin
-            read_q = 0;
-            if(read_dn == 1) begin
-              
-              if(isRegCondPtr==1) begin
-                cond_r_adr = data;
-                addr_r = data; //cond_r_aux;
-                read_q = 1;
-                 progress = `MEM_REG_COND_PTR_TRAP;
-              end else begin
-                cond_r = data;
-                progress = `MEM_RD_SRC1_BEGIN;
-              end
-              
-              read_e = 0;
-              next_state = 1'b z;
-            end
-          end
-          
-          `MEM_REG_COND_PTR_TRAP: begin
-            read_q = 0;
-            if(read_dn == 1) begin
-              cond_r = data;
-              
-              read_e = 0;
-              next_state = 1'b z;
-              progress = `MEM_RD_SRC1_BEGIN;
-            end
-          end
-*/          
+
           `MEM_RD_SRC1_BEGIN: begin
             if(regS1Flags == 2'b 11) begin
               src1_r = 1;
               progress = `MEM_RD_SRC0_BEGIN;
             end else begin
-              src1_r_adr = base_addr_r + regNumS1 /* `DATA_SIZE*/;
+              src1_r_adr = base_addr + regNumS1 /* `DATA_SIZE*/;
               addr_r = src1_r_adr;
               read_q = 1;
               src1_waiting = 1;
               progress = `MEM_RD_SRC0_BEGIN; //MEM_REG_SRC1_TRAP;
             end
           end
-/*          
-          `MEM_REG_SRC1_TRAP: begin
-            read_q = 0;
-            if(read_dn == 1) begin
-              if(isRegS1Ptr==1) begin
-                src1_r_adr = data;
-                addr_r = data;
-                read_q = 1;
-                progress = `MEM_REG_SRC1_PTR_TRAP;
-              end else begin
-                src1_r = data;
-                progress = `MEM_RD_SRC0_BEGIN;
-              end
-              read_e = 0;
-              next_state = 1'b z;
-            end
-          end
-          
-          `MEM_REG_SRC1_PTR_TRAP: begin
-            read_q = 0;
-            if(read_dn == 1) begin
-              src1_r = data;
-              
-              read_e = 0;
-              next_state = 1'b z;
-              progress = `MEM_RD_SRC0_BEGIN;
-            end
-          end
-*/          
+
           `MEM_RD_SRC0_BEGIN: begin
             if(regS0Flags == 2'b 11) begin
               src0_r = 1;
               progress = `MEM_BEGIN;
             end else begin
-              src0_r_adr = base_addr_r + regNumS0 /* `DATA_SIZE*/;
+              src0_r_adr = base_addr + regNumS0 /* `DATA_SIZE*/;
               addr_r = src0_r_adr;
               read_q = 1;
               src0_waiting = 1;
@@ -342,48 +284,14 @@ module MemManager (
               read_q = 1;
               cond_waiting = 1;
             end else if( (src1_waiting | src0_waiting | cond_waiting) == 0) begin
-         //     begin
                 read_e = 1;
                 next_state = 1'b 1;
   
                 progress = `MEM_BEGIN; //MEM_REG_SRC0_TRAP;
-         //     end
             end
+             
+          end
 
-              
-          end
-/*          
-          `MEM_REG_SRC0_TRAP: begin
-            read_q = 0;
-            if(read_dn == 1) begin
-              if(isRegS0Ptr == 1) begin
-                src0_r_adr = data;
-                addr_r = data;
-                read_q = 1;
-                
-                next_state = 1'b z;
-                
-                progress = `MEM_REG_SRC0_PTR_TRAP;
-              end else begin
-                src0_r = data;
-                read_e = 1;
-                next_state = 1'b 1;
-                progress = `MEM_BEGIN;
-              end
-            end
-          end
-          
-          `MEM_REG_SRC0_PTR_TRAP: begin
-            read_q = 0;
-            if(read_dn == 1) begin
-              src0_r = data;
-              
-              read_e = 1;
-              next_state = 1'b 1;
-              progress = `MEM_BEGIN;
-            end
-          end
-*/
           endcase
         end
    
@@ -392,7 +300,7 @@ module MemManager (
           case(progress)
           `MEM_BEGIN: begin
             dst_r = dst;
-            addr_r = base_addr_r + regNumD /* ((`DATA_SIZE0+1)/8)*/;
+            addr_r = base_addr + regNumD /* ((`DATA_SIZE0+1)/8)*/;
             data_r = dst_r;
             write_q = 1;
             progress = 1;
@@ -415,9 +323,6 @@ module MemManager (
       
     end
     
-//    if(state == `
-//    if(state == `READ_DATA) begin
-//    end
   end
   
   end
