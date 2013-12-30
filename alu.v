@@ -60,7 +60,7 @@ module Alu(
       src1_r = `DATA_SIZE'h zzzzzzzz;
       src0_r = `DATA_SIZE'h zzzzzzzz;
       dst_r =  `DATA_SIZE'h zzzzzzzz;
-      dst_h = 0;
+      dst_h =  `DATA_SIZE'h zzzzzzzz;
       
       is_bus_busy_r = 1'b z;
     end else begin

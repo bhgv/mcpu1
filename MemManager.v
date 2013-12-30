@@ -154,6 +154,8 @@ module MemManager (
 //    base_addr_r = 0;
     next_state = 1'b z;
     
+    src1_r = 32'h zzzzzzzz;
+    src0_r = 32'h zzzzzzzz;
     dst_r = 32'h zzzzzzzz;
     
     data_r = 32'h zzzzzzzz;

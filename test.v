@@ -227,7 +227,7 @@ initial begin
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
            //#(STEP*20)
-           #(STEP*44)
+           #(STEP*90)
           $finish;
         end
 
