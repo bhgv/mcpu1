@@ -11,8 +11,9 @@
 //`define READ_S0    6
 //`define READ_S0P   7
 
-`define WRITE_DATA 2
+`define ALU_BEGIN 2
 
+`define WRITE_DATA 3
 
 
 `define MEM_BEGIN 0

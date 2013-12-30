@@ -65,6 +65,9 @@ module test;
   wire write_q;
   reg read_dn = 0;
   reg write_dn = 0;
+  wire read_e;
+  wire write_e;
+  
   
 //  reg [`DATA_SIZE0:0] mem;
   wire [`DATA_SIZE0:0] data_wire;
@@ -79,6 +82,7 @@ module test;
   wire [`DATA_SIZE0:0] src1;
   wire [`DATA_SIZE0:0] src0;
   wire [`DATA_SIZE0:0] dst;
+  wire [`DATA_SIZE0:0] dst_h;
   wire [`DATA_SIZE0:0] cond;
   
   wire [`STATE_SIZE0:0] state;
@@ -90,7 +94,7 @@ module test;
   
  
   reg [31:0] command = {
-                    4'b 0000,  //command code
+                    4'h 0,  //command code
                     
                     2'b 00,    //flags Cond: 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
                     2'b 00,    //flags D   : 00 - as is, 01 - post inc, 10 - post dec, 11 - unused 
@@ -154,12 +158,13 @@ MemManager mem_mng (
             .data(data_wire),
             .read_dn(read_dn),
             .write_dn(write_dn),
-            //.read_e(),
-            //.write_e(),
+            .read_e(read_e),
+            .write_e(write_e),
             
             .src1(src1),
             .src0(src0),
             .dst(dst),
+            .dst_h(dst_h),
             .cond(cond),
             
             .next_state(nxt_state),
@@ -167,6 +172,23 @@ MemManager mem_mng (
             .rst(RESET)
             );
 
+Alu alu_1 (
+        .clk(CLK),
+        .is_bus_busy(bus_busy),
+        
+        .command(command),
+        
+        .state(state),
+        
+        .src1(src1),
+        .src0(src0),
+        .dst(dst),
+        .dst_h(dst_h),
+        
+        .next_state(nxt_state),
+        
+        .rst(RESET)
+        );
 
 
 
@@ -180,7 +202,7 @@ initial begin
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
            //#(STEP*20)
-           #(STEP*17)
+           #(STEP*23)
           $finish;
         end
 
