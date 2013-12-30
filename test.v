@@ -93,7 +93,7 @@ module test;
   
   
  
-  reg [31:0] command = {
+  wire [31:0] command /*= {
                     4'h 0,  //command code
                     
                     2'b 00,    //flags Cond: 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
@@ -110,9 +110,10 @@ module test;
                     4'b 0011,   //dst
                     4'b 0100,   //src0
                     4'b 0010    //src1
-                    };
+                    }*/
+                    ;
                     
-  reg [`ADDR_SIZE0:0] base_addr;
+  wire [`ADDR_SIZE0:0] base_addr;
   
   
   
@@ -132,6 +133,30 @@ module test;
 parameter STEP = 20;
 
 //RIPPL0 DUT(RESET,CLK,Q);
+
+
+
+StartManager start_mng(
+            .clk(CLK), 
+            .state(state),
+            
+            .base_addr(base_addr),
+            .command(command),
+            
+            .is_bus_busy(bus_busy),
+            .addr(addr_out),
+            .read_q(read_q),
+            .write_q(write_q),
+            .data(data_wire),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            .read_e(read_e),
+            .write_e(write_e),
+            
+            .next_state(nxt_state),
+            
+            .rst(RESET)
+            );
 
 
 StateManager states_mng(
@@ -221,32 +246,49 @@ always @(posedge CLK) begin
 
 
 always @(negedge CLK) begin
-  if(state == `BASE_ADDR_SET) begin
-    base_addr = 0; //Q;
-  end
+
+  data_wire_r = 32'h zzzzzzzz;
+  addr_out_r = 32'h zzzzzzzz;
   
+  read_dn = 0;
+  write_dn = 0;
+  bus_busy_r = 1'b z;
   
-          read_dn = 0;
-          bus_busy_r = 1'b z;
-          
-          if(read_q == 1) begin
-            addr_out_r = 32'h zzzzzzzz;
-            addr_out_r = addr_out;
-            data_wire_r = mem[addr_out];
-            read_dn = 1;
-            bus_busy_r = 1;
-          end else /*if(read_e == 1)*/ begin
-            addr_out_r = 32'h zzzzzzzz;
-            data_wire_r = 32'h zzzzzzzz;
-          end
-  
-       end
+  case(state)
+    `START_BEGIN: begin
+      data_wire_r = 0; //Q;
+    end
+
+    default: begin
+      if(read_q == 1) begin
+        //addr_out_r = 32'h zzzzzzzz;
+        addr_out_r = addr_out;
+        data_wire_r = mem[addr_out];
+        read_dn = 1;
+        bus_busy_r = 1;
+      end else /*if(read_e == 1)*/ begin
+     //            data_wire_r = 32'h zzzzzzzz;
+      end
+      
+      if(write_q == 1) begin
+        addr_out_r = addr_out;
+        mem[addr_out] = data_wire;
+        $monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
+        write_dn = 1;
+      end
+      
+    end
+    
+  endcase
+
+end
 
 
 
 always @(negedge RESET) begin
-           addr_out_r = 32'h zzzzzzzz;
-           bus_busy_r = 1'b z;
+  data_wire_r = 32'h zzzzzzzz;
+  addr_out_r = 32'h zzzzzzzz;
+  bus_busy_r = 1'b z;
 //          Q = 0;
        end
        

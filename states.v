@@ -1,19 +1,19 @@
 
 
-`define BASE_ADDR_SET 0
+`define START_BEGIN 0
+`define START_READ_CMD 1
+`define WRITE_REG_IP 2
 
-`define READ_DATA  1
 
-//`define READ_COND  2
-//`define READ_CONDP 3
-//`define READ_S1    4
-//`define READ_S1P   5
-//`define READ_S0    6
-//`define READ_S0P   7
+`define BASE_ADDR_SET 3
 
-`define ALU_BEGIN 2
+`define READ_DATA  4
 
-`define WRITE_DATA 3
+`define ALU_BEGIN 5
+
+`define WRITE_DATA 6
+
+
 
 
 `define MEM_BEGIN 0
