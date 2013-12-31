@@ -162,6 +162,8 @@ StateManager states_mng(
             .clk(CLK),
             .state(state),
             
+            .cond(cond),
+            
             .next_state(nxt_state),
             
             .rst(RESET)

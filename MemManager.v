@@ -230,22 +230,53 @@ module MemManager (
 //          next_state = 1;
 //        end
         
-        `READ_DATA: begin
+        `READ_COND: begin
 //          $monitor("progress=%b",progress);
           case(progress)
           `MEM_BEGIN: begin
             if(regCondFlags == 2'b 11) begin
               cond_r = 1;
               progress = `MEM_RD_SRC1_BEGIN;
+              next_state = 1;
             end else begin
               cond_r_adr = base_addr + regNumCnd /* `DATA_SIZE*/;
               addr_r = cond_r_adr;
               read_q = 1;
               cond_waiting = 1;
-              progress = `MEM_RD_SRC1_BEGIN; //MEM_REG_COND_TRAP;
+              progress = `MEM_WAIT_FOR_READ_REGS; //MEM_RD_SRC1_BEGIN; //MEM_REG_COND_TRAP;
             end
           end
+          
+          `MEM_WAIT_FOR_READ_REGS: begin
+//            if(src1_waiting == 0 && src1ptr_waiting == 1) begin
+//              addr_r = src1_r; //cond_r_aux;
+//              src1_r_adr = src1_r;
+//              read_q = 1;
+//              src1_waiting = 1; 
+//            end else if(src0_waiting == 0 && src0ptr_waiting == 1) begin
+//              addr_r = src0_r; //cond_r_aux;
+//              src0_r_adr = src0_r;
+//              read_q = 1;
+//              src0_waiting = 1;
+//            end else 
+            if(cond_waiting == 0 && condptr_waiting == 1) begin
+              addr_r = cond_r; //cond_r_aux;
+              cond_r_adr = cond_r;
+              read_q = 1;
+              cond_waiting = 1;
+            end else if( (/*src1_waiting | src0_waiting |*/ cond_waiting) == 0) begin
+                read_e = 1;
+                next_state = 1'b 1;
+  
+                progress = `MEM_RD_SRC1_BEGIN;  //MEM_BEGIN; //MEM_REG_SRC0_TRAP;
+            end
+          end
+          
+          endcase
+        end
 
+        `READ_DATA: begin
+          case(progress)
           `MEM_RD_SRC1_BEGIN: begin
             if(regS1Flags == 2'b 11) begin
               src1_r = 1;
@@ -283,11 +314,11 @@ module MemManager (
               src0_r_adr = src0_r;
               read_q = 1;
               src0_waiting = 1;
-            end else if(cond_waiting == 0 && condptr_waiting == 1) begin
-              addr_r = cond_r; //cond_r_aux;
-              cond_r_adr = cond_r;
-              read_q = 1;
-              cond_waiting = 1;
+//            end else if(cond_waiting == 0 && condptr_waiting == 1) begin
+//              addr_r = cond_r; //cond_r_aux;
+//              cond_r_adr = cond_r;
+//              read_q = 1;
+//              cond_waiting = 1;
             end else if( (src1_waiting | src0_waiting | cond_waiting) == 0) begin
                 read_e = 1;
                 next_state = 1'b 1;
@@ -327,35 +358,35 @@ module MemManager (
           `MEM_WR_SRC_REGS: begin
             if(^regCondFlags == 1 && condptr_waiting == 0) begin
               if(regCondFlags == 2'b 01) begin
-                cond_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)+1;
+                data_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)+1;
               end else if(regCondFlags == 2'b 10) begin
-                cond_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)-1;
+                data_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)-1;
               end
-              data_r = cond_r;
+              //data_r = cond_r;
               addr_r = base_addr + regNumCnd;
               cond_waiting = 1;
               write_q = 1;
               progress = `MEM_WR_SRC_REGS_WAIT;
             end else
-            if(^regS1Flags == 1 && src1ptr_waiting == 0) begin
+            if(^regS1Flags == 1 && src1ptr_waiting == 0 && cond_r != 0) begin
               if(regS1Flags == 2'b 01) begin
-                src1_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)+1;
+                data_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)+1;
               end else if(regS1Flags == 2'b 10) begin
-                src1_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)-1;
+                data_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)-1;
               end
-              data_r = src1_r;
+              //data_r = src1_r;
               addr_r = base_addr + regNumS1;
               src1_waiting = 1;
               write_q = 1;
               progress = `MEM_WR_SRC_REGS_WAIT;
             end else
-            if(^regS0Flags == 1 && src0ptr_waiting == 0) begin
+            if(^regS0Flags == 1 && src0ptr_waiting == 0 && cond_r != 0) begin
               if(regS0Flags == 2'b 01) begin
-                src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)+1;
+                data_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)+1;
               end else if(regS0Flags == 2'b 10) begin
-                src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
+                data_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
               end
-              data_r = src0_r;
+              //data_r = src0_r;
               addr_r = base_addr + regNumS0;
               src0_waiting = 1;
               write_q = 1;
