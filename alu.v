@@ -100,14 +100,17 @@ module Alu(
               dst_r = src0 << src1;
             end
             
-//            `: begin
-//            end
+            `CMD_XOR: begin
+              dst_r = src0 ^ src1;
+            end
             
-//            `: begin
-//            end
+            `CMD_AND: begin
+              dst_r = src0 & src1;
+            end
             
-//            `: begin
-//            end
+            `CMD_OR: begin
+              dst_r = src0 | src1;
+            end
             
 //            `: begin
 //            end
