@@ -117,15 +117,13 @@ module test;
 parameter STEP = 20;
 
 
-
-StartManager start_mng(
+  InternalBus int_bus (
             .clk(CLK), 
-            .state(state),
+            //.state(state),
+            //.base_addr(base_addr),
+            //.command(command),
             
-            .base_addr(base_addr),
-            .command(command),
-            
-            .is_bus_busy(bus_busy),
+            .bus_busy(bus_busy),
             .addr(addr_out),
             .read_q(read_q),
             .write_q(write_q),
@@ -135,87 +133,16 @@ StartManager start_mng(
             .read_e(read_e),
             .write_e(write_e),
             
-            .next_state(nxt_state),
+            //.src1(src1),
+            //.src0(src0),
+            //.dst(dst),
+            //.dst_h(dst_h),
+            //.cond(cond),
+            
+            //.next_state(nxt_state),
             
             .rst(RESET)
             );
-
-
-FinishManager finish_mng(
-            .clk(CLK), 
-            .state(state),
-            
-            .base_addr(base_addr),
-            .command(command),
-            
-            .is_bus_busy(bus_busy),
-            .addr(addr_out),
-            .data(data_wire),
-            
-            .next_state(nxt_state),
-            
-            .rst(RESET)
-            );
-
-
-StateManager states_mng(
-            .clk(CLK),
-            .state(state),
-            
-            .cond(cond),
-            
-            .next_state(nxt_state),
-            
-            .rst(RESET)
-            );
-            
-
-
-MemManager mem_mng (
-            .clk(CLK), 
-            .state(state),
-            .base_addr(base_addr),
-            .command_word(command),
-            
-            .is_bus_busy(bus_busy),
-            .addr(addr_out),
-            .read_q(read_q),
-            .write_q(write_q),
-            .data(data_wire),
-            .read_dn(read_dn),
-            .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
-            
-            .src1(src1),
-            .src0(src0),
-            .dst(dst),
-            .dst_h(dst_h),
-            .cond(cond),
-            
-            .next_state(nxt_state),
-            
-            .rst(RESET)
-            );
-
-
-Alu alu_1 (
-        .clk(CLK),
-        .is_bus_busy(bus_busy),
-        
-        .command(command),
-        
-        .state(state),
-        
-        .src1(src1),
-        .src0(src0),
-        .dst(dst),
-        .dst_h(dst_h),
-        
-        .next_state(nxt_state),
-        
-        .rst(RESET)
-        );
 
 
 
@@ -250,13 +177,16 @@ always @(posedge CLK) begin
 always @(negedge CLK) begin
 
     addr_out_r = 32'h zzzzzzzz;
+    data_wire_r = 32'h zzzzzzzz;
     
     read_dn = 0;
     write_dn = 0;
     bus_busy_r = 1'b z;
     
   if(RESET == 1) begin
-    data_wire_r = 32'h zzzzzzzz;
+        data_wire_r = 0; //Q;
+        read_dn = 1;
+
     //addr_out_r = 32'h zzzzzzzz;
     //bus_busy_r = 1'b z;
     //read_dn = 0;
@@ -264,10 +194,10 @@ always @(negedge CLK) begin
   end else begin
 
     case(state)
-      `START_BEGIN: begin
-        data_wire_r = 0; //Q;
-        read_dn = 1;
-      end
+//      `START_BEGIN: begin
+//        data_wire_r = 0; //Q;
+//        read_dn = 1;
+//      end
   
       default: begin
         data_wire_r = 32'h zzzzzzzz;

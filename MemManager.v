@@ -14,9 +14,9 @@ module MemManager (
             
             is_bus_busy,
             addr,
+            data,
             read_q,
             write_q,
-            data,
             read_dn,
             write_dn,
             read_e,
