@@ -1,21 +1,21 @@
 
 
-`define START_BEGIN 0
-`define START_READ_CMD 1
-`define WRITE_REG_IP 2
+`define START_BEGIN 1
+`define START_READ_CMD 2
+`define WRITE_REG_IP 3
 
 
 //`define BASE_ADDR_SET 3
 
-`define READ_COND  3
-`define READ_DATA  4
+`define READ_COND  4
+`define READ_DATA  5
 
-`define ALU_BEGIN 5
+`define ALU_BEGIN 6
 
-`define WRITE_DATA 6
+`define WRITE_DATA 7
 
 
-`define FINISH_BEGIN 7
+`define FINISH_BEGIN 8 
 
 
 

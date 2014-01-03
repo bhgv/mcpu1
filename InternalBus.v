@@ -11,9 +11,9 @@ module InternalBus(
         //    state,
         bus_busy,
         
-        //command,
+        command,
         
-        //state,
+        state,
         
             addr,
             data,
@@ -30,7 +30,7 @@ module InternalBus(
         //dst,
         //dst_h,
         
-        //next_state,
+        next_state,
         
         rst
         );
@@ -40,8 +40,7 @@ module InternalBus(
   reg bus_busy_r;
   wire bus_busy = bus_busy_r;
   
-  //output 
-  wire [31:0] command;
+  output wire [31:0] command;
     
   input wire rst;
   
@@ -71,10 +70,8 @@ module InternalBus(
   wire [`DATA_SIZE0:0] dst_h;
   /*output*/ wire [`DATA_SIZE0:0] cond;
   
-  //output 
-  wire [`STATE_SIZE0:0] state;
-  //input 
-  wire next_state;
+  output wire [`STATE_SIZE0:0] state;
+  input wire next_state;
  
                     
   wire [`ADDR_SIZE0:0] base_addr;
