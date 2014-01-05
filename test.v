@@ -118,8 +118,8 @@ module test;
   
   reg ext_rst_e_r;
   
-  wire ext_rst_b = RESET;
-  wire ext_rst_e = ext_rst_e_r;
+  reg ext_rst_b; // = RESET;
+  wire ext_rst_e; // = ext_rst_e_r;
   
   reg [`DATA_SIZE0:0] ext_cpu_index_r;
   wire [`DATA_SIZE0:0] ext_cpu_index = ext_cpu_index_r;
@@ -141,6 +141,9 @@ module test;
   reg [7:0] stage;
 
 parameter STEP = 20;
+
+
+parameter CPU_QUANTITY = 1;
 
 
 BridgeToOutside outside_bridge (
@@ -211,18 +214,21 @@ BridgeToOutside outside_bridge (
             );
 
 
+reg [`DATA_SIZE0:0] cpu_tbl [1:CPU_QUANTITY];
+reg [`DATA_SIZE0:0] cpu_num;
 
+reg [7:0] state_ctl;
 
 
 initial begin
 // $monitor("RESET=%b  CLK=%b  Q=%b",RESET,CLK,Q);
                       RESET_r = 1'bz;
            #(STEP*3)  RESET_r = 1'b1;
-           #(STEP*3)      RESET_r = 1'bz;
+           #(STEP)  RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
            #(STEP*40) stage = 0; cpu_running = 0;
-           #(STEP*25); //90)
+           #(STEP*125); //90)
           $finish;
         end
 
@@ -242,8 +248,10 @@ always @(posedge CLK) begin
 
 always @(negedge CLK) begin
 
-    addr_out_r = 32'h zzzzzzzz;
-    data_wire_r = 32'h zzzzzzzz;
+//    addr_out_r = 32'h zzzzzzzz;
+//    data_wire_r = 32'h zzzzzzzz;
+    
+    ext_rst_b = 0;
     
     read_dn_r = 1'b z;
     write_dn_r = 1'b z;
@@ -251,10 +259,15 @@ always @(negedge CLK) begin
     
     ext_rst_e_r = 1'b z;
     cpu_q_r = 0;
-    ext_cpu_index_r = 0;
+//    ext_cpu_index_r = 32'h zzzzzzzz;
     
-  if(RESET == 1) begin
-    data_wire_r = 18; //Q;
+  if(RESET == 1) begin 
+    cpu_num = 0;
+    data_wire_r = cpu_num; //Q;
+    bus_busy_r  = 1'bz;
+    
+    state_ctl = `CTL_RESET_WAIT;
+    
         //read_dn = 1;
 
     //addr_out_r = 32'h zzzzzzzz;
@@ -262,41 +275,93 @@ always @(negedge CLK) begin
     //read_dn = 0;
     //write_dn = 0;
     
-    ext_cpu_index_r = 0;
+    ext_cpu_index_r = 32'h zzzzzzzz;
     cpu_q_r = 0;
     
     cpu_running = 0;
     
     stage = 0;
     
+    ext_rst_b = 1;
+    
 //    ext_rst_e_r = 1;
   end else /*if(ext_rst_e == 1)*/ begin
   
-    data_wire_r = 32'h zzzzzzzz;
-    addr_out_r  = 32'h zzzzzzzz;
+//    data_wire_r = 32'h zzzzzzzz;
+//    addr_out_r  = 32'h zzzzzzzz;
 
+    case(state_ctl)
+      `CTL_RESET_WAIT: begin
+        if(read_dn == 1) begin
+          data_wire_r = 32'h zzzzzzzz;
+          addr_out_r  = 32'h zzzzzzzz;
+        end
+          
+        if(bus_busy == 1) begin
+          cpu_tbl[data_wire] = 0; //32'h ffffffff;
+        end
+        
+        if(ext_rst_e == 1) begin
+          ext_rst_b = 0;
+          
+          state_ctl = `CTL_CPU_LOOP;
+        end
+      end
+      
+      `CTL_CPU_LOOP: begin
+        if(cpu_num == CPU_QUANTITY) begin
+          cpu_num = 0;
+        end
+        ext_cpu_index_r = cpu_num;
+        
+        cpu_num = cpu_num + 1;
+        
+        addr_out_r = cpu_tbl[cpu_num];
+        
+        cpu_q_r = 1;
+        
+        state_ctl = `CTL_CPU_CMD;
+      end
+      
+      `CTL_CPU_CMD: begin
+        if(cpu_q_r == 1) begin
+          cpu_q_r = 0;
+        end
+        if(ext_cpu_e == 1) begin
+          cpu_running = 1;
+          addr_out_r = 32'h zzzzzzzz;
+          ext_cpu_index_r = 32'h zzzzzzzz;
+          state_ctl = `CTL_MEM_WORK;
+        end
+      end
+      
+      `CTL_MEM_WORK: begin
 
-    if(stage < 3) stage = stage + 1;
-  
-    if(stage == 2/*cpu_q_r == 0 && ext_cpu_e == 0*/) begin
+        data_wire_r = 32'h zzzzzzzz;
+        addr_out_r  = 32'h zzzzzzzz;
+        
+
+//    if(stage < 3) stage = stage + 1;
+//  
+//    if(stage == 2/*cpu_q_r == 0 && ext_cpu_e == 0*/) begin
+//    
+//      addr_out_r = 0;
+//      ext_cpu_index_r = cpu_num;
+//      cpu_q_r = 1;
     
-      addr_out_r = 0;
-      ext_cpu_index_r = 18;
-      cpu_q_r = 1;
-    
-    end else if(/*ext_cpu_e == 1 &&*/ cpu_q_r == 1) begin
-      cpu_q_r = 0;
-    end else if(ext_cpu_e == 1) begin
-      cpu_running = 1;
-    end else 
-    if(/*cpu_q_r != 1 && ext_cpu_e != 1*/ cpu_running == 1) begin
+//    end else if(/*ext_cpu_e == 1 &&*/ cpu_q_r == 1) begin
+//      cpu_q_r = 0;
+//    end else if(ext_cpu_e == 1) begin
+//      cpu_running = 1;
+//    end else 
+
+//    if(/*cpu_q_r != 1 && ext_cpu_e != 1*/ cpu_running == 1) begin
 
       case(state)
-  //      `START_BEGIN: begin
-  //        data_wire_r = 0; //Q;
-  //        read_dn = 1;
-  //      end
-    
+        `FINISH_END: begin
+          state_ctl = `CTL_CPU_LOOP;
+        end
+        
         default: begin
           data_wire_r = 32'h zzzzzzzz;
           if(read_q == 1) begin
@@ -320,6 +385,13 @@ always @(negedge CLK) begin
       endcase
       
     end
+    
+    
+      //end
+    endcase
+    
+    
+    
   end
   
 end

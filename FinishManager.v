@@ -54,23 +54,24 @@ module FinishManager (
   
   output reg next_state;
   
-  inout rst;
-  reg rst_r;
-  wire rst = rst_r;
+  input rst;
+//  reg rst_r;
+  wire rst; // = rst_r;
   
   
-  reg [8:0] progress;
+//  reg [8:0] progress;
 
 
   always @(posedge clk) begin
     addr_r = 32'h zzzzzzzz;
     data_r = 32'h zzzzzzzz;
-    rst_r = 1'b z;
+//    rst_r = 1'b z;
+    next_state = 1'b z;
     
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
     if(rst == 1) begin
-      progress = `MEM_BEGIN;
+//      progress = `MEM_BEGIN;
       addr_r = 32'h zzzzzzzz;
       next_state = 1'b z;
       
@@ -80,7 +81,8 @@ module FinishManager (
     else begin
       case(state)
         `FINISH_BEGIN: begin
-          rst_r = 1;
+          //rst_r = 1;
+          next_state = 1;
         end
         
       endcase

@@ -1,5 +1,14 @@
 
 
+`define CTL_RESET_BEGIN 0
+`define CTL_RESET_WAIT  1
+`define CTL_CPU_LOOP    2
+`define CTL_CPU_CMD     3
+`define CTL_MEM_WORK    4
+
+
+
+
 `define START_BEGIN 1
 `define START_READ_CMD 2
 `define WRITE_REG_IP 3
@@ -16,6 +25,7 @@
 
 
 `define FINISH_BEGIN 8 
+`define FINISH_END   9 
 
 
 

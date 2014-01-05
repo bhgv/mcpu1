@@ -96,8 +96,8 @@ module BridgeToOutside (
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr = addr_r;
   
-  output reg read_q;
-  output reg write_q;
+  input wire read_q;
+  input wire  write_q;
 
   inout bus_busy;
   reg bus_busy_r;
@@ -157,7 +157,9 @@ module BridgeToOutside (
   input wire ext_rst_b;
   output reg ext_rst_e = 0;
   
-  input wire [`DATA_SIZE0:0] ext_cpu_index;
+  inout [`DATA_SIZE0:0] ext_cpu_index;
+  reg [`DATA_SIZE0:0] cpu_index_itf;
+  wire [`DATA_SIZE0:0] ext_cpu_index = cpu_index_itf;
   reg [`DATA_SIZE0:0] cpu_index_r;
   
   input wire ext_next_cpu_q;
@@ -174,19 +176,21 @@ module BridgeToOutside (
   always @(posedge clk) begin
     addr_r = 32'h zzzzzzzz;
     data_r = 32'h zzzzzzzz;
-      next_state = 1'b z;
-      ext_rst_e = 0;
-      
-      ext_next_cpu_e = 1'b z;
-      
-      read_dn_r = 1'b z;
+    next_state = 1'b z;
+    ext_rst_e = 0;
+    
+    ext_next_cpu_e = 1'b z;
+    
+    read_dn_r = 1'b z;
+    
+    /*ext_*/bus_busy_r = 1'b z;
       
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
     if(ext_rst_b == 1) begin
       
-      read_q = 1'b z;
-      write_q = 1'b z;
+//      read_q = 1'b z;
+//      write_q = 1'b z;
       read_e = 1'b z;
       write_e = 1'b z;
 //      progress = `MEM_BEGIN;
@@ -198,28 +202,43 @@ module BridgeToOutside (
 //      src0_r = 32'h zzzzzzzz;
 //      dst_r = 32'h zzzzzzzz;
       
-      data_r = 32'h zzzzzzzz;
+//      data_r = 32'h zzzzzzzz;
       bus_busy_r = 1'b z;
       
       //base_addr_r = addr;
-      cpu_index_r = data;
-      //data_r = cpu_index_r + 1;
+      cpu_index_r = 32'h ffffffff; //data;
+      cpu_index_itf = 32'h zzzzzzzz;
+//      data_r = cpu_index_r + 1;
       
       rst = 1;
       
-      ext_rst_e = 1;
+//      ext_rst_e = 1;
       
       ext_next_cpu_e = 1'b z;
-      ext_bus_busy_r = 1'b z;
-      
+//      ext_bus_busy_r = 1'b z;
     end
-    else begin
+    else if(rst == 1 && cpu_index_r == 32'h ffffffff) begin
+      cpu_index_r = 32'h fffffffe;
+    end else if(rst == 1 && cpu_index_r == 32'h fffffffe) begin
+      cpu_index_r = data;
+      read_dn_r = 1;
+    end
+    else if(rst == 1) begin
+      read_dn_r = 1'b z;
+      
       rst = 0;
+//      cpu_index_r = data;
+      data_r = cpu_index_r + 1;
+      /*ext_*/bus_busy_r = 1'b 1;
+      
+            ext_rst_e = 1;
 
+    end 
+    else begin
       read_e = 1'b z;
       write_e = 1'b z;
-      read_q = 1'b z;
-      write_q = 1'b z;
+//      read_q = 1'b z;
+//      write_q = 1'b z;
       
       if(ext_bus_busy == 1) begin
         
@@ -242,6 +261,19 @@ module BridgeToOutside (
             
               data_r = base_addr_r;
               read_dn_r = 1;
+            end
+            
+            `READ_COND, `READ_DATA: begin
+              if(read_q == 1) begin
+                cpu_index_itf = cpu_index_r;
+              end else begin
+                cpu_index_itf = 32'h zzzzzzzz;
+              end
+              
+            end
+            
+            `FINISH_END: begin
+              rst = 1;
             end
             
           endcase
