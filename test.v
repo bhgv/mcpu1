@@ -58,24 +58,24 @@ module test;
   wire RESET = RESET_r;
 
   
-  reg [`ADDR_SIZE0:0] addr_out_r;
-  wire [`ADDR_SIZE0:0] addr_out = addr_out_r;
+//  reg [`ADDR_SIZE0:0] addr_out_r;
+  wire [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
   wire read_q;
   wire write_q;
   
-  reg read_dn_r;
-  wire read_dn = read_dn_r;
+//  reg read_dn_r;
+  wire read_dn; // = read_dn_r;
   
-  reg write_dn_r;
-  wire write_dn = write_dn_r;
+//  reg write_dn_r;
+  wire write_dn; // = write_dn_r;
   
 //  wire read_e;
 //  wire write_e;
   
   
-  reg [`DATA_SIZE0:0] data_wire_r;
-  wire [`DATA_SIZE0:0] data_wire = data_wire_r;
+//  reg [`DATA_SIZE0:0] data_wire_r;
+  wire [`DATA_SIZE0:0] data_wire; // = data_wire_r;
   
    
 /*
@@ -89,8 +89,8 @@ module test;
   wire nxt_state;
 */
 
-  reg bus_busy_r;
-  wire bus_busy = bus_busy_r;
+//  reg bus_busy_r;
+  wire bus_busy; // = bus_busy_r;
   
   
  
@@ -124,14 +124,15 @@ module test;
   reg ext_rst_e_r;
 */
 
-  reg ext_rst_b; // = RESET;
+  //reg
+  wire ext_rst_b; // = RESET;
   wire ext_rst_e; // = ext_rst_e_r;
   
-  reg [`DATA_SIZE0:0] ext_cpu_index_r;
-  wire [`DATA_SIZE0:0] ext_cpu_index = ext_cpu_index_r;
+//  reg [`DATA_SIZE0:0] ext_cpu_index_r;
+  wire [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
   
-  reg cpu_q_r;
-  wire ext_cpu_q = cpu_q_r;
+//  reg cpu_q_r;
+  wire ext_cpu_q; // = cpu_q_r;
   wire ext_cpu_e;
   
 //  reg cpu_running;
@@ -178,6 +179,32 @@ Cpu cpu1(
             
             .dispatcher_q(dispatcher_q)
           );
+
+DispatcherOfCpus disp_1(
+            .clk(CLK),
+            .rst(RESET),
+            
+            .addr_out(addr_out),
+            .data_wire(data_wire),
+            
+            .read_q(read_q),
+            .write_q(write_q),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            
+            .bus_busy(bus_busy),
+            
+            .ext_rst_b(ext_rst_b),
+            .ext_rst_e(ext_rst_e),
+            
+            .ext_cpu_index(ext_cpu_index),
+            
+            .ext_cpu_q(ext_cpu_q),
+            .ext_cpu_e(ext_cpu_e),
+            
+            .dispatcher_q(dispatcher_q)
+          );
+
 
 /*
 BridgeToOutside outside_bridge (
@@ -250,11 +277,12 @@ BridgeToOutside outside_bridge (
 
 */
 
+/*
 reg [`DATA_SIZE0:0] cpu_tbl [1:CPU_QUANTITY];
 reg [`DATA_SIZE0:0] cpu_num;
 
 reg [7:0] state_ctl;
-
+*/
 
 initial begin
 // $monitor("RESET=%b  CLK=%b  Q=%b",RESET,CLK,Q);
@@ -281,7 +309,7 @@ always @(posedge CLK) begin
        end
 
 
-
+/*
 always @(negedge CLK) begin
 
 //    addr_out_r = 32'h zzzzzzzz;
@@ -321,7 +349,7 @@ always @(negedge CLK) begin
     ext_rst_b = 1;
     
 //    ext_rst_e_r = 1;
-  end else /*if(ext_rst_e == 1)*/ begin
+  end else begin
   
 //    data_wire_r = 32'h zzzzzzzz;
 //    addr_out_r  = 32'h zzzzzzzz;
@@ -389,19 +417,19 @@ always @(negedge CLK) begin
 
 //    if(stage < 3) stage = stage + 1;
 //  
-//    if(stage == 2/*cpu_q_r == 0 && ext_cpu_e == 0*/) begin
+//    if(stage == 2) begin
 //    
 //      addr_out_r = 0;
 //      ext_cpu_index_r = cpu_num;
 //      cpu_q_r = 1;
     
-//    end else if(/*ext_cpu_e == 1 &&*/ cpu_q_r == 1) begin
+//    end else if( cpu_q_r == 1) begin
 //      cpu_q_r = 0;
 //    end else if(ext_cpu_e == 1) begin
 //      cpu_running = 1;
 //    end else 
 
-//    if(/*cpu_q_r != 1 && ext_cpu_e != 1*/ cpu_running == 1) begin
+//    if(cpu_running == 1) begin
 
           data_wire_r = 32'h zzzzzzzz;
 //      case(state)
@@ -424,6 +452,8 @@ always @(negedge CLK) begin
           end
         end
 */
+
+/*
         
 //        default: begin
           if(read_q == 1) begin
@@ -461,7 +491,7 @@ always @(negedge CLK) begin
   end
   
 end
-
+*/
 
 
 //always @(negedge RESET) begin
