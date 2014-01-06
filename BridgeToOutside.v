@@ -3,6 +3,7 @@
 
 `include "sizes.v"
 `include "states.v"
+`include "inter_cpu_msgs.v"
 
 
 
@@ -41,7 +42,9 @@ module BridgeToOutside (
             ext_next_cpu_q,
             ext_next_cpu_e,
             
-            ext_bus_busy
+            ext_bus_busy,
+            
+            ext_dispatcher_q
             
             );
   input wire clk;
@@ -168,6 +171,8 @@ module BridgeToOutside (
   inout ext_bus_busy;
   reg ext_bus_busy_r;
   wire ext_bus_busy = ext_bus_busy_r;
+  
+  output reg ext_dispatcher_q;
     
   
 //  reg [8:0] progress;
@@ -212,6 +217,8 @@ module BridgeToOutside (
       
       rst = 1;
       
+      ext_dispatcher_q = 1;
+      
 //      ext_rst_e = 1;
       
       ext_next_cpu_e = 1'b z;
@@ -231,10 +238,9 @@ module BridgeToOutside (
       data_r = cpu_index_r + 1;
       /*ext_*/bus_busy_r = 1'b 1;
       
-            ext_rst_e = 1;
+      ext_rst_e = 1;
 
-    end 
-    else begin
+    end else begin
       read_e = 1'b z;
       write_e = 1'b z;
 //      read_q = 1'b z;
@@ -248,11 +254,26 @@ module BridgeToOutside (
 //        end
       end else begin
         if(ext_next_cpu_q == 1 && 
-           ext_cpu_index == cpu_index_r &&
-           state == 0
+           ext_cpu_index == cpu_index_r
         ) begin
-          base_addr_r = addr;
-          next_state = 1;
+          case(state)
+            0: begin
+              data_r = `CPU_R_START;
+              base_addr_r = addr;
+              ext_dispatcher_q = 1'b z;
+              next_state = 1;
+            end
+            
+            `FINISH_END: begin
+              data_r = `CPU_R_END;
+              rst = 1;
+            end  
+            
+            default: begin
+              data_r = `CPU_R_VOID;
+            end
+
+          endcase
           
           ext_next_cpu_e = 1;
         end else begin
@@ -263,7 +284,9 @@ module BridgeToOutside (
               read_dn_r = 1;
             end
             
-            `READ_COND, `READ_DATA: begin
+            `READ_COND, 
+            `READ_DATA, 
+            `START_READ_CMD: begin
               if(read_q == 1) begin
                 cpu_index_itf = cpu_index_r;
               end else begin
@@ -273,12 +296,17 @@ module BridgeToOutside (
             end
             
             `FINISH_END: begin
-              rst = 1;
+               ext_dispatcher_q = 1;
+              //rst = 1;
             end
             
           endcase
           
         end
+
+
+
+
       end
         
     end

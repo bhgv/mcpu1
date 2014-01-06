@@ -46,6 +46,7 @@
 
 `include "sizes.v"
 `include "states.v"
+`include "inter_cpu_msgs.v"
 
 
 
@@ -69,14 +70,15 @@ module test;
   reg write_dn_r;
   wire write_dn = write_dn_r;
   
-  wire read_e;
-  wire write_e;
+//  wire read_e;
+//  wire write_e;
   
   
   reg [`DATA_SIZE0:0] data_wire_r;
   wire [`DATA_SIZE0:0] data_wire = data_wire_r;
   
    
+/*
   wire [`DATA_SIZE0:0] src1;
   wire [`DATA_SIZE0:0] src0;
   wire [`DATA_SIZE0:0] dst;
@@ -85,13 +87,15 @@ module test;
   
   wire [`STATE_SIZE0:0] state;
   wire nxt_state;
-  
+*/
+
   reg bus_busy_r;
   wire bus_busy = bus_busy_r;
   
   
  
-  wire [31:0] command /*= {
+//  wire [31:0] command 
+                    /*= {
                     4'h 0,  //command code
                     
                     2'b 00,    //flags Cond: 00 - as is, 01 - post inc, 10 - post dec, 11 - unused
@@ -109,15 +113,17 @@ module test;
                     4'b 0100,   //src0
                     4'b 0010    //src1
                     }*/
-                    ;
-                    
+//                    ;
+
+/*
   wire [`ADDR_SIZE0:0] base_addr;
   
   wire rst;
   
   
   reg ext_rst_e_r;
-  
+*/
+
   reg ext_rst_b; // = RESET;
   wire ext_rst_e; // = ext_rst_e_r;
   
@@ -128,9 +134,11 @@ module test;
   wire ext_cpu_q = cpu_q_r;
   wire ext_cpu_e;
   
-  reg cpu_running;
+//  reg cpu_running;
   
-  wire ext_bus_busy;
+//  wire ext_bus_busy;
+  
+  wire dispatcher_q;
   
   
   
@@ -138,7 +146,7 @@ module test;
 	reg [31:0] mem [0:100]; 
   initial $readmemh("mem.txt", mem);
   
-  reg [7:0] stage;
+//  reg [7:0] stage;
 
 parameter STEP = 20;
 
@@ -146,6 +154,32 @@ parameter STEP = 20;
 parameter CPU_QUANTITY = 1;
 
 
+
+Cpu cpu1(
+            .clk(CLK),
+            
+            .addr(addr_out),
+            .data(data_wire),
+            
+            .read_q(read_q),
+            .write_q(write_q),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            
+            .bus_busy(bus_busy),
+            
+            .ext_rst_b(ext_rst_b),
+            .ext_rst_e(ext_rst_e),
+            
+            .ext_cpu_index(ext_cpu_index),
+            
+            .ext_cpu_q(ext_cpu_q),
+            .ext_cpu_e(ext_cpu_e),
+            
+            .dispatcher_q(dispatcher_q)
+          );
+
+/*
 BridgeToOutside outside_bridge (
             .clk(CLK),
             .state(state),
@@ -181,8 +215,9 @@ BridgeToOutside outside_bridge (
             .ext_next_cpu_q(ext_cpu_q),
             .ext_next_cpu_e(ext_cpu_e),
             
-            .ext_bus_busy(ext_bus_busy)
+            .ext_bus_busy(ext_bus_busy),
             
+            .ext_dispatcher_q(dispatcher_q)
             );
             
             
@@ -213,6 +248,7 @@ BridgeToOutside outside_bridge (
             .rst(rst)
             );
 
+*/
 
 reg [`DATA_SIZE0:0] cpu_tbl [1:CPU_QUANTITY];
 reg [`DATA_SIZE0:0] cpu_num;
@@ -227,7 +263,7 @@ initial begin
            #(STEP)  RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
-           #(STEP*40) stage = 0; cpu_running = 0;
+           #(STEP*40) //stage = 0; cpu_running = 0;
            #(STEP*125); //90)
           $finish;
         end
@@ -257,7 +293,7 @@ always @(negedge CLK) begin
     write_dn_r = 1'b z;
     bus_busy_r = 1'b z;
     
-    ext_rst_e_r = 1'b z;
+//    ext_rst_e_r = 1'b z;
     cpu_q_r = 0;
 //    ext_cpu_index_r = 32'h zzzzzzzz;
     
@@ -278,9 +314,9 @@ always @(negedge CLK) begin
     ext_cpu_index_r = 32'h zzzzzzzz;
     cpu_q_r = 0;
     
-    cpu_running = 0;
+//    cpu_running = 0;
     
-    stage = 0;
+    //stage = 0;
     
     ext_rst_b = 1;
     
@@ -328,9 +364,19 @@ always @(negedge CLK) begin
           cpu_q_r = 0;
         end
         if(ext_cpu_e == 1) begin
-          cpu_running = 1;
+          //cpu_running = 1;
           addr_out_r = 32'h zzzzzzzz;
           ext_cpu_index_r = 32'h zzzzzzzz;
+          
+          case(data_wire)
+            `CPU_R_START: begin
+            end
+            
+            `CPU_R_END: begin
+            end
+            
+          endcase
+          
           state_ctl = `CTL_MEM_WORK;
         end
       end
@@ -357,23 +403,39 @@ always @(negedge CLK) begin
 
 //    if(/*cpu_q_r != 1 && ext_cpu_e != 1*/ cpu_running == 1) begin
 
-      case(state)
+          data_wire_r = 32'h zzzzzzzz;
+//      case(state)
+/*
         `FINISH_END: begin
           state_ctl = `CTL_CPU_LOOP;
         end
         
-        default: begin
-          data_wire_r = 32'h zzzzzzzz;
+        `READ_COND, 
+        `READ_DATA, 
+        `START_READ_CMD: begin
           if(read_q == 1) begin
             //addr_out_r = 32'h zzzzzzzz;
             addr_out_r = addr_out;
             data_wire_r = mem[addr_out];
             read_dn_r = 1;
             bus_busy_r = 1;
-          end else /*if(read_e == 1)*/ begin
+         // end else begin
          //            data_wire_r = 32'h zzzzzzzz;
           end
-          
+        end
+*/
+        
+//        default: begin
+          if(read_q == 1) begin
+            //addr_out_r = 32'h zzzzzzzz;
+            addr_out_r = addr_out;
+            data_wire_r = mem[addr_out];
+            read_dn_r = 1;
+            bus_busy_r = 1;
+          end else begin
+         //            data_wire_r = 32'h zzzzzzzz;
+          end
+
           if(write_q == 1) begin
             addr_out_r = addr_out;
             mem[addr_out] = data_wire;
@@ -381,8 +443,12 @@ always @(negedge CLK) begin
             write_dn_r = 1;
           end
           
-        end
-      endcase
+          if(dispatcher_q == 1) begin
+            state_ctl = `CTL_CPU_LOOP;
+          end
+          
+//        end
+//      endcase
       
     end
     
