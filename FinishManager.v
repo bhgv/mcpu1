@@ -32,24 +32,19 @@ module FinishManager (
   input wire [`STATE_SIZE0:0] state;
   input wire [31:0] command;
   
-//  reg [`ADDR_SIZE0:0] cmd_ptr;
-//  reg cmd_ptr_waiting;
-//  reg cmd_waiting;
-
-  
   input wire [`ADDR_SIZE0:0] base_addr;
 
   inout [`ADDR_SIZE0:0] addr;
-  reg [`ADDR_SIZE0:0] addr_r;
-  wire [`ADDR_SIZE0:0] addr = addr_r;
+//  reg [`ADDR_SIZE0:0] addr_r;
+  wire [`ADDR_SIZE0:0] addr; // = addr_r;
   
   inout is_bus_busy;
   reg is_bus_busy_r;
   wire is_bus_busy = is_bus_busy_r;
   
   inout [`DATA_SIZE0:0] data;
-  reg [`DATA_SIZE0:0] data_r;
-  wire [`DATA_SIZE0:0] data = data_r;
+//  reg [`DATA_SIZE0:0] data_r;
+  wire [`DATA_SIZE0:0] data; // = data_r;
 //  assign data = write_q==1 ? dst_r : 32'h z;
   
   output reg next_state;
@@ -57,32 +52,29 @@ module FinishManager (
   input rst;
 //  reg rst_r;
   wire rst; // = rst_r;
-  
-  
-//  reg [8:0] progress;
 
 
   always @(posedge clk) begin
-    addr_r = 32'h zzzzzzzz;
-    data_r = 32'h zzzzzzzz;
+//    addr_r = 32'h zzzzzzzz;
+//    data_r = 32'h zzzzzzzz;
 //    rst_r = 1'b z;
     next_state = 1'b z;
-    
-//     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
+
+      is_bus_busy_r = 1'b z;
 
     if(rst == 1) begin
 //      progress = `MEM_BEGIN;
-      addr_r = 32'h zzzzzzzz;
+//      addr_r = 32'h zzzzzzzz;
       next_state = 1'b z;
       
-      data_r = 32'h zzzzzzzz;
-      is_bus_busy_r = 1'b z;
+//      data_r = 32'h zzzzzzzz;
+//      is_bus_busy_r = 1'b z;
     end
     else begin
       case(state)
         `FINISH_BEGIN: begin
           //rst_r = 1;
-          next_state = 1;
+//          next_state = 1;
         end
         
       endcase

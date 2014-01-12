@@ -152,9 +152,9 @@ module test;
 parameter STEP = 20;
 
 
-parameter CPU_QUANTITY = 1;
+//parameter CPU_QUANTITY = 1;
 
-
+wire rst_w1;
 
 Cpu cpu1(
             .clk(CLK),
@@ -170,6 +170,30 @@ Cpu cpu1(
             .bus_busy(bus_busy),
             
             .ext_rst_b(ext_rst_b),
+            .ext_rst_e(rst_w1),    //ext_rst_e),
+            
+            .ext_cpu_index(ext_cpu_index),
+            
+            .ext_cpu_q(ext_cpu_q),
+            .ext_cpu_e(ext_cpu_e),
+            
+            .dispatcher_q(dispatcher_q)
+          );
+
+Cpu cpu2(
+            .clk(CLK),
+            
+            .addr(addr_out),
+            .data(data_wire),
+            
+            .read_q(read_q),
+            .write_q(write_q),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            
+            .bus_busy(bus_busy),
+            
+            .ext_rst_b(rst_w1),    //ext_rst_b),
             .ext_rst_e(ext_rst_e),
             
             .ext_cpu_index(ext_cpu_index),
@@ -179,6 +203,8 @@ Cpu cpu1(
             
             .dispatcher_q(dispatcher_q)
           );
+
+
 
 DispatcherOfCpus disp_1(
             .clk(CLK),
@@ -291,8 +317,8 @@ initial begin
            #(STEP)  RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
-           #(STEP*40) //stage = 0; cpu_running = 0;
-           #(STEP*125); //90)
+           #(STEP*160) //stage = 0; cpu_running = 0;
+           //#(STEP*125); //90)
           $finish;
         end
 

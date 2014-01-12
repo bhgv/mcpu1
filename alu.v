@@ -56,13 +56,15 @@ module Alu(
   always @(posedge clk) begin
     next_state = 1'b z;
     
+      is_bus_busy_r = 1'b z;
+
     if(rst == 1) begin
       src1_r = `DATA_SIZE'h zzzzzzzz;
       src0_r = `DATA_SIZE'h zzzzzzzz;
       dst_r =  `DATA_SIZE'h zzzzzzzz;
       dst_h =  `DATA_SIZE'h zzzzzzzz;
       
-      is_bus_busy_r = 1'b z;
+//      is_bus_busy_r = 1'b z;
     end else begin
     
       case(state)

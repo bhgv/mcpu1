@@ -37,6 +37,9 @@ module Cpu(
   
   inout wire [`ADDR_SIZE0:0] addr;
   
+  wire int_read_q;
+  wire int_write_q;
+  
   inout wire read_q;
   inout wire write_q;
   
@@ -62,7 +65,9 @@ module Cpu(
   inout wire bus_busy;
   
   wire [31:0] command;
-          
+  
+  
+  wire disp_online;
           
           
   wire [`ADDR_SIZE0:0] base_addr;
@@ -98,8 +103,8 @@ BridgeToOutside outside_bridge (
             .bus_busy(bus_busy),
             .addr(addr),
             .data(data),
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(int_read_q),
+            .write_q(int_write_q),
             .read_dn(read_dn),
             .write_dn(write_dn),
             .read_e(read_e),
@@ -110,6 +115,8 @@ BridgeToOutside outside_bridge (
             .dst(dst),
             .dst_h(dst_h),
             .cond(cond),
+            
+            .disp_online(disp_online),
             
             .next_state(nxt_state),
             
@@ -125,7 +132,10 @@ BridgeToOutside outside_bridge (
             
             .ext_bus_busy(ext_bus_busy),
             
-            .ext_dispatcher_q(dispatcher_q)
+            .ext_dispatcher_q(dispatcher_q),
+            
+            .ext_read_q(read_q),
+            .ext_write_q(write_q)
             );
             
             
@@ -137,8 +147,8 @@ BridgeToOutside outside_bridge (
             
             .bus_busy(bus_busy),
             .addr(addr),
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(int_read_q),
+            .write_q(int_write_q),
             .data(data),
             .read_dn(read_dn),
             .write_dn(write_dn),
@@ -150,6 +160,8 @@ BridgeToOutside outside_bridge (
             //.dst(dst),
             //.dst_h(dst_h),
             //.cond(cond),
+            
+            .disp_online(disp_online),
             
             .next_state(nxt_state),
             

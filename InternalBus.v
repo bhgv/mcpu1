@@ -30,6 +30,8 @@ module InternalBus(
         //dst,
         //dst_h,
         
+        disp_online,
+        
         next_state,
         
         rst
@@ -77,6 +79,9 @@ module InternalBus(
   wire [`ADDR_SIZE0:0] base_addr;
   
   
+  input wire disp_online;
+  
+  
   
 //	reg [31:0] mem [0:100]; 
 //  initial $readmemh("mem.txt", mem);
@@ -102,6 +107,8 @@ module InternalBus(
             .write_dn(write_dn),
             .read_e(read_e),
             .write_e(write_e),
+            
+            .disp_online(disp_online),
             
             .next_state(next_state),
             
@@ -129,6 +136,8 @@ module InternalBus(
   StateManager states_mng(
             .clk(clk),
             .state(state),
+
+            .command(command),
             
             .cond(cond),
             
@@ -161,6 +170,8 @@ module InternalBus(
             .dst_h(dst_h),
             .cond(cond),
             
+            .disp_online(disp_online),
+            
             .next_state(next_state),
             
             .rst(rst)
@@ -190,8 +201,10 @@ module InternalBus(
 
   always @(posedge clk) begin
     
-    if(rst == 1) begin
       bus_busy_r = 1'b z;
+
+    if(rst == 1) begin
+//      bus_busy_r = 1'b z;
     end //else begin
 
 /*
