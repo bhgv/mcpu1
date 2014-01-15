@@ -263,7 +263,7 @@ always @(negedge clk) begin
 
           if(mem_wr == 1) begin
             addr_out_r = mem_addr_tmp;
-            mem[mem_addr_tmp] = data_wire;
+            mem[mem_addr_tmp] = mem_data_tmp; // data_wire;
             //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
             write_dn_r = 1;
             bus_busy_r = 1;

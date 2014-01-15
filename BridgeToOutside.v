@@ -98,6 +98,7 @@ module BridgeToOutside (
   output reg next_state;
   
   output reg rst;
+  reg [2:0] rst_state;
   
   
   input wire ext_rst_b;
@@ -124,7 +125,9 @@ module BridgeToOutside (
                         state == `READ_SRC1_P ||
                         state == `READ_SRC0 ||
                         state == `READ_SRC0_P ||
-                        state == `START_READ_CMD) &&
+                        state == `START_READ_CMD ||
+                        state == `START_READ_CMD_P
+                        ) &&
                         disp_online == 1 
 //                        && (!ext_next_cpu_e == 1)
                         ? read_q 
@@ -147,101 +150,93 @@ module BridgeToOutside (
     data_r = 32'h zzzzzzzz;
     next_state = 1'b z;
     ext_rst_e = 0;
-    
-//    ext_next_cpu_e = 1'b z;
-    
+  
     read_dn_r = 1'b z;
     
     bus_busy_r = 1'b z;
     
-          cpu_index_itf = 32'h zzzzzzzz;
-
-//      ext_read_q = 1'bz;
-//      ext_write_q = 1'bz;
-      
+    cpu_index_itf = 32'h zzzzzzzz;
 
     if(ext_rst_b == 1) begin  // begin of RESET
-      read_e = 1'b z;
-      write_e = 1'b z;
-  //      progress = `MEM_BEGIN;
-//      addr_r = 32'h zzzzzzzz;
-  //    base_addr_r = 0;
-//      next_state = 1'b z;
-      
-//      bus_busy_r = 1'b z;
-      
-      //base_addr_r = addr;
-      cpu_index_r = 32'h ffffffff; //data;
-      cpu_index_itf = 32'h zzzzzzzz;
-      
-      rst = 1;
-      
-      ext_dispatcher_q = 1;
-      
-//      ext_rst_e = 1;
-      
+      rst_state = 0;
+    end else if(rst_state < 5) begin // == 1) begin
       ext_next_cpu_e = 1'b z;
-      
-//      ext_read_q =  1'bz;
-//      ext_write_q = 1'bz;
-      
-      disp_online = 0;
-    end
-    else if(rst == 1 && cpu_index_r == 32'h ffffffff) begin
-      cpu_index_r = 32'h fffffffe;
-    end else if(rst == 1 && cpu_index_r == 32'h fffffffe) begin
-      cpu_index_r = ext_cpu_index; //data;
-      read_dn_r = 1;
-    end
-    else if(rst == 1) begin
-      read_dn_r = 1'b z;
-      
       rst = 0;
-//      cpu_index_r = data;
-      //data_r = cpu_index_r + 1;
-      bus_busy_r = 1'b 1;
+
+      if(ext_next_cpu_q == 1 && 
+         ext_cpu_index == cpu_index_r
+      ) begin
+        ext_next_cpu_e = 1;
+      end
       
-      ext_rst_e = 1;
+      case(rst_state)
+        0: begin
+          ext_dispatcher_q = 1'b z;
+          
+          disp_online = 0;
+          
+          rst_state = 1;
+        end
+        
+        1: begin
+          if(state == `FINISH_END) begin
+            rst_state = 3;
+          end else begin
+            rst_state = 2;
+          end
+        end
+        
+        2: begin
+          cpu_index_r = ext_cpu_index; //data;
+          read_dn_r = 1;
+          
+          rst_state = 3;
+        end
+        
+        3: begin
+          read_dn_r = 1'b z;
+          
+          rst = 1;
+
+          bus_busy_r = 1'b 1;
+          
+          if(state == `FINISH_END) begin
+          end else begin
+            ext_rst_e = 1;
+          end
+          
+          rst_state = 4;
+        end
+        
+        4: begin
+          ext_dispatcher_q = 1;
+          
+          rst_state = 5;
+        end
+        
+      endcase
 
     end else begin      // end of RESET
-      read_e = 1'b z;
-      write_e = 1'b z;
-      
-      //ext_next_cpu_e = 1'bz;
       
       if(bus_busy == 1) begin
-        
       end else begin
-        
-      
-          if( disp_online == 1) begin
-            if(
-              read_q == 1 ||
-              write_q == 1
-            ) begin
-            
-//              if(read_q == 1) begin
-//                ext_read_q = 1;
-//              end else if(write_q == 1) begin
-//                ext_write_q = 1;
-//              end
-            
-//              disp_online = 0;
-              ext_next_cpu_e = 1;
-            end 
-            else if(ext_next_cpu_e == 1) begin
-//              ext_read_q = 1'bz;
-//              ext_write_q = 1'bz;
-              
-              ext_next_cpu_e = 1'bz;
-              disp_online = 0;
-            end
+
+        if(disp_online == 1) begin
+          if(
+            read_q == 1 ||
+            write_q == 1
+          ) begin
+            ext_next_cpu_e = 1;
+          end 
+          else if(ext_next_cpu_e == 1) begin
+            ext_next_cpu_e = 1'bz;
+            disp_online = 0;
           end
+        end
       
         if(ext_next_cpu_q == 1 && 
            ext_cpu_index == cpu_index_r
         ) begin
-          
           disp_online = 1;
           
           case(state)
@@ -251,7 +246,7 @@ module BridgeToOutside (
               ext_dispatcher_q = 1'b z;
               disp_online = 1;
               
-              ext_next_cpu_e = 1;
+//              ext_next_cpu_e = 1;
               
               next_state = 1;
               ext_next_cpu_e = 1;
@@ -263,18 +258,9 @@ module BridgeToOutside (
             `READ_SRC1_P,
             `READ_SRC0,
             `READ_SRC0_P,
-            `START_READ_CMD: begin
-
-//              disp_online = 1;
-          
-//              if(read_q == 1) begin
-//                cpu_index_itf = cpu_index_r;
+            `START_READ_CMD,
+            `START_READ_CMD_P: begin
                 ext_dispatcher_q = 1;
-//              end else begin
-//                ext_dispatcher_q = 1'b z;
-//                cpu_index_itf = 32'h zzzzzzzz;
-//              end
-              
             end
             
             `WRITE_REG_IP,
@@ -282,13 +268,12 @@ module BridgeToOutside (
             `WRITE_SRC1,
             `WRITE_SRC0,
             `WRITE_COND: begin
-
-                ext_dispatcher_q = 1;
+              ext_dispatcher_q = 1;
             end
             
             `FINISH_END: begin
-              data_r = `CPU_R_END;
-              rst = 1;
+              rst_state = 0; // = 1;
+              ext_next_cpu_e = 1;
             end
             
             default: begin
@@ -301,10 +286,7 @@ module BridgeToOutside (
 
           endcase
           
-        end 
-        else 
-//      end else begin
-        
+        end else 
         begin
           case(state)
             `START_BEGIN: begin
@@ -319,15 +301,9 @@ module BridgeToOutside (
             `READ_SRC1_P,
             `READ_SRC0,
             `READ_SRC0_P,
-            `START_READ_CMD: begin
-//              if(read_q == 1) begin
-//                cpu_index_itf = cpu_index_r;
-                ext_dispatcher_q = 1;
-//              end else begin
-//                ext_dispatcher_q = 1'b z;
-//                cpu_index_itf = 32'h zzzzzzzz;
-//              end
-              
+            `START_READ_CMD,
+            `START_READ_CMD_P: begin
+              ext_dispatcher_q = 1;
             end
             
             `WRITE_REG_IP,
@@ -335,13 +311,11 @@ module BridgeToOutside (
             `WRITE_SRC1,
             `WRITE_SRC0,
             `WRITE_COND: begin
-
-                ext_dispatcher_q = 1;
+              ext_dispatcher_q = 1;
             end
             
             `FINISH_END: begin
-               ext_dispatcher_q = 1;
-              //rst = 1;
+              rst_state = 0; // = 1;
             end
             
             default: begin
@@ -352,14 +326,8 @@ module BridgeToOutside (
           endcase
           
         end
-
-
-
-
       end
-        
     end
-    
   end
 
 endmodule

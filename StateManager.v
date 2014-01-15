@@ -124,21 +124,45 @@ module StateManager(
         end
 
         `WRITE_DST: begin
-            state = `WRITE_SRC1;
-        end
-
-        `WRITE_SRC1: begin
-            state = `WRITE_SRC0;
-        end
-
-        `WRITE_SRC0: begin
+          if(^regCondFlags == 1) begin
             state = `WRITE_COND;
+          end else
+          if(^regS1Flags == 1) begin
+            state = `WRITE_SRC1;
+          end else
+          if(^regS0Flags == 1) begin
+            state = `WRITE_SRC0;
+          end else
+          begin
+            state = `FINISH_BEGIN;
+          end
         end
 
         `WRITE_COND: begin
+          if(^regS1Flags == 1) begin
+            state = `WRITE_SRC1;
+          end else
+          if(^regS0Flags == 1) begin
+            state = `WRITE_SRC0;
+          end else
+          begin
             state = `FINISH_BEGIN;
+          end
         end
         
+        `WRITE_SRC1: begin
+          if(^regS0Flags == 1) begin
+            state = `WRITE_SRC0;
+          end else
+          begin
+            state = `FINISH_BEGIN;
+          end
+        end
+
+        `WRITE_SRC0: begin
+            state = `FINISH_BEGIN;
+        end
+
         default: begin
           state = state + 1;
         end
