@@ -15,6 +15,10 @@ module InternalBus(
         
         state,
         
+        halt_q,
+        rw_halt,
+        cpu_ind_rel,
+        
             addr,
             data,
             
@@ -22,8 +26,8 @@ module InternalBus(
             write_q,
             read_dn,
             write_dn,
-            read_e,
-            write_e,
+//            read_e,
+//            write_e,
             
         //src1,
         //src0,
@@ -46,6 +50,9 @@ module InternalBus(
     
   input wire rst;
   
+  input wire halt_q;
+  inout wire rw_halt;
+  input wire [1:0] cpu_ind_rel;
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
   inout wire [`ADDR_SIZE0:0] addr; //= addr_out_r;
@@ -54,8 +61,8 @@ module InternalBus(
   output wire write_q;
   input wire read_dn;
   input wire write_dn;
-  output wire read_e;
-  output wire write_e;
+//  output wire read_e;
+//  output wire write_e;
   
   
 //  reg [`DATA_SIZE0:0] data_r;
@@ -98,6 +105,10 @@ module InternalBus(
             .base_addr(base_addr),
             .command(command),
             
+            .cpu_ind_rel(cpu_ind_rel),
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
+            
             .is_bus_busy(bus_busy),
             .addr(addr),
             .read_q(read_q),
@@ -105,8 +116,8 @@ module InternalBus(
             .data(data),
             .read_dn(read_dn),
             .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
+//            .read_e(read_e),
+//            .write_e(write_e),
             
             .disp_online(disp_online),
             
@@ -154,6 +165,10 @@ module InternalBus(
             .base_addr(base_addr),
             .command_word(command),
             
+            .cpu_ind_rel(cpu_ind_rel),
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
+            
             .is_bus_busy(bus_busy),
             .addr(addr),
             .read_q(read_q),
@@ -161,8 +176,8 @@ module InternalBus(
             .data(data),
             .read_dn(read_dn),
             .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
+//            .read_e(read_e),
+//            .write_e(write_e),
             
             .src1(src1),
             .src0(src0),

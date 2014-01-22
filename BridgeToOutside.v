@@ -14,6 +14,10 @@ module BridgeToOutside (
             //base_addr,
             command,
             
+            halt_q,
+            cpu_ind_rel,
+            rw_halt,
+            
             bus_busy,
             addr,
             data,
@@ -21,8 +25,8 @@ module BridgeToOutside (
             write_q,
             read_dn,
             write_dn,
-            read_e,
-            write_e,
+//            read_e,
+//            write_e,
             
             src1,
             src0,
@@ -48,6 +52,8 @@ module BridgeToOutside (
             
             ext_dispatcher_q,
             
+            ext_rw_halt,
+            
             ext_read_q,
             ext_write_q
             
@@ -58,6 +64,26 @@ module BridgeToOutside (
 
 //  input wire [`ADDR_SIZE0:0] base_addr;
   reg [`ADDR_SIZE0:0] base_addr_r;
+  
+  inout halt_q;
+  reg halt_q_r;
+  wire halt_q; // = halt_q_r;
+//  reg halt_q; // = (ext_read_q == 1 || ext_write_q == 1) ?
+//                1 : 1'bz;
+  /*
+                (read_q | write_q | read_dn | write_dn ) == 1 ?
+                0 :
+                ext_read_q == 1 ?
+                1 :
+                ext_write_q == 1 ?
+                1 :
+                0;
+  */
+  
+  inout wire rw_halt;
+  
+  output reg [1:0] cpu_ind_rel;
+  
   
   inout [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
@@ -80,8 +106,8 @@ module BridgeToOutside (
   wire read_dn = read_dn_r;
   
   input  wire write_dn;
-  output reg read_e;
-  output reg write_e;
+//  output reg read_e;
+//  output reg write_e;
   
 
   input  wire [`DATA_SIZE0:0] src1;
@@ -101,12 +127,28 @@ module BridgeToOutside (
   reg [2:0] rst_state;
   
   
+  inout ext_rw_halt;
+  wire ext_rw_halt; // = rw_halt; // = cpu_index_r > ext_cpu_index ?
+//                     (
+//                      (read_q == 1 && ext_cpu_index < cpu_index_r) ||
+//                      (write_q == 1 && ext_cpu_index > cpu_index_r)
+//                     ) ?
+//                     rw_halt
+//                     : 1'bz
+//                        ;
+  
   input wire ext_rst_b;
   output reg ext_rst_e = 0;
   
   inout [`DATA_SIZE0:0] ext_cpu_index;
   reg [`DATA_SIZE0:0] cpu_index_itf;
-  wire [`DATA_SIZE0:0] ext_cpu_index = cpu_index_itf;
+  wire [`DATA_SIZE0:0] ext_cpu_index = 
+//                              (
+//                                read_q == 1 ||
+//                                write_q == 1
+//                              ) ?
+//                              cpu_index_r :
+                              cpu_index_itf;
   reg [`DATA_SIZE0:0] cpu_index_r;
   
   input wire ext_next_cpu_q;
@@ -118,7 +160,7 @@ module BridgeToOutside (
   
   output reg ext_dispatcher_q;
   
-  output ext_read_q;
+  inout ext_read_q;
   wire ext_read_q    = (state == `READ_COND ||
                         state == `READ_COND_P ||
                         state == `READ_SRC1 ||
@@ -132,7 +174,7 @@ module BridgeToOutside (
 //                        && (!ext_next_cpu_e == 1)
                         ? read_q 
                         : 1'bz;
-  output ext_write_q;
+  inout ext_write_q;
   wire ext_write_q   = (state == `WRITE_REG_IP ||
                         state == `WRITE_DST    ||
                         state == `WRITE_SRC1   ||
@@ -156,9 +198,29 @@ module BridgeToOutside (
     bus_busy_r = 1'b z;
     
     cpu_index_itf = 32'h zzzzzzzz;
+    
+    
+    halt_q_r = 1'bz; //(read_q == 1 || write_q == 1) ? 1 : 1'bz;
+  /*
+                (read_q | write_q | read_dn | write_dn ) == 1 ?
+                0 :
+                ext_read_q == 1 ?
+                1 :
+                ext_write_q == 1 ?
+                1 :
+                0;
+  */
+  
+  
+  
+//  ext_rw_halt = 1'bz;
+  
+  
+  
 
     if(ext_rst_b == 1) begin  // begin of RESET
       rst_state = 0;
+      cpu_ind_rel = 0;
     end else if(rst_state < 5) begin // == 1) begin
       ext_next_cpu_e = 1'b z;
       rst = 0;
@@ -217,11 +279,63 @@ module BridgeToOutside (
       endcase
 
     end else begin      // end of RESET
+    
+    
+//      if(read_q == 1 || write_q == 1) begin
+//        halt_q_r = 1;
+//      end else begin
+//        halt_q_r = 1'bz;
+//      end
+
+
+
+//        cpu_ind_rel = 0;
+
+//      if(rw_halt == 1) begin
+//        $monitor("cpu_index_r = %b, ext_cpu_index = %b", cpu_index_r, ext_cpu_index);
+//        if(cpu_index_r != ext_cpu_index) begin
+//          ext_rw_halt = 1;
+//        end else begin
+//          ext_rw_halt = 1'bz;
+//        end
+//      end 
+//      else begin
+//        ext_rw_halt = 1'bz;
+//      end
+
+
+
+//        if(ext_next_cpu_q == 1 && 
+//           ext_cpu_index == cpu_index_r
+//        ) begin
+      
+
+        if(ext_next_cpu_q == 1) begin
+        
+          if(ext_cpu_index < cpu_index_r) begin
+            cpu_ind_rel = 2'b01;
+          end else
+          if(ext_cpu_index > cpu_index_r) begin
+            cpu_ind_rel = 2'b10;
+          end else
+          if(ext_cpu_index == cpu_index_r) begin
+            cpu_ind_rel = 2'b11;
+//          end else begin
+//            cpu_ind_rel = 0;
+          end
+          
+        end else if(ext_next_cpu_e == 1) begin
+          cpu_ind_rel = 0;
+        end
+
+
       
       if(bus_busy == 1) begin
       end else begin
 
         if(disp_online == 1) begin
+        
+        
           if(
             read_q == 1 ||
             write_q == 1

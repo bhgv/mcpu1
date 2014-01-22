@@ -13,6 +13,9 @@ module DispatcherOfCpus(
             clk,
             rst,
             
+            halt_q,
+            rw_halt,
+            
             addr_out,
             data_wire,
             
@@ -37,6 +40,8 @@ module DispatcherOfCpus(
   input wire clk;
   input wire rst;
 
+  input wire halt_q;
+  inout wire rw_halt;
   
   inout [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_out_r;
@@ -113,6 +118,8 @@ always @(negedge clk) begin
     
     cpu_q_r = 0;
     
+//    halt_q = 0; //1'bz;
+    
   if(rst == 1) begin 
     bus_busy_r = 1'b z;
     
@@ -132,6 +139,26 @@ always @(negedge clk) begin
     mem_wr = 0;
     
   end else /*if(ext_rst_e == 1)*/ begin
+//    if(read_q == 1 || write_q == 1)
+//      halt_q = 1;
+
+
+          if(mem_rd == 1 || mem_wr == 1) begin
+            if(rw_halt == 1) begin
+              mem_rd = 0;
+              mem_wr = 0;
+              state_ctl = `CTL_CPU_LOOP;
+            end else begin
+              state_ctl = `CTL_MEM_WORK;
+            end
+          end 
+//          else
+//          if(dispatcher_q == 1) begin
+//            
+//          end else begin
+//            state_ctl = `CTL_MEM_WORK;
+//          end
+
 
     case(state_ctl)
       `CTL_RESET_WAIT: begin
@@ -215,9 +242,9 @@ always @(negedge clk) begin
               end
             
             endcase
-          if(mem_rd == 1 || mem_wr == 1) begin
-            state_ctl = `CTL_MEM_WORK;
-          end else
+//          if(mem_rd == 1 || mem_wr == 1) begin
+//            state_ctl = `CTL_MEM_WORK;
+//          end else
           if(dispatcher_q == 1) begin
             state_ctl = `CTL_CPU_LOOP;
           end else begin
@@ -240,6 +267,7 @@ always @(negedge clk) begin
               bus_busy_r = 1'b z;
               mem_rd = 0;
               mem_wr = 0;
+//              halt_q = 0;
               if(dispatcher_q == 1) begin
                 state_ctl = `CTL_CPU_LOOP;
               end
@@ -256,17 +284,21 @@ always @(negedge clk) begin
             data_wire_r = mem[mem_addr_tmp];
             read_dn_r = 1;
             bus_busy_r = 1;
+//            halt_q = 1;
 //            mem_rd = 0;
-          end else begin
-         //            data_wire_r = 32'h zzzzzzzz;
-          end
+          end 
+//          else begin
+//         //            data_wire_r = 32'h zzzzzzzz;
+//          end
 
           if(mem_wr == 1) begin
             addr_out_r = mem_addr_tmp;
             mem[mem_addr_tmp] = mem_data_tmp; // data_wire;
+            data_wire_r = mem_data_tmp;
             //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
             write_dn_r = 1;
             bus_busy_r = 1;
+//            halt_q = 1;
 //            mem_wr = 0;
           end
           

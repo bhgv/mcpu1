@@ -156,8 +156,15 @@ parameter STEP = 20;
 
 wire rst_w1;
 
+wire rw_halt;
+wire halt_q;
+
+
 Cpu cpu1(
             .clk(CLK),
+            
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
             
             .addr(addr_out),
             .data(data_wire),
@@ -182,6 +189,9 @@ Cpu cpu1(
 
 Cpu cpu2(
             .clk(CLK),
+            
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
             
             .addr(addr_out),
             .data(data_wire),
@@ -209,6 +219,9 @@ Cpu cpu2(
 DispatcherOfCpus disp_1(
             .clk(CLK),
             .rst(RESET),
+            
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
             
             .addr_out(addr_out),
             .data_wire(data_wire),

@@ -15,6 +15,9 @@ module Cpu(
             addr,
             data,
             
+            halt_q,
+            rw_halt,
+            
             read_q,
             write_q,
             read_dn,
@@ -47,11 +50,17 @@ module Cpu(
   
   input wire write_dn;
   
-  wire read_e;
-  wire write_e;
+//  wire read_e;
+//  wire write_e;
   
   inout wire [`DATA_SIZE0:0] data;
   
+  inout wire rw_halt;
+  wire int_rw_halt;
+  
+  inout wire halt_q;
+  
+  wire [1:0] cpu_ind_rel;
    
   wire [`DATA_SIZE0:0] src1;
   wire [`DATA_SIZE0:0] src0;
@@ -100,6 +109,10 @@ BridgeToOutside outside_bridge (
             //base_addr,
             .command(command),
             
+            .halt_q(halt_q),
+            .cpu_ind_rel(cpu_ind_rel),
+            .rw_halt(rw_halt), //(int_rw_halt),
+            
             .bus_busy(bus_busy),
             .addr(addr),
             .data(data),
@@ -107,8 +120,8 @@ BridgeToOutside outside_bridge (
             .write_q(int_write_q),
             .read_dn(read_dn),
             .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
+//            .read_e(read_e),
+//            .write_e(write_e),
             
             .src1(src1),
             .src0(src0),
@@ -126,6 +139,8 @@ BridgeToOutside outside_bridge (
             .ext_rst_e(ext_rst_e),
             
             .ext_cpu_index(ext_cpu_index),
+            
+            .ext_rw_halt(rw_halt),
             
             .ext_next_cpu_q(ext_cpu_q),
             .ext_next_cpu_e(ext_cpu_e),
@@ -145,6 +160,10 @@ BridgeToOutside outside_bridge (
             //.base_addr(base_addr),
             .command(command),
             
+            .halt_q(halt_q),
+            .rw_halt(rw_halt), //(int_rw_halt),
+            .cpu_ind_rel(cpu_ind_rel),
+            
             .bus_busy(bus_busy),
             .addr(addr),
             .read_q(int_read_q),
@@ -152,8 +171,8 @@ BridgeToOutside outside_bridge (
             .data(data),
             .read_dn(read_dn),
             .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
+//            .read_e(read_e),
+//            .write_e(write_e),
             
             //.src1(src1),
             //.src0(src0),
