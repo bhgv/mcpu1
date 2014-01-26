@@ -4,6 +4,7 @@
 `include "sizes.v"
 `include "states.v"
 `include "inter_cpu_msgs.v"
+`include "misc_codes.v"
 
 
 
@@ -53,6 +54,8 @@ module BridgeToOutside (
             ext_dispatcher_q,
             
             ext_rw_halt,
+            
+            ext_cpu_msg,
             
             ext_read_q,
             ext_write_q
@@ -152,13 +155,19 @@ module BridgeToOutside (
   reg [`DATA_SIZE0:0] cpu_index_r;
   
   input wire ext_next_cpu_q;
-  output reg ext_next_cpu_e;
+  inout ext_next_cpu_e;
+  reg ext_next_cpu_e_r;
+  wire ext_next_cpu_e = ext_next_cpu_e_r;
   
   inout ext_bus_busy;
   reg ext_bus_busy_r;
   wire ext_bus_busy = ext_bus_busy_r;
   
   output reg ext_dispatcher_q;
+  
+  inout [7:0] ext_cpu_msg;
+  reg [7:0] cpu_msg_r;
+  wire [7:0] ext_cpu_msg = cpu_msg_r;
   
   inout ext_read_q;
   wire ext_read_q    = (state == `READ_COND ||
@@ -187,6 +196,7 @@ module BridgeToOutside (
                         : 1'bz;
 
 
+
   always @(posedge clk) begin
     addr_r = 32'h zzzzzzzz;
     data_r = 32'h zzzzzzzz;
@@ -200,36 +210,23 @@ module BridgeToOutside (
     cpu_index_itf = 32'h zzzzzzzz;
     
     
-    halt_q_r = 1'bz; //(read_q == 1 || write_q == 1) ? 1 : 1'bz;
-  /*
-                (read_q | write_q | read_dn | write_dn ) == 1 ?
-                0 :
-                ext_read_q == 1 ?
-                1 :
-                ext_write_q == 1 ?
-                1 :
-                0;
-  */
-  
-  
-  
-//  ext_rw_halt = 1'bz;
-  
-  
+    halt_q_r = 1'bz;
+    
+    cpu_msg_r = 8'hzz;
+
   
 
     if(ext_rst_b == 1) begin  // begin of RESET
       rst_state = 0;
       cpu_ind_rel = 0;
     end else if(rst_state < 5) begin // == 1) begin
-      ext_next_cpu_e = 1'b z;
+      ext_next_cpu_e_r = 1'b z;
       rst = 0;
 
-      if(ext_next_cpu_q == 1 && 
-         ext_cpu_index == cpu_index_r
-      ) begin
-        ext_next_cpu_e = 1;
-      end
+      if(ext_next_cpu_q == 1 && ext_cpu_index == cpu_index_r) begin
+        ext_next_cpu_e_r = 1;
+      end 
+
       
       case(rst_state)
         0: begin
@@ -323,6 +320,22 @@ module BridgeToOutside (
 //          end else begin
 //            cpu_ind_rel = 0;
           end
+
+
+/*
+//      if(ext_next_cpu_q == 1) begin 
+          if(ext_cpu_index == cpu_index_r) begin
+//          ext_next_cpu_e_r = 1;
+          end else if(ext_cpu_index == `CPU_NONACTIVE) begin
+        
+            if((cpu_index_r & `CPU_ACTIVE) == `CPU_ACTIVE) begin
+              cpu_index_r = cpu_index_r + 1;
+            end else begin
+              cpu_index_r = cpu_index_r - 1;
+            end
+          end  
+//      end
+*/
           
         end else if(ext_next_cpu_e == 1) begin
           cpu_ind_rel = 0;
@@ -340,10 +353,10 @@ module BridgeToOutside (
             read_q == 1 ||
             write_q == 1
           ) begin
-            ext_next_cpu_e = 1;
+            ext_next_cpu_e_r = 1;
           end 
-          else if(ext_next_cpu_e == 1) begin
-            ext_next_cpu_e = 1'bz;
+          else if(ext_next_cpu_e_r == 1) begin
+            ext_next_cpu_e_r = 1'bz;
             disp_online = 0;
           end
         end
@@ -355,15 +368,20 @@ module BridgeToOutside (
           
           case(state)
             `WAIT_FOR_START: begin
-              data_r = `CPU_R_START;
+              //data_r
+              cpu_msg_r = `CPU_R_START;
+//              cpu_index_r = `CPU_ACTIVE;
+              cpu_index_itf = cpu_index_r;
               base_addr_r = addr;
               ext_dispatcher_q = 1'b z;
               disp_online = 1;
               
-//              ext_next_cpu_e = 1;
+//              cpu_index_r = cpu_index_r | `CPU_ACTIVE;
+              
+//              ext_next_cpu_e_r = 1;
               
               next_state = 1;
-              ext_next_cpu_e = 1;
+              ext_next_cpu_e_r = 1;
             end
             
             `READ_COND, 
@@ -385,9 +403,14 @@ module BridgeToOutside (
               ext_dispatcher_q = 1;
             end
             
-            `FINISH_END: begin
-              rst_state = 0; // = 1;
-              ext_next_cpu_e = 1;
+            `FINISH_BEGIN: begin
+              //data_r
+              cpu_msg_r = `CPU_R_END;
+              cpu_index_itf = cpu_index_r;
+//              cpu_index_r = `CPU_NONACTIVE;
+//              rst_state = 0; // = 1;
+              ext_next_cpu_e_r = 1;
+              next_state = 1;
             end
             
             default: begin
@@ -404,6 +427,7 @@ module BridgeToOutside (
         begin
           case(state)
             `START_BEGIN: begin
+//              cpu_index_r = cpu_index_r | `CPU_ACTIVE;
             
               data_r = base_addr_r;
               read_dn_r = 1;
@@ -430,11 +454,12 @@ module BridgeToOutside (
             
             `FINISH_END: begin
               rst_state = 0; // = 1;
+              cpu_index_r = `CPU_NONACTIVE;
             end
             
             default: begin
-              ext_dispatcher_q = 1'b z;
               cpu_index_itf = 32'h zzzzzzzz;
+              ext_dispatcher_q = 1'b z;
             end
             
           endcase
@@ -442,6 +467,71 @@ module BridgeToOutside (
         end
       end
     end
+    
+/*
+    if(ext_next_cpu_q == 1) begin 
+      if(ext_cpu_index == cpu_index_r) begin
+//          ext_next_cpu_e_r = 1;
+      end else if(ext_cpu_index == `CPU_NONACTIVE) begin
+      
+        if((cpu_index_r & `CPU_ACTIVE) == `CPU_ACTIVE) begin
+          cpu_index_r = cpu_index_r + 1;
+        end else begin
+          cpu_index_r = cpu_index_r - 1;
+        end
+      end
+    end
+*/
+    
+    if(ext_next_cpu_e == 1) begin 
+      if(ext_cpu_index == cpu_index_r) begin
+        if(
+            cpu_index_r == 0 && 
+            state == `START_BEGIN &&
+            //data
+            ext_cpu_msg == `CPU_R_START
+        ) begin
+          cpu_index_r = `CPU_ACTIVE;
+        end
+      end else begin
+        if((ext_cpu_index & `CPU_ACTIVE) == `CPU_ACTIVE) begin
+          if((cpu_index_r & `CPU_ACTIVE) == `CPU_ACTIVE) begin
+            if(ext_cpu_index < cpu_index_r) begin
+              case(ext_cpu_msg) //data)
+                `CPU_R_END: begin
+                  cpu_index_r = cpu_index_r - 1;
+                end
+            
+                `CPU_R_START: begin
+//                  cpu_index_r = cpu_index_r + 1;
+                end
+            
+              endcase
+            end
+          end
+        end
+ 
+        else if((ext_cpu_index & `CPU_ACTIVE) == `CPU_NONACTIVE) begin
+          case(ext_cpu_msg) //data)
+            `CPU_R_END: begin
+//              cpu_index_r = cpu_index_r + 1;
+            end
+          
+            `CPU_R_START: begin
+              if((cpu_index_r & `CPU_ACTIVE) == `CPU_ACTIVE) begin
+                cpu_index_r = cpu_index_r + 1;
+              end else begin
+                cpu_index_r = cpu_index_r - 1;
+              end
+            end
+            
+          endcase
+        end
+
+      end
+    end
+   
+
   end
 
 endmodule

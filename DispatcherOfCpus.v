@@ -4,7 +4,7 @@
 `include "sizes.v"
 `include "states.v"
 `include "inter_cpu_msgs.v"
-
+`include "misc_codes.v"
 
 
 
@@ -33,6 +33,8 @@ module DispatcherOfCpus(
             
             ext_cpu_q,
             ext_cpu_e,
+            
+            cpu_msg,
             
             dispatcher_q
           );
@@ -82,6 +84,10 @@ module DispatcherOfCpus(
 
   input wire ext_cpu_e;
   
+  inout [7:0] cpu_msg;
+  reg [7:0] cpu_msg_r;
+  wire [7:0] cpu_msg = cpu_msg_r;
+  
   input wire dispatcher_q;
   
   
@@ -98,13 +104,22 @@ module DispatcherOfCpus(
 
 
 parameter CPU_QUANTITY = 2;
+parameter PROC_QUANTITY = 8;
 
 
+  reg [`DATA_SIZE0:0] proc_num;
+  reg [`DATA_SIZE0:0] proc_num_t;
 
-  reg [`DATA_SIZE0:0] cpu_tbl [0:CPU_QUANTITY];
+  reg [`DATA_SIZE0:0] proc_tbl [0:PROC_QUANTITY];
+
+  reg [`DATA_SIZE0:0] cpu_num_a;
+  reg [`DATA_SIZE0:0] cpu_num_na;
+  
   reg [`DATA_SIZE0:0] cpu_num;
 
   reg [7:0] state_ctl;
+  
+  reg new_cpu_restarted;
 
 
 
@@ -123,13 +138,20 @@ always @(negedge clk) begin
   if(rst == 1) begin 
     bus_busy_r = 1'b z;
     
+    proc_num = 0;
+    proc_num_t = 1;
+    proc_tbl[0] = 0;
+    
     cpu_num = 0;
+    cpu_num_a = 0;
+    cpu_num_na = CPU_QUANTITY;
+    
     data_wire_r = 32'h zzzzzzzz; //cpu_num; //Q;
     bus_busy_r  = 1'bz;
     
     state_ctl = `CTL_RESET_WAIT;
     
-    ext_cpu_index_r = cpu_num; //32'h zzzzzzzz;
+    ext_cpu_index_r = 0; //32'h zzzzzzzz;
     cpu_q_r = 0;
     
     ext_rst_b = 1;
@@ -137,6 +159,10 @@ always @(negedge clk) begin
     mem_addr_tmp = 0;
     mem_rd = 0;
     mem_wr = 0;
+    
+    new_cpu_restarted = 0;
+    
+    cpu_msg_r = 8'hzz;
     
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
@@ -164,14 +190,14 @@ always @(negedge clk) begin
       `CTL_RESET_WAIT: begin
         if(read_dn == 1) begin
           //data_wire_r = data_wire_r + 1;
-          cpu_tbl[ext_cpu_index_r] = 0; //32'h ffffffff;
+//          proc_tbl[ext_cpu_index_r] = 0; //32'h ffffffff;
           ext_cpu_index_r = ext_cpu_index_r + 1;
           //data_wire_r = 32'h zzzzzzzz;
           addr_out_r  = 32'h zzzzzzzz;
         end
           
         if(bus_busy == 1) begin
-          //cpu_tbl[data_wire] = 0; //32'h ffffffff;
+          //proc_tbl[data_wire] = 0; //32'h ffffffff;
         end
         
         ext_rst_b = 0;
@@ -185,17 +211,33 @@ always @(negedge clk) begin
       
       `CTL_CPU_LOOP: begin
 //        bus_busy_r  = 1;
-        ext_cpu_index_r = cpu_num;
-        addr_out_r = cpu_tbl[cpu_num];
-        
-        cpu_num = cpu_num + 1;
-        if(cpu_num >= CPU_QUANTITY) begin
-          cpu_num = 0;
+        if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
+          ext_cpu_index_r = `CPU_NONACTIVE;
+          new_cpu_restarted = 1;
+        end else begin
+          cpu_num = cpu_num + 1;
+          if(cpu_num >= cpu_num_a) begin
+            cpu_num = 0;
+          end
+          ext_cpu_index_r = cpu_num | `CPU_ACTIVE;
+          new_cpu_restarted = 0;
         end
+        
+        proc_num = proc_num + 1;
+        if(proc_num >= proc_num_t) begin
+          proc_num = 0;
+        end
+
+        addr_out_r = proc_tbl[proc_num];
+        
+//        cpu_num = cpu_num + 1;
+//        if(cpu_num >= CPU_QUANTITY) begin
+//          cpu_num = 0;
+//        end
         
 //        cpu_num = cpu_num + 1;
         
-//        addr_out_r = cpu_tbl[cpu_num];
+//        addr_out_r = proc_tbl[cpu_num];
         
         cpu_q_r = 1;
         
@@ -234,17 +276,26 @@ always @(negedge clk) begin
           
 //          data_wire_r = mem_addr_tmp;
           
-            case(data_wire)
+            case(cpu_msg) //data_wire)
               `CPU_R_START: begin
+                cpu_num_na = cpu_num_na - 1;
+                cpu_num_a = cpu_num_a + 1;
+          
+                cpu_num = cpu_num + 1;
+
+                new_cpu_restarted = 0;
               end
             
               `CPU_R_END: begin
+                cpu_num_a = cpu_num_a - 1;
+                cpu_num_na = cpu_num_na + 1;
               end
             
             endcase
 //          if(mem_rd == 1 || mem_wr == 1) begin
 //            state_ctl = `CTL_MEM_WORK;
 //          end else
+
           if(dispatcher_q == 1) begin
             state_ctl = `CTL_CPU_LOOP;
           end else begin
@@ -252,6 +303,7 @@ always @(negedge clk) begin
           
 //            bus_busy_r  = 1'bz;
           end
+          
         end
       end
       

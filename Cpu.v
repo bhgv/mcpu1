@@ -33,6 +33,8 @@ module Cpu(
             ext_cpu_q,
             ext_cpu_e,
             
+            cpu_msg,
+            
             dispatcher_q
           );
           
@@ -94,6 +96,8 @@ module Cpu(
   input wire ext_cpu_q;
   output wire ext_cpu_e;
   
+  inout wire [7:0] cpu_msg;
+  
 //  reg cpu_running;
   
   wire ext_bus_busy;
@@ -146,6 +150,8 @@ BridgeToOutside outside_bridge (
             .ext_next_cpu_e(ext_cpu_e),
             
             .ext_bus_busy(ext_bus_busy),
+            
+            .ext_cpu_msg(cpu_msg),
             
             .ext_dispatcher_q(dispatcher_q),
             

@@ -2,6 +2,7 @@
 
 `include "sizes.v"
 `include "states.v"
+`include "misc_codes.v"
 
 
 
@@ -183,8 +184,8 @@ module StartManager (
       case(state)
         `START_READ_CMD: begin
           if(
-              (read_dn == 1 && ip_addr_to_read == 1) ||
-              (write_dn == 1)
+              (read_dn == 1 && ip_addr_to_read == 1) //||
+              //(write_dn == 1)
           ) begin
             if(addr == ip_addr) begin
               ip_addr_to_read = 0;

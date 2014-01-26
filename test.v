@@ -141,6 +141,8 @@ module test;
   
   wire dispatcher_q;
   
+  wire [7:0] cpu_msg;
+  
   
   
   
@@ -184,6 +186,8 @@ Cpu cpu1(
             .ext_cpu_q(ext_cpu_q),
             .ext_cpu_e(ext_cpu_e),
             
+            .cpu_msg(cpu_msg),
+            
             .dispatcher_q(dispatcher_q)
           );
 
@@ -210,6 +214,8 @@ Cpu cpu2(
             
             .ext_cpu_q(ext_cpu_q),
             .ext_cpu_e(ext_cpu_e),
+            
+            .cpu_msg(cpu_msg),
             
             .dispatcher_q(dispatcher_q)
           );
@@ -240,6 +246,8 @@ DispatcherOfCpus disp_1(
             
             .ext_cpu_q(ext_cpu_q),
             .ext_cpu_e(ext_cpu_e),
+            
+            .cpu_msg(cpu_msg),
             
             .dispatcher_q(dispatcher_q)
           );
@@ -330,7 +338,7 @@ initial begin
            #(STEP)  RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
-           #(STEP*160) //stage = 0; cpu_running = 0;
+           #(STEP*220) //stage = 0; cpu_running = 0;
            //#(STEP*125); //90)
           $finish;
         end

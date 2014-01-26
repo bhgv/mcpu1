@@ -2,6 +2,7 @@
 
 `include "sizes.v"
 `include "states.v"
+`include "misc_codes.v"
 
 
 
@@ -213,6 +214,15 @@ module MemManager (
           src0_waiting = 0;
         end 
 
+        if(dst_waiting == 1) begin
+//          if(isRegDPtr == 0) begin
+            rw_halt_r = addr == (base_addr + regNumD) ? 1 : 1'bz;
+//          end else begin
+//            rw_halt_r = addr == dst_r_adr ? 1 : 1'bz;
+//          end
+//          dst_waiting = 0;
+        end 
+
       end
     end
     
@@ -270,7 +280,7 @@ module MemManager (
           end
         
           `READ_COND_P: begin
-            if(read_dn == 1 && cond_waiting == 1) begin
+            if(read_dn == 1) begin
                 if(addr == cond_r) begin
                   cond_r = data;
                   condptr_waiting = 0;
@@ -290,7 +300,7 @@ module MemManager (
           end
         
           `READ_SRC1_P: begin
-            if(read_dn == 1 && src1_waiting == 1) begin
+            if(read_dn == 1) begin
                 if(addr == src1_r) begin
                   src1_r = data;
                   src1ptr_waiting = 0;
@@ -310,7 +320,7 @@ module MemManager (
           end
         
           `READ_SRC0_P: begin
-            if(read_dn == 1 && src0_waiting == 1) begin
+            if(read_dn == 1) begin
                 if(addr == src0_r) begin
                   src0_r = data;
                   src0ptr_waiting = 0;
@@ -388,11 +398,12 @@ module MemManager (
     end else begin
      
       case(state)
-        `START_READ_CMD: begin
-          dst_waiting = 1;
-        end
+//        `START_READ_CMD: begin
+//          dst_waiting = 1;
+//        end
         
         `WRITE_REG_IP: begin
+          dst_waiting = 1;
           cond_r_adr = base_addr + regNumCnd /* `DATA_SIZE*/;
           src1_r_adr = base_addr + regNumS1 /* `DATA_SIZE*/;
           src0_r_adr = base_addr + regNumS0 /* `DATA_SIZE*/;
@@ -407,7 +418,8 @@ module MemManager (
             addr_r = cond_r_adr;
             read_q = 1;
             halt_q_r = 1;
-            if(^regCondFlags == 1) cond_waiting = 1;
+            if(^regCondFlags == 1) condptr_waiting = 1;
+            cond_waiting = 1;
                 
             single = 0;
           end
@@ -423,7 +435,7 @@ module MemManager (
             cond_r_adr = cond_r;
             read_q = 1;
             halt_q_r = 1;
-            cond_waiting = 1;
+//            condptr_waiting = 1;
             
             single = 0;
           end
@@ -439,7 +451,8 @@ module MemManager (
             read_q = 1;
             halt_q_r = 1;
             
-            if(^regS1Flags == 1) src1_waiting = 1;
+            if(^regS1Flags == 1) src1ptr_waiting = 1;
+            src1_waiting = 1;
 
             single = 0;
           end  
@@ -455,7 +468,7 @@ module MemManager (
             src1_r_adr = src1_r;
             read_q = 1;
             halt_q_r = 1;
-            cond_waiting = 1;
+//            src1ptr_waiting = 1;
             
             single = 0;
           end
@@ -471,7 +484,8 @@ module MemManager (
             read_q = 1;
             halt_q_r = 1;
             
-            if(^regS0Flags == 1) src0_waiting = 1;
+            if(^regS0Flags == 1) src0ptr_waiting = 1;
+            src0_waiting = 1;
 
             single = 0;
           end
@@ -487,7 +501,7 @@ module MemManager (
             src0_r_adr = src0_r;
             read_q = 1;
             halt_q_r = 1;
-            cond_waiting = 1;
+//            src0ptr_waiting = 1;
             
             single = 0;
           end
