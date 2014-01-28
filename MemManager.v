@@ -33,6 +33,8 @@ module MemManager (
             dst_h,
             cond,
             
+            cmd_ptr,
+            
             disp_online,
             
             next_state,
@@ -139,6 +141,7 @@ module MemManager (
   assign src1 = src1_r;
   reg src1_waiting;
   reg src1ptr_waiting;
+  reg src1w_waiting;
 
   inout  wire [`DATA_SIZE0:0] src0;
   reg [`DATA_SIZE0:0] src0_r_adr;
@@ -146,6 +149,7 @@ module MemManager (
   assign src0 = src0_r;
   reg src0_waiting;
   reg src0ptr_waiting;
+  reg src0w_waiting;
 
   inout  wire [`DATA_SIZE0:0] dst;
   reg [`DATA_SIZE0:0] dst_r_adr;
@@ -153,6 +157,7 @@ module MemManager (
   assign dst = dst_r;
   reg dst_waiting;
   reg dstptr_waiting;
+  reg dstw_waiting;
   
   input wire [`DATA_SIZE0:0] dst_h;
   reg [`DATA_SIZE0:0] dst_h_r;
@@ -163,6 +168,10 @@ module MemManager (
   assign cond = cond_r;
   reg cond_waiting;
   reg condptr_waiting;
+  reg condw_waiting;
+  
+  input wire [`DATA_SIZE0:0] cmd_ptr;
+  
   
   input wire disp_online;
   
@@ -187,34 +196,34 @@ module MemManager (
     if(halt_q == 1) begin
       if(cpu_ind_rel == 2'b01) begin
 
-        if(cond_waiting == 1) begin
-          if(isRegCondPtr == 0) begin
+        if(condw_waiting == 1 && rw_halt_r !== 1) begin
+//          if(isRegCondPtr == 0) begin
             rw_halt_r = addr == (base_addr + regNumCnd) ? 1 : 1'bz;
-          end else begin
-            rw_halt_r = addr == cond_r_adr ? 1 : 1'bz;
-          end
+//          end else begin
+//            rw_halt_r = addr == cond_r_adr ? 1 : 1'bz;
+//          end
           cond_waiting = 0;
         end
       
-        if(src1_waiting == 1) begin
-          if(isRegS1Ptr == 0) begin
+        if(src1w_waiting == 1 && rw_halt_r !== 1) begin
+//          if(isRegS1Ptr == 0) begin
             rw_halt_r = addr == (base_addr + regNumS1) ? 1 : 1'bz;
-          end else begin
-            rw_halt_r = addr == src1_r_adr ? 1 : 1'bz;
-          end
+//          end else begin
+//            rw_halt_r = addr == src1_r_adr ? 1 : 1'bz;
+//          end
           src1_waiting = 0;
         end 
       
-        if(src0_waiting == 1) begin
-          if(isRegS0Ptr == 0) begin
+        if(src0w_waiting == 1 && rw_halt_r !== 1) begin
+//          if(isRegS0Ptr == 0) begin
             rw_halt_r = addr == (base_addr + regNumS0) ? 1 : 1'bz;
-          end else begin
-            rw_halt_r = addr == src0_r_adr ? 1 : 1'bz;
-          end
+//          end else begin
+//            rw_halt_r = addr == src0_r_adr ? 1 : 1'bz;
+//          end
           src0_waiting = 0;
         end 
 
-        if(dst_waiting == 1) begin
+        if(dstw_waiting == 1 && rw_halt_r !== 1) begin
 //          if(isRegDPtr == 0) begin
             rw_halt_r = addr == (base_addr + regNumD) ? 1 : 1'bz;
 //          end else begin
@@ -250,6 +259,7 @@ module MemManager (
    
     src1_waiting = 0; src0_waiting = 0; dst_waiting = 0; cond_waiting = 0; 
     src1ptr_waiting = 0; src0ptr_waiting = 0; dstptr_waiting = 0; condptr_waiting = 0; 
+    src1w_waiting = 0; src0w_waiting = 0; dstw_waiting = 0; condw_waiting = 0;
     
     single = 0;
   end
@@ -328,36 +338,40 @@ module MemManager (
                 end
             end
           end
+          
+          `WRITE_PREP: begin
+            next_state = 1;
+          end
 
-        `WRITE_DST: begin
-          if(write_dn == 1 && addr == (base_addr + regNumD)) begin
-            dst_waiting = 0;
-            next_state = 1;
+          `WRITE_DST: begin
+            if(write_dn == 1 && addr == (base_addr + regNumD)) begin
+              dstw_waiting = 0;
+              next_state = 1;
+            end
           end
-        end
            
-        `WRITE_COND: begin
-          if(write_dn == 1 && addr == (base_addr + regNumCnd)) begin
-            cond_waiting = 0;
-            next_state = 1;
+          `WRITE_COND: begin
+            if(write_dn == 1 && addr == (base_addr + regNumCnd)) begin
+              condw_waiting = 0;
+              next_state = 1;
+            end
           end
-        end
            
-        `WRITE_SRC1: begin
-          if(write_dn == 1 && addr == (base_addr + regNumS1)) begin
-            src1_waiting = 0;
-            next_state = 1;
+          `WRITE_SRC1: begin
+            if(write_dn == 1 && addr == (base_addr + regNumS1)) begin
+              src1w_waiting = 0;
+              next_state = 1;
+            end
           end
-        end
            
-        `WRITE_SRC0: begin
-          if(write_dn == 1 && addr == (base_addr + regNumS0)) begin
-            src0_waiting = 0;
-            next_state = 1;
+          `WRITE_SRC0: begin
+            if(write_dn == 1 && addr == (base_addr + regNumS0)) begin
+              src0w_waiting = 0;
+              next_state = 1;
+            end
           end
-        end
-
-        endcase
+          
+          endcase
         
 /*
         if(src1_waiting == 1) begin if(
@@ -402,11 +416,19 @@ module MemManager (
 //          dst_waiting = 1;
 //        end
         
-        `WRITE_REG_IP: begin
+        //`WRITE_REG_IP
+        `PREEXECUTE: begin
           dst_waiting = 1;
           cond_r_adr = base_addr + regNumCnd /* `DATA_SIZE*/;
           src1_r_adr = base_addr + regNumS1 /* `DATA_SIZE*/;
           src0_r_adr = base_addr + regNumS0 /* `DATA_SIZE*/;
+          
+          if(&regDFlags == 0) dstw_waiting = 1;
+          if(^regCondFlags == 1) condw_waiting = 1;
+          if(^regS1Flags == 1) src1w_waiting = 1;
+          if(^regS0Flags == 1) src0w_waiting = 1;
+          
+          next_state = 1;
         end
         
         `READ_COND: begin
@@ -414,6 +436,10 @@ module MemManager (
             addr_r = `ADDR_SIZE'h zzzzzzzz;
             read_q = 1'bz;
           end else
+          if(cond_r_adr == 15) begin // 4'h f <- ip reg
+            cond_r = cmd_ptr;
+            next_state = 1;
+          end else 
           if(disp_online == 1 && single == 1) begin
             addr_r = cond_r_adr;
             read_q = 1;
@@ -430,6 +456,11 @@ module MemManager (
             addr_r = `ADDR_SIZE'h zzzzzzzz;
             read_q = 1'bz;
           end else
+          if(cond_r == 15) begin // 4'h f <- ip reg
+            cond_r_adr = cond_r;
+            cond_r = cmd_ptr;
+            next_state = 1;
+          end else 
           if(disp_online == 1 && single == 1) begin
             addr_r = cond_r; //cond_r_aux;
             cond_r_adr = cond_r;
@@ -445,6 +476,10 @@ module MemManager (
           if(read_q == 1) begin
             addr_r = `ADDR_SIZE'h zzzzzzzz;
             read_q = 1'bz;
+          end else 
+          if(src1_r_adr == 15) begin // 4'h f <- ip reg
+            src1_r = cmd_ptr;
+            next_state = 1;
           end else 
           if(disp_online == 1 && single == 1) begin
             addr_r = src1_r_adr;
@@ -463,6 +498,11 @@ module MemManager (
             addr_r = `ADDR_SIZE'h zzzzzzzz;
             read_q = 1'bz;
           end else
+          if(src1_r == 15) begin // 4'h f <- ip reg
+            src1_r_adr = src1_r;
+            src1_r = cmd_ptr;
+            next_state = 1;
+          end else 
           if(disp_online == 1 && single == 1) begin
             addr_r = src1_r; //cond_r_aux;
             src1_r_adr = src1_r;
@@ -479,6 +519,10 @@ module MemManager (
             addr_r = `ADDR_SIZE'h zzzzzzzz;
             read_q = 1'bz;
           end else //begin
+          if(src0_r_adr == 15) begin // 4'h f <- ip reg
+            src0_r = cmd_ptr;
+            next_state = 1;
+          end else 
           if(disp_online == 1 && single == 1) begin
             addr_r = src0_r_adr;
             read_q = 1;
@@ -496,6 +540,11 @@ module MemManager (
             addr_r = `ADDR_SIZE'h zzzzzzzz;
             read_q = 1'bz;
           end else
+          if(src0_r == 15) begin // 4'h f <- ip reg
+            src0_r_adr = src0_r;
+            src0_r = cmd_ptr;
+            next_state = 1;
+          end else 
           if(disp_online == 1 && single == 1) begin
             addr_r = src0_r; //cond_r_aux;
             src0_r_adr = src0_r;
@@ -506,15 +555,40 @@ module MemManager (
             single = 0;
           end
         end
+        
+        `WRITE_PREP: begin
+            dst_r = (regDFlags == 2'b 01 ? dst+1 : 
+                     regDFlags == 2'b 10 ? dst-1 : 
+                                           dst );
+            
+            if(regNumCnd == regNumD) cond_r = dst_r;
+            if(regNumS1  == regNumD) src1_r = dst_r;
+            if(regNumS0  == regNumD) src0_r = dst_r;
+
+            if(regCondFlags == 2'b 01) begin
+              cond_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)+1;
+            end else if(regCondFlags == 2'b 10) begin
+              cond_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)-1;
+            end
+            if(regS1Flags == 2'b 01) begin
+              src1_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)+1;
+            end else if(regS1Flags == 2'b 10) begin
+              src1_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)-1;
+            end
+            if(regS0Flags == 2'b 01) begin
+              src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)+1;
+            end else if(regS0Flags == 2'b 10) begin
+              src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
+            end
+            
+            next_state = 1;
+        end
 
         `WRITE_DST: begin
           if(write_q == 1) begin
             write_q = 1'bz;
           end else
           if(disp_online == 1 && single == 1) begin
-            dst_r = (regDFlags == 2'b 01 ? dst+1 : 
-                     regDFlags == 2'b 10 ? dst-1 : 
-                                           dst );
             data_r = dst_r;
             addr_r = base_addr + regNumD /* ((`DATA_SIZE0+1)/8)*/;
             write_q = 1;
@@ -524,12 +598,13 @@ module MemManager (
         end
 
         `WRITE_COND: begin
+          dstw_waiting = 0;
+        
+          if(write_q == 1) begin
+            write_q = 1'bz;
+          end else
           if(disp_online == 1 && single == 1) begin
-            if(regCondFlags == 2'b 01) begin
-              data_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)+1;
-            end else if(regCondFlags == 2'b 10) begin
-              data_r = (isRegCondPtr==1 ? cond_r_adr : cond_r)-1;
-            end
+            data_r = cond_r;
             addr_r = base_addr + regNumCnd;
             write_q = 1;
             
@@ -538,12 +613,14 @@ module MemManager (
         end
         
         `WRITE_SRC1: begin
+          dstw_waiting = 0;
+          condw_waiting = 0;
+
+          if(write_q == 1) begin
+            write_q = 1'bz;
+          end else
           if(disp_online == 1 && single == 1) begin
-            if(regS1Flags == 2'b 01) begin
-              data_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)+1;
-            end else if(regS1Flags == 2'b 10) begin
-              data_r = (isRegS1Ptr==1 ? src1_r_adr : src1_r)-1;
-            end
+            data_r = src1_r;
             addr_r = base_addr + regNumS1;
             write_q = 1;
             
@@ -552,19 +629,29 @@ module MemManager (
         end
         
         `WRITE_SRC0: begin
+          dstw_waiting = 0;
+          condw_waiting = 0;
+          src1w_waiting = 0;
+
+          if(write_q == 1) begin
+            write_q = 1'bz;
+          end else
           if(disp_online == 1 && single == 1) begin
-            if(regS0Flags == 2'b 01) begin
-              data_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)+1;
-            end else if(regS0Flags == 2'b 10) begin
-              data_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
-            end
+            data_r = src0_r;
             addr_r = base_addr + regNumS0;
             write_q = 1;
             
             single = 0;
-          end          
+          end
         end
         
+        `FINISH_BEGIN: begin
+          dstw_waiting = 0;
+          condw_waiting = 0;
+          src1w_waiting = 0;
+          src0w_waiting = 0;
+        end
+
       endcase
       
     end

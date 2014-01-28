@@ -79,6 +79,8 @@ module InternalBus(
   wire [`DATA_SIZE0:0] dst_h;
   /*output*/ wire [`DATA_SIZE0:0] cond;
   
+  wire [`DATA_SIZE0:0] cmd_ptr;
+  
   output wire [`STATE_SIZE0:0] state;
   input wire next_state;
  
@@ -118,6 +120,8 @@ module InternalBus(
             .write_dn(write_dn),
 //            .read_e(read_e),
 //            .write_e(write_e),
+
+            .cmd_ptr(cmd_ptr),
             
             .disp_online(disp_online),
             
@@ -184,6 +188,8 @@ module InternalBus(
             .dst(dst),
             .dst_h(dst_h),
             .cond(cond),
+            
+            .cmd_ptr(cmd_ptr),
             
             .disp_online(disp_online),
             

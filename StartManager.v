@@ -29,6 +29,7 @@ module StartManager (
             
             disp_online,
             
+            cmd_ptr,
            // cond,
             
             next_state,
@@ -39,7 +40,7 @@ module StartManager (
   input wire [`STATE_SIZE0:0] state;
   output reg [31:0] command;
   
-  reg [`ADDR_SIZE0:0] cmd_ptr;
+  output reg [`ADDR_SIZE0:0] cmd_ptr;
 //  reg cmd_ptr_waiting;
 //  reg cmd_waiting;
 
@@ -131,7 +132,7 @@ module StartManager (
 //        `WRITE_REG_IP,
 //        `START_READ_CMD: begin
           if(cpu_ind_rel == 2'b01) begin
-            if(ip_addr_saved == 0) begin
+            if(ip_addr_saved == 0 && state <= `WRITE_REG_IP) begin
               rw_halt_r = (addr == ip_addr) ? 1 : 1'bz;
         
               ip_addr_to_read = 0;
@@ -257,6 +258,10 @@ module StartManager (
             single = 0;
           end
         end
+        
+        `PREEXECUTE: begin
+            cmd_ptr = cmd_ptr + 1;
+        end
 
         `WRITE_REG_IP: begin
           if(write_q == 1) begin
@@ -265,7 +270,7 @@ module StartManager (
           end else
           if(disp_online == 1 && single == 1) begin
             addr_r = ip_addr;
-            cmd_ptr = cmd_ptr + 1;
+//            cmd_ptr = cmd_ptr + 1;
             data_r = cmd_ptr;
             write_q = 1;
             halt_q_r = 1;
