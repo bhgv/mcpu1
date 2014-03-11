@@ -13,7 +13,7 @@ module BridgeToOutside (
             state,
             
             //base_addr,
-            command,
+            //command,
             
             halt_q,
             cpu_ind_rel,
@@ -55,6 +55,7 @@ module BridgeToOutside (
             
             ext_rw_halt,
             
+            int_cpu_msg,
             ext_cpu_msg,
             
             ext_read_q,
@@ -63,14 +64,14 @@ module BridgeToOutside (
             );
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
-  input wire [31:0] command;
+  //inout wire [31:0] command;
 
 //  input wire [`ADDR_SIZE0:0] base_addr;
   reg [`ADDR_SIZE0:0] base_addr_r;
   
   inout halt_q;
   reg halt_q_r;
-  wire halt_q; // = halt_q_r;
+  tri halt_q; // = halt_q_r;
 //  reg halt_q; // = (ext_read_q == 1 || ext_write_q == 1) ?
 //                1 : 1'bz;
   /*
@@ -83,30 +84,30 @@ module BridgeToOutside (
                 0;
   */
   
-  inout wire rw_halt;
+  inout tri rw_halt;
   
   output reg [1:0] cpu_ind_rel;
   
   
   inout [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
-  wire [`ADDR_SIZE0:0] addr = addr_r;
+  tri [`ADDR_SIZE0:0] addr = addr_r;
   
-  input wire read_q;
-  input wire  write_q;
+  input tri read_q;
+  input tri  write_q;
 
   inout bus_busy;
   reg bus_busy_r;
-  wire bus_busy = bus_busy_r;
+  tri bus_busy = bus_busy_r;
   
   inout [`DATA_SIZE0:0] data;
   reg [`DATA_SIZE0:0] data_r;
-  wire [`DATA_SIZE0:0] data = data_r;
+  tri [`DATA_SIZE0:0] data = data_r;
 //  assign data = write_q==1 ? dst_r : 32'h z;
   
-  inout  read_dn;
-  reg read_dn_r;
-  wire read_dn = read_dn_r;
+  input  read_dn;
+//  reg read_dn_r;
+//  wire read_dn = read_dn_r;
   
   input  wire write_dn;
 //  output reg read_e;
@@ -131,7 +132,7 @@ module BridgeToOutside (
   
   
   inout ext_rw_halt;
-  wire ext_rw_halt; // = rw_halt; // = cpu_index_r > ext_cpu_index ?
+  tri ext_rw_halt; // = rw_halt; // = cpu_index_r > ext_cpu_index ?
 //                     (
 //                      (read_q == 1 && ext_cpu_index < cpu_index_r) ||
 //                      (write_q == 1 && ext_cpu_index > cpu_index_r)
@@ -145,7 +146,7 @@ module BridgeToOutside (
   
   inout [`DATA_SIZE0:0] ext_cpu_index;
   reg [`DATA_SIZE0:0] cpu_index_itf;
-  wire [`DATA_SIZE0:0] ext_cpu_index = 
+  tri [`DATA_SIZE0:0] ext_cpu_index = 
 //                              (
 //                                read_q == 1 ||
 //                                write_q == 1
@@ -154,23 +155,29 @@ module BridgeToOutside (
                               cpu_index_itf;
   reg [`DATA_SIZE0:0] cpu_index_r;
   
-  input wire ext_next_cpu_q;
+  input tri ext_next_cpu_q;
   inout ext_next_cpu_e;
   reg ext_next_cpu_e_r;
-  wire ext_next_cpu_e = ext_next_cpu_e_r;
+  tri ext_next_cpu_e = ext_next_cpu_e_r;
   
   inout ext_bus_busy;
   reg ext_bus_busy_r;
-  wire ext_bus_busy = ext_bus_busy_r;
+  tri ext_bus_busy = ext_bus_busy_r;
   
   output reg ext_dispatcher_q;
   
+  
+  input tri [7:0] int_cpu_msg;
+  
+  reg [7:0] cpu_msg_tmp;
+  
   inout [7:0] ext_cpu_msg;
   reg [7:0] cpu_msg_r;
-  wire [7:0] ext_cpu_msg = cpu_msg_r;
+  tri [7:0] ext_cpu_msg = cpu_msg_r;
+  
   
   inout ext_read_q;
-  wire ext_read_q    = (state == `READ_COND ||
+  tri ext_read_q    = (state == `READ_COND ||
                         state == `READ_COND_P ||
                         state == `READ_SRC1 ||
                         state == `READ_SRC1_P ||
@@ -184,7 +191,7 @@ module BridgeToOutside (
                         ? read_q 
                         : 1'bz;
   inout ext_write_q;
-  wire ext_write_q   = (state == `WRITE_REG_IP ||
+  tri ext_write_q   = (state == `WRITE_REG_IP ||
                         state == `WRITE_DST    ||
                         state == `WRITE_SRC1   ||
                         state == `WRITE_SRC0   ||
@@ -203,7 +210,7 @@ module BridgeToOutside (
     next_state = 1'b z;
     ext_rst_e = 0;
   
-    read_dn_r = 1'b z;
+    //read_dn_r = 1'b z;
     
     bus_busy_r = 1'b z;
     
@@ -219,6 +226,8 @@ module BridgeToOutside (
     if(ext_rst_b == 1) begin  // begin of RESET
       rst_state = 0;
       cpu_ind_rel = 0;
+      cpu_msg_tmp = 0;
+      
     end else if(rst_state < 5) begin // == 1) begin
       ext_next_cpu_e_r = 1'b z;
       rst = 0;
@@ -247,13 +256,14 @@ module BridgeToOutside (
         
         2: begin
           cpu_index_r = ext_cpu_index; //data;
-          read_dn_r = 1;
+          //read_dn_r = 1;
+          cpu_msg_r = `CPU_R_RESET;
           
           rst_state = 3;
         end
         
         3: begin
-          read_dn_r = 1'b z;
+          //read_dn_r = 1'b z;
           
           rst = 1;
 
@@ -343,8 +353,8 @@ module BridgeToOutside (
 
 
       
-      if(bus_busy == 1) begin
-      end else begin
+      if(bus_busy !== 1) begin
+//      end else begin
 
         if(disp_online == 1) begin
         
@@ -355,14 +365,14 @@ module BridgeToOutside (
           ) begin
             ext_next_cpu_e_r = 1;
           end 
-          else if(ext_next_cpu_e_r == 1) begin
+          else if(ext_next_cpu_e_r === 1) begin
             ext_next_cpu_e_r = 1'bz;
             disp_online = 0;
           end
         end
       
-        if(ext_next_cpu_q == 1 && 
-           ext_cpu_index == cpu_index_r
+        if(ext_next_cpu_q === 1 && 
+           ext_cpu_index === cpu_index_r
         ) begin
           disp_online = 1;
           
@@ -403,6 +413,16 @@ module BridgeToOutside (
               ext_dispatcher_q = 1;
             end
             
+            `ALU_BEGIN: begin
+              if(int_cpu_msg !== 0) begin
+                cpu_msg_r = int_cpu_msg;
+                cpu_index_itf = cpu_index_r;
+                
+                next_state = 1;
+                ext_next_cpu_e_r = 1;
+              end
+            end
+            
             `FINISH_BEGIN: begin
               //data_r
               cpu_msg_r = `CPU_R_END;
@@ -423,14 +443,14 @@ module BridgeToOutside (
 
           endcase
           
-        end else 
+        end else
         begin
           case(state)
             `START_BEGIN: begin
 //              cpu_index_r = cpu_index_r | `CPU_ACTIVE;
             
               data_r = base_addr_r;
-              read_dn_r = 1;
+              //read_dn_r = 1;
             end
             
             `READ_COND, 

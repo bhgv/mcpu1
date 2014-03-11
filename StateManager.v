@@ -61,7 +61,7 @@ module StateManager(
   assign regCondFlags = command[27:26];
 
 
-  input wire [`DATA_SIZE0:0] cond;
+  inout wire [`DATA_SIZE0:0] cond;
   
   input wire next_state;
   
@@ -73,12 +73,31 @@ module StateManager(
     end
     else if(next_state == 1) begin
       case(state)
+/**
+        `START_READ_CMD: begin
+          if(
+            (&regDFlags == 0 && regNumD == 4'h f) ||
+            (^regCondFlags && regNumCnd == 4'h f) ||
+            (^regS1Flags && regNumS1 == 4'h f) ||
+            (^regS0Flags && regNumS0 == 4'h f)
+          ) begin
+              state = `START_READ_CMD_P;
+          end else begin
+            state = `WRITE_REG_IP;
+          end
+        end
+        
+        `WRITE_REG_IP: begin
+          state = `START_READ_CMD_P;
+        end
+/**/
+        
         `PREEXECUTE: begin
           if(
-            (&regDFlags || regNumD == 4'h f) ||
-            (^regCondFlags || regNumCnd == 4'h f) ||
-            (^regS1Flags || regNumS1 == 4'h f) ||
-            (^regS0Flags || regNumS0 == 4'h f)
+            (&regDFlags == 0 && regNumD == 4'h f) ||
+            (^regCondFlags && regNumCnd == 4'h f) ||
+            (^regS1Flags && regNumS1 == 4'h f) ||
+            (^regS0Flags && regNumS0 == 4'h f)
           ) begin
             if(&regCondFlags == 0) 
               state = `READ_COND;
@@ -93,6 +112,7 @@ module StateManager(
           end
         end
         
+/**/
         `WRITE_REG_IP: begin
           if(&regCondFlags == 0) 
             state = `READ_COND;
@@ -103,6 +123,7 @@ module StateManager(
           else
             state = `ALU_BEGIN;
         end
+/**/
         
         `READ_COND: begin
           if(&regS1Flags == 0) 

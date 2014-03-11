@@ -11,7 +11,7 @@ module InternalBus(
         //    state,
         bus_busy,
         
-        command,
+//        command,
         
         state,
         
@@ -29,10 +29,12 @@ module InternalBus(
 //            read_e,
 //            write_e,
             
-        //src1,
-        //src0,
-        //dst,
+//        src1,
+//        src0,
+//        dst,
         //dst_h,
+        
+        cpu_msg,
         
         disp_online,
         
@@ -44,37 +46,38 @@ module InternalBus(
   input wire clk;
   inout bus_busy;
   reg bus_busy_r;
-  wire bus_busy = bus_busy_r;
+  tri bus_busy = bus_busy_r;
   
-  output wire [31:0] command;
+  //output 
+  tri0 [31:0] command;
     
   input wire rst;
   
-  input wire halt_q;
-  inout wire rw_halt;
-  input wire [1:0] cpu_ind_rel;
+  inout tri halt_q;
+  inout tri rw_halt;
+  input tri [1:0] cpu_ind_rel;
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
-  inout wire [`ADDR_SIZE0:0] addr; //= addr_out_r;
+  inout tri [`ADDR_SIZE0:0] addr; //= addr_out_r;
   
-  output wire read_q;
-  output wire write_q;
-  input wire read_dn;
-  input wire write_dn;
+  output tri read_q;
+  output tri write_q;
+  input tri read_dn;
+  input tri write_dn;
 //  output wire read_e;
 //  output wire write_e;
   
   
 //  reg [`DATA_SIZE0:0] data_r;
-  inout wire [`DATA_SIZE0:0] data; // = data_r;
+  inout tri [`DATA_SIZE0:0] data; // = data_r;
   
 
-  //output 
-  wire [`DATA_SIZE0:0] src1;
-  //output 
-  wire [`DATA_SIZE0:0] src0;
-  //output 
-  wire [`DATA_SIZE0:0] dst;
+  //inout 
+  tri [`DATA_SIZE0:0] src1;
+  //inout 
+  tri [`DATA_SIZE0:0] src0;
+  //inout 
+  tri [`DATA_SIZE0:0] dst;
   //output 
   wire [`DATA_SIZE0:0] dst_h;
   /*output*/ wire [`DATA_SIZE0:0] cond;
@@ -82,7 +85,8 @@ module InternalBus(
   wire [`DATA_SIZE0:0] cmd_ptr;
   
   output wire [`STATE_SIZE0:0] state;
-  input wire next_state;
+  inout next_state;
+  tri0 next_state;
  
                     
   wire [`ADDR_SIZE0:0] base_addr;
@@ -90,6 +94,8 @@ module InternalBus(
   
   input wire disp_online;
   
+  
+  output tri [7:0] cpu_msg;
   
   
 //	reg [31:0] mem [0:100]; 
@@ -99,7 +105,7 @@ module InternalBus(
 //parameter STEP = 20;
 
 
-
+/**/
   StartManager start_mng(
             .clk(clk), 
             .state(state),
@@ -129,7 +135,7 @@ module InternalBus(
             
             .rst(rst)
             );
-
+/**/
 
   FinishManager finish_mng(
             .clk(clk), 
@@ -162,7 +168,7 @@ module InternalBus(
             );
             
 
-
+/**/
   MemManager mem_mng (
             .clk(clk), 
             .state(state),
@@ -197,8 +203,9 @@ module InternalBus(
             
             .rst(rst)
             );
+/**/
 
-
+/**/
   Alu alu_1 (
         .clk(clk),
         .is_bus_busy(bus_busy),
@@ -216,7 +223,29 @@ module InternalBus(
         
         .rst(rst)
         );
+/**/
 
+/**/
+  ThreadCtlr thrd_1 (
+        .clk(clk),
+        .is_bus_busy(bus_busy),
+        
+        .command(command),
+        
+        .state(state),
+        
+        .src1(src1),
+        .src0(src0),
+        .dst(dst),
+        .dst_h(dst_h),
+        
+        .cpu_msg(cpu_msg),
+        
+        .next_state(next_state),
+        
+        .rst(rst)
+        );
+/**/
 
 
 
@@ -231,7 +260,7 @@ module InternalBus(
 /*
       case(state)
         `START_BEGIN: begin
-          data_wire_r = 0; //Q;
+          data_tri_r = 0; //Q;
           read_dn = 1;
         end
         

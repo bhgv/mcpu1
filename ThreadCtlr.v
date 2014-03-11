@@ -2,8 +2,9 @@
 `include "sizes.v"
 `include "states.v"
 `include "cmd_codes.v"
+`include "inter_cpu_msgs.v"
 
-module Alu(
+module ThreadCtlr(
         clk,
         is_bus_busy,
         
@@ -15,6 +16,8 @@ module Alu(
         src0,
         dst,
         dst_h,
+        
+        cpu_msg,
         
         next_state,
         
@@ -41,7 +44,11 @@ module Alu(
   
   wire [`DATA_SIZE0:0] src1 = src1_r;
   wire [`DATA_SIZE0:0] src0 = src0_r;
-  wire [`DATA_SIZE0:0] dst = dst_r;
+  wire [`DATA_SIZE0:0] dst  = dst_r;
+  
+  inout [7:0] cpu_msg;
+  reg [7:0] cpu_msg_r;
+  wire [7:0] cpu_msg = cpu_msg_r;
 
   output reg next_state;
   
@@ -56,13 +63,15 @@ module Alu(
   always @(posedge clk) begin
     next_state = 1'b z;
     
-      is_bus_busy_r = 1'b z;
+    is_bus_busy_r = 1'b z;
 
     if(rst == 1) begin
       src1_r = `DATA_SIZE'h zzzzzzzz;
       src0_r = `DATA_SIZE'h zzzzzzzz;
       dst_r =  `DATA_SIZE'h zzzzzzzz;
       dst_h =  `DATA_SIZE'h zzzzzzzz;
+      
+      cpu_msg_r = 8'h00;
       
 //      is_bus_busy_r = 1'b z;
     end else begin
@@ -71,68 +80,22 @@ module Alu(
         `ALU_BEGIN: begin
           dst_h = 0;
           case(cmd_code)
-            `CMD_MOV: begin
-              //dst_h = src1;
-              //dst_r = src0;
-              //src0_r = dst_h;
+            `CMD_EXT_CMD: begin
+            
+              //case(src0)
+                if(src0 === `EXT_CMD_NEW_THREAD) begin
+                  cpu_msg_r = `CPU_R_NEW_THRD;
+                end
+                
+					 else
+                if(src0 === `EXT_CMD_DESTROY_THREAD) begin
+                  cpu_msg_r = `CPU_R_DEL_THRD;
+                end
               
-              next_state = 1;
+              //endcase
+
             end
             
-            `CMD_ADD: begin
-              {dst_h, dst_r} = src0 + src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_SUB: begin
-              {dst_h, dst_r} = src0 - src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_MUL: begin
-              {dst_h, dst_r} = src0 * src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_DIV: begin
-              dst_r = src0 / src1;
-              dst_h = src0 % src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_SHR: begin
-              dst_r = src0 >> src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_SHL: begin
-              dst_r = src0 << src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_XOR: begin
-              dst_r = src0 ^ src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_AND: begin
-              dst_r = src0 & src1;
-              
-              next_state = 1;
-            end
-            
-            `CMD_OR: begin
-              dst_r = src0 | src1;
-              
-              next_state = 1;
-            end
             
 //            `: begin
 //            end
@@ -146,6 +109,9 @@ module Alu(
           endcase
           
 //          next_state = 1;
+        end
+        
+        `FINISH_BEGIN: begin
         end
         
       endcase

@@ -75,7 +75,7 @@ module Cpu(
   
   inout wire bus_busy;
   
-  wire [31:0] command;
+  //wire [31:0] command;
   
   
   wire disp_online;
@@ -96,6 +96,7 @@ module Cpu(
   input wire ext_cpu_q;
   output wire ext_cpu_e;
   
+  wire [7:0] int_cpu_msg;
   inout wire [7:0] cpu_msg;
   
 //  reg cpu_running;
@@ -105,13 +106,13 @@ module Cpu(
   output wire dispatcher_q;
 
           
-          
+/**/
 BridgeToOutside outside_bridge (
             .clk(clk),
             .state(state),
             
             //base_addr,
-            .command(command),
+            //.command(command),
             
             .halt_q(halt_q),
             .cpu_ind_rel(cpu_ind_rel),
@@ -151,6 +152,7 @@ BridgeToOutside outside_bridge (
             
             .ext_bus_busy(ext_bus_busy),
             
+            .int_cpu_msg(int_cpu_msg),
             .ext_cpu_msg(cpu_msg),
             
             .ext_dispatcher_q(dispatcher_q),
@@ -158,13 +160,13 @@ BridgeToOutside outside_bridge (
             .ext_read_q(read_q),
             .ext_write_q(write_q)
             );
-            
+/**/
             
   InternalBus int_bus (
             .clk(clk), 
             .state(state),
             //.base_addr(base_addr),
-            .command(command),
+            //.command(command),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt), //(int_rw_halt),
@@ -185,6 +187,8 @@ BridgeToOutside outside_bridge (
             //.dst(dst),
             //.dst_h(dst_h),
             //.cond(cond),
+            
+            .cpu_msg(int_cpu_msg),
             
             .disp_online(disp_online),
             

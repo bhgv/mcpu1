@@ -51,31 +51,47 @@
 
 
 
-module test;
+module Top(
+	CLK,
+	
+	addr_out,
+	data_wire,
+	
+	read_q,
+   write_q,
+	
+	read_dn,
+	write_dn,
 
-  reg  CLK;
-  reg RESET_r;
-  wire RESET = RESET_r;
+	RESET
+);
+
+//  reg  CLK;
+//  reg RESET_r;
+//  wire RESET = RESET_r;
+
+	input wire CLK;
+	input wire RESET;
 
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
-  tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
+  inout wire [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
-  tri0 read_q;
-  tri0 write_q;
+  output trior read_q;
+  output trior write_q;
   
 //  reg read_dn_r;
-  tri0 read_dn; // = read_dn_r;
+  output wire read_dn; // = read_dn_r;
   
 //  reg write_dn_r;
-  tri0 write_dn; // = write_dn_r;
+  output wire write_dn; // = write_dn_r;
   
 //  wire read_e;
 //  wire write_e;
   
   
 //  reg [`DATA_SIZE0:0] data_wire_r;
-  tri [`DATA_SIZE0:0] data_wire; // = data_wire_r;
+  inout wire [`DATA_SIZE0:0] data_wire; // = data_wire_r;
   
    
 /*
@@ -129,32 +145,33 @@ module test;
   wire ext_rst_e; // = ext_rst_e_r;
   
 //  reg [`DATA_SIZE0:0] ext_cpu_index_r;
-  wire [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
+  tri0 [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
   
 //  reg cpu_q_r;
-  wire ext_cpu_q; // = cpu_q_r;
+  tri0 ext_cpu_q; // = cpu_q_r;
   tri0 ext_cpu_e;
   
 //  reg cpu_running;
   
 //  wire ext_bus_busy;
   
-  trior dispatcher_q;
+  tri0 dispatcher_q;
   
-  tri [7:0] cpu_msg;
-  
-  
+  tri0 [7:0] cpu_msg;
   
   
-	reg [31:0] mem [0:100]; 
-  initial $readmemh("mem.txt", mem);
+  
+  
+//	reg [31:0] mem [0:100]; 
+//  initial $readmemh("mem.txt", mem);
   
 //  reg [7:0] stage;
 
 parameter STEP = 20;
 
 
-parameter CPU_QUANTITY = 5;
+
+parameter CPU_QUANTITY = 50;
 
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;
@@ -201,9 +218,9 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
 
 
 
+/**
 wire rst_w1;
 
-/**
 Cpu cpu1(
             .clk(CLK),
             
@@ -302,76 +319,39 @@ DispatcherOfCpus disp_1(
 defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;
 
 
-/*
-BridgeToOutside outside_bridge (
+
+/**
+DispatcherOfCpus disp_1(
             .clk(CLK),
-            .state(state),
+            .rst(RESET),
             
-            //base_addr,
-            .command(command),
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
             
-            .bus_busy(bus_busy),
-            .addr(addr_out),
-            .data(data_wire),
+            .addr_out(addr_out),
+            .data_wire(data_wire),
+            
             .read_q(read_q),
             .write_q(write_q),
             .read_dn(read_dn),
             .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
             
-            .src1(src1),
-            .src0(src0),
-            .dst(dst),
-            .dst_h(dst_h),
-            .cond(cond),
-            
-            .next_state(nxt_state),
-            
-            .rst(rst),
+            .bus_busy(bus_busy),
             
             .ext_rst_b(ext_rst_b),
             .ext_rst_e(ext_rst_e),
             
             .ext_cpu_index(ext_cpu_index),
             
-            .ext_next_cpu_q(ext_cpu_q),
-            .ext_next_cpu_e(ext_cpu_e),
+            .ext_cpu_q(ext_cpu_q),
+            .ext_cpu_e(ext_cpu_e),
             
-            .ext_bus_busy(ext_bus_busy),
+            .cpu_msg(cpu_msg),
             
-            .ext_dispatcher_q(dispatcher_q)
-            );
-            
-            
-  InternalBus int_bus (
-            .clk(CLK), 
-            .state(state),
-            //.base_addr(base_addr),
-            .command(command),
-            
-            .bus_busy(bus_busy),
-            .addr(addr_out),
-            .read_q(read_q),
-            .write_q(write_q),
-            .data(data_wire),
-            .read_dn(read_dn),
-            .write_dn(write_dn),
-            .read_e(read_e),
-            .write_e(write_e),
-            
-            //.src1(src1),
-            //.src0(src0),
-            //.dst(dst),
-            //.dst_h(dst_h),
-            //.cond(cond),
-            
-            .next_state(nxt_state),
-            
-            .rst(rst)
-            );
+            .dispatcher_q(dispatcher_q)
+          );
+/**/
 
-*/
 
 /*
 reg [`DATA_SIZE0:0] cpu_tbl [1:CPU_QUANTITY];
@@ -380,6 +360,7 @@ reg [`DATA_SIZE0:0] cpu_num;
 reg [7:0] state_ctl;
 */
 
+/**
 initial begin
 // $monitor("RESET=%b  CLK=%b  Q=%b",RESET,CLK,Q);
                       RESET_r = 1'bz;
@@ -387,7 +368,7 @@ initial begin
            #(STEP)  RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
-           #(STEP*220) //stage = 0; cpu_running = 0;
+           #(STEP*320) //stage = 0; cpu_running = 0;
            //#(STEP*125); //90)
           $finish;
         end
@@ -397,12 +378,13 @@ always begin
           #(STEP/2) CLK = 1;
           #(STEP/2);
        end
+/**/
 
 
-always @(posedge CLK) begin
+//always @(posedge CLK) begin
 //          Q = Q+1;
           
-       end
+//       end
 
 
 /*

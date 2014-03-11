@@ -17,5 +17,14 @@
 `define  CMD_OR  09
 
 
+`define  CMD_EXT_CMD  15
+
+
+
+
+`define EXT_CMD_NEW_THREAD 1
+`define EXT_CMD_NEW_SUSPENDED_THREAD 2
+`define EXT_CMD_SUSPEND_THREAD 3
+`define EXT_CMD_DESTROY_THREAD 4
 
 

@@ -38,7 +38,9 @@ module StartManager (
             );
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
-  output reg [31:0] command;
+  inout [31:0] command;
+  reg [31:0] command_r;
+  wire [31:0] command = command_r;
   
   output reg [`ADDR_SIZE0:0] cmd_ptr;
 //  reg cmd_ptr_waiting;
@@ -48,15 +50,15 @@ module StartManager (
   output reg [`ADDR_SIZE0:0] base_addr;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
   
-  input wire [1:0] cpu_ind_rel;
+  input tri [1:0] cpu_ind_rel;
   
   inout halt_q;
   reg halt_q_r;
-  wire halt_q = halt_q_r;
+  tri halt_q = halt_q_r;
   
   inout rw_halt;
   reg rw_halt_r;
-  wire rw_halt = rw_halt_r;
+  tri rw_halt = rw_halt_r;
   /*
    = (halt_q == 0) 
                   ? 1'bz
@@ -72,7 +74,7 @@ module StartManager (
   
   inout [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
-  wire [`ADDR_SIZE0:0] addr = (
+  tri [`ADDR_SIZE0:0] addr = (
                         state == `START_READ_CMD   ||
                         state == `START_READ_CMD_P   ||
                         state == `WRITE_REG_IP
@@ -87,11 +89,11 @@ module StartManager (
 
   inout is_bus_busy;
   reg is_bus_busy_r;
-  wire is_bus_busy = is_bus_busy_r;
+  tri is_bus_busy = is_bus_busy_r;
   
   inout [`DATA_SIZE0:0] data;
   reg [`DATA_SIZE0:0] data_r;
-  wire [`DATA_SIZE0:0] data = (
+  tri [`DATA_SIZE0:0] data = (
                         state == `WRITE_REG_IP
                         ) &&
                         disp_online == 1 
@@ -100,8 +102,8 @@ module StartManager (
                         : `DATA_SIZE'h zzzzzzzz;
 //  assign data = write_q==1 ? dst_r : 32'h z;
   
-  input  wire read_dn;
-  input  wire write_dn;
+  input  tri read_dn;
+  input  tri write_dn;
 //  output reg read_e;
 //  output reg write_e;
   
@@ -111,7 +113,7 @@ module StartManager (
   
   input wire rst;
   
-  wire [`ADDR_SIZE0:0] ip_addr = base_addr + `REG_IP;
+  wire [`ADDR_SIZE0:0] ip_addr = /*base_addr +*/ `REG_IP;
   reg ip_addr_saved;
   reg ip_addr_to_read;
   
@@ -123,19 +125,18 @@ module StartManager (
     addr_r = 32'h zzzzzzzz;
     data_r = 32'h zzzzzzzz;
     
-    
 
     rw_halt_r = 1'bz;
-    if(halt_q == 1) begin
+    if(halt_q === 1) begin
 //      case(state)
 //        `START_READ_CMD_P,
 //        `WRITE_REG_IP,
 //        `START_READ_CMD: begin
-          if(cpu_ind_rel == 2'b01) begin
+          if(cpu_ind_rel === 2'b01) begin
             if(ip_addr_saved == 0 && state <= `WRITE_REG_IP) begin
-              rw_halt_r = (addr == ip_addr) ? 1 : 1'bz;
-        
-              ip_addr_to_read = 0;
+              rw_halt_r = (addr === ip_addr) ? 1 : 1'bz;
+              
+//              ip_addr_to_read = 0;
             end 
           end 
 //        end
@@ -144,7 +145,7 @@ module StartManager (
     end
     
     
-    if(rw_halt == 1) begin
+    if(rw_halt === 1) begin
       ip_addr_to_read = 0;
     end
     
@@ -155,6 +156,8 @@ module StartManager (
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
   if(rst == 1) begin
+    command_r = 32'h zzzzzzzz;
+
     read_q = 1'b z;
     write_q = 1'b z;
 
@@ -172,23 +175,23 @@ module StartManager (
   end
   else begin
     
-    data_r = `DATA_SIZE'h zzzzzzzz;
+//    data_r = `DATA_SIZE'h zzzzzzzz;
     next_state = 1'b z;
 //    read_e = 1'b z;
 //    write_e = 1'b z;
 
-    if(disp_online == 0) single = 1;
+    if(disp_online == 0) begin single = 1; end
     
-    if(is_bus_busy == 1) begin
-      addr_r = `ADDR_SIZE'h zzzzzzzz;
+    if(is_bus_busy === 1) begin
+//      addr_r = `ADDR_SIZE'h zzzzzzzz;
 
       case(state)
         `START_READ_CMD: begin
           if(
-              (read_dn == 1 && ip_addr_to_read == 1) //||
+              (read_dn === 1 && ip_addr_to_read == 1) //||
               //(write_dn == 1)
           ) begin
-            if(addr == ip_addr) begin
+            if(addr === ip_addr) begin
               ip_addr_to_read = 0;
               cmd_ptr = data;
               next_state = 1;
@@ -197,16 +200,16 @@ module StartManager (
         end
         
         `START_READ_CMD_P: begin
-          if(read_dn == 1) begin
-            if(addr == cmd_ptr) begin
-              command = data;
+          if(read_dn === 1) begin
+            if(addr === cmd_ptr) begin
+              command_r = data;
               next_state = 1;
             end
           end
         end
         
         `WRITE_REG_IP: begin
-          if(write_dn == 1 && addr == ip_addr) begin
+          if(write_dn === 1 && addr === ip_addr) begin
             ip_addr_saved = 1;
             next_state = 1;
           end
@@ -218,18 +221,18 @@ module StartManager (
      
       case(state)
         `START_BEGIN: begin
-          if(read_dn == 1) begin
+          //if(read_dn == 1) begin
             data_r = `DATA_SIZE'h zzzzzzzz;
             base_addr = data;
             
             cmd_ptr = ip_addr;
             
             next_state = 1;
-          end
+          //end
         end
         
         `START_READ_CMD: begin
-          if(read_q == 1) begin
+          if(read_q === 1) begin
             read_q = 1'b z;
             halt_q_r = 1'b z;
           end else
@@ -264,7 +267,7 @@ module StartManager (
         end
 
         `WRITE_REG_IP: begin
-          if(write_q == 1) begin
+          if(write_q === 1) begin
             write_q = 1'b z;
             halt_q_r = 1'b z;
           end else

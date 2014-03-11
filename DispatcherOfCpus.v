@@ -39,35 +39,39 @@ module DispatcherOfCpus(
             dispatcher_q
           );
           
+parameter CPU_QUANTITY = 2;
+parameter PROC_QUANTITY = 8;
+
+
   input wire clk;
   input wire rst;
 
-  input wire halt_q;
-  inout wire rw_halt;
+  input tri halt_q;
+  inout tri rw_halt;
   
   inout [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_out_r;
-  wire [`ADDR_SIZE0:0] addr_out = addr_out_r;
+  tri [`ADDR_SIZE0:0] addr_out = addr_out_r;
   
-  input wire read_q;
-  input wire write_q;
+  input tri read_q;
+  input tri write_q;
   
   output read_dn;
   reg read_dn_r;
-  wire read_dn = read_dn_r;
+  tri read_dn = read_dn_r;
   
   output write_dn;
   reg write_dn_r;
-  wire write_dn = write_dn_r;
+  tri write_dn = write_dn_r;
   
   
   inout [`DATA_SIZE0:0] data_wire;
   reg [`DATA_SIZE0:0] data_wire_r;
-  wire [`DATA_SIZE0:0] data_wire = data_wire_r;
+  tri [`DATA_SIZE0:0] data_wire = data_wire_r;
   
   inout bus_busy;
   reg bus_busy_r;
-  wire bus_busy = bus_busy_r;
+  tri bus_busy = bus_busy_r;
   
   
 
@@ -76,19 +80,19 @@ module DispatcherOfCpus(
   
   inout [`DATA_SIZE0:0] ext_cpu_index;
   reg [`DATA_SIZE0:0] ext_cpu_index_r;
-  wire [`DATA_SIZE0:0] ext_cpu_index = ext_cpu_index_r;
+  tri [`DATA_SIZE0:0] ext_cpu_index = ext_cpu_index_r;
   
   output ext_cpu_q;
   reg cpu_q_r;
   wire ext_cpu_q = cpu_q_r;
 
-  input wire ext_cpu_e;
+  input tri ext_cpu_e;
   
   inout [7:0] cpu_msg;
   reg [7:0] cpu_msg_r;
-  wire [7:0] cpu_msg = cpu_msg_r;
+  tri [7:0] cpu_msg = cpu_msg_r;
   
-  input wire dispatcher_q;
+  input tri dispatcher_q;
   
   
   
@@ -101,10 +105,6 @@ module DispatcherOfCpus(
 	reg [31:0] mem [0:100]; 
   initial $readmemh("mem.txt", mem);
   
-
-
-parameter CPU_QUANTITY = 2;
-parameter PROC_QUANTITY = 8;
 
 
   reg [`DATA_SIZE0:0] proc_num;
@@ -132,6 +132,8 @@ always @(negedge clk) begin
 //    bus_busy_r = 1'b z;
     
     cpu_q_r = 0;
+    
+    cpu_msg_r = 8'hzz;
     
 //    halt_q = 0; //1'bz;
     
@@ -188,7 +190,7 @@ always @(negedge clk) begin
 
     case(state_ctl)
       `CTL_RESET_WAIT: begin
-        if(read_dn == 1) begin
+        if(cpu_msg === `CPU_R_RESET) begin //read_dn == 1) begin
           //data_wire_r = data_wire_r + 1;
 //          proc_tbl[ext_cpu_index_r] = 0; //32'h ffffffff;
           ext_cpu_index_r = ext_cpu_index_r + 1;
@@ -289,6 +291,11 @@ always @(negedge clk) begin
               `CPU_R_END: begin
                 cpu_num_a = cpu_num_a - 1;
                 cpu_num_na = cpu_num_na + 1;
+              end
+              
+              `CPU_R_NEW_THRD: begin
+                proc_tbl[proc_num_t] = proc_num_t << 4;
+                proc_num_t = proc_num_t + 1;
               end
             
             endcase
