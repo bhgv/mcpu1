@@ -50,6 +50,10 @@ module Alu(
   
   wire [3:0] cmd_code = command[31:28];
   
+  reg [1+2*`DATA_SIZE0:0] tmp64_r;
+  reg [`DATA_SIZE0:0] tmp32_r;
+  reg [3:0] mlt_state;
+  
   
   
         
@@ -64,6 +68,8 @@ module Alu(
       dst_r =  `DATA_SIZE'h zzzzzzzz;
       dst_h =  `DATA_SIZE'h zzzzzzzz;
       
+		mlt_state = 0;
+		
 //      is_bus_busy_r = 1'b z;
     end else begin
     
@@ -92,12 +98,54 @@ module Alu(
             end
             
             `CMD_MUL: begin
+/*
+				  if(mlt_state == 0) begin
+				    {dst_h, dst_r} = 0;
+				    tmp64_r = src0; //{`DATA_SIZE{1'b 0}, src0};
+					 tmp32_r = src1;
+					 
+				    mlt_state = 1;
+				  end else begin
+			       if(tmp32_r == 0) begin
+				      next_state = 1;
+						mlt_state = 0;
+					 end else begin
+					   if(tmp32_r[0] == 1'b 1) begin
+						  {dst_h, dst_r} = {dst_h, dst_r} + tmp64_r;
+						end
+						
+						tmp64_r = tmp64_r << 1;
+						tmp32_r = tmp32_r >> 1;
+			       end
+				  end
+*/
               {dst_h, dst_r} = src0 * src1;
               
-              next_state = 1;
+              next_state = 1;       
             end
             
             `CMD_DIV: begin
+/*
+				  if(mlt_state == 0) begin
+				    {dst_h, dst_r} = 0;
+				    tmp64_r = src0; //{`DATA_SIZE'{0}, src0};
+					 tmp32_r = src1;
+					 
+				    mlt_state = 1;
+				  end else begin
+			       if(tmp32_r == 0) begin
+				      next_state = 1;
+						mlt_state = 0;
+					 end else begin
+					   if(tmp32_r[0] == 1'b 1) begin
+						  {dst_h, dst_r} = {dst_h, dst_r} + tmp64_r;
+						end
+						
+						tmp64_r = tmp64_r << 1;
+						tmp32_r = tmp32_r >> 1;
+			       end
+				  end
+*/
               dst_r = src0 / src1;
               dst_h = src0 % src1;
               

@@ -53,8 +53,8 @@ parameter PROC_QUANTITY = 8;
   reg [`ADDR_SIZE0:0] addr_out_r;
   tri [`ADDR_SIZE0:0] addr_out = addr_out_r;
   
-  input tri read_q;
-  input tri write_q;
+  input tri0 read_q;
+  input tri0 write_q;
   
   output read_dn;
   reg read_dn_r;
@@ -107,17 +107,42 @@ parameter PROC_QUANTITY = 8;
   
 
 
-  reg [`DATA_SIZE0:0] proc_num;
-  reg [`DATA_SIZE0:0] proc_num_t;
 
-  reg [`DATA_SIZE0:0] proc_tbl [0:PROC_QUANTITY];
+  reg [7:0] state_ctl;
+  
+
+
+
+
+
+  wire [`DATA_SIZE0:0] next_proc;
+
+  ThreadsManager trds_mngr (
+                    .clk(clk),
+                    
+                    .ctl_state(state_ctl),
+                    
+                    .cpu_msg(cpu_msg),
+                    
+                    //.proc,
+
+                    .next_proc(next_proc),
+                    
+                    .rst(rst)
+                      );
+
+
+//  reg [`DATA_SIZE0:0] proc_num;
+//  reg [`DATA_SIZE0:0] proc_num_t;
+//
+//  reg [`DATA_SIZE0:0] proc_tbl [0:PROC_QUANTITY];
 
   reg [`DATA_SIZE0:0] cpu_num_a;
   reg [`DATA_SIZE0:0] cpu_num_na;
   
   reg [`DATA_SIZE0:0] cpu_num;
 
-  reg [7:0] state_ctl;
+//  reg [7:0] state_ctl;
   
   reg new_cpu_restarted;
 
@@ -140,9 +165,9 @@ always @(negedge clk) begin
   if(rst == 1) begin 
     bus_busy_r = 1'b z;
     
-    proc_num = 0;
-    proc_num_t = 1;
-    proc_tbl[0] = 0;
+//    proc_num = 0;
+//    proc_num_t = 1;
+//    proc_tbl[0] = 0;
     
     cpu_num = 0;
     cpu_num_a = 0;
@@ -200,8 +225,8 @@ always @(negedge clk) begin
           
         if(bus_busy == 1) begin
           //proc_tbl[data_wire] = 0; //32'h ffffffff;
-        end
         
+        end
         ext_rst_b = 0;
         if(ext_rst_e == 1) begin
           //ext_rst_b = 0;
@@ -225,12 +250,12 @@ always @(negedge clk) begin
           new_cpu_restarted = 0;
         end
         
-        proc_num = proc_num + 1;
-        if(proc_num >= proc_num_t) begin
-          proc_num = 0;
-        end
+//        proc_num = proc_num + 1;
+//        if(proc_num >= proc_num_t) begin
+//          proc_num = 0;
+//        end
 
-        addr_out_r = proc_tbl[proc_num];
+        addr_out_r = next_proc;   //proc_tbl[proc_num];
         
 //        cpu_num = cpu_num + 1;
 //        if(cpu_num >= CPU_QUANTITY) begin
@@ -294,8 +319,8 @@ always @(negedge clk) begin
               end
               
               `CPU_R_NEW_THRD: begin
-                proc_tbl[proc_num_t] = proc_num_t << 4;
-                proc_num_t = proc_num_t + 1;
+//                proc_tbl[proc_num_t] = proc_num_t << 4;
+//                proc_num_t = proc_num_t + 1;
               end
             
             endcase

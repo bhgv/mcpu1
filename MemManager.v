@@ -41,6 +41,10 @@ module MemManager (
             
             rst
             );
+            
+  input wire disp_online;
+            
+            
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
   input wire [31:0] command_word;
@@ -173,7 +177,7 @@ module MemManager (
   input wire [`DATA_SIZE0:0] cmd_ptr;
   
   
-  input wire disp_online;
+//  input wire disp_online;
   
   output reg next_state;
   

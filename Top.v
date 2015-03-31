@@ -75,10 +75,10 @@ module Top(
 
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
-  inout wire [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
+  inout tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
-  output trior read_q;
-  output trior write_q;
+  output tri0 read_q;
+  output tri0 write_q;
   
 //  reg read_dn_r;
   output wire read_dn; // = read_dn_r;
@@ -91,7 +91,7 @@ module Top(
   
   
 //  reg [`DATA_SIZE0:0] data_wire_r;
-  inout wire [`DATA_SIZE0:0] data_wire; // = data_wire_r;
+  inout tri [`DATA_SIZE0:0] data_wire; // = data_wire_r;
   
    
 /*
@@ -106,7 +106,7 @@ module Top(
 */
 
 //  reg bus_busy_r;
-  tri0 bus_busy; // = bus_busy_r;
+  tri bus_busy; // = bus_busy_r;
   
   
  
@@ -145,7 +145,7 @@ module Top(
   wire ext_rst_e; // = ext_rst_e_r;
   
 //  reg [`DATA_SIZE0:0] ext_cpu_index_r;
-  tri0 [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
+  tri [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
   
 //  reg cpu_q_r;
   tri0 ext_cpu_q; // = cpu_q_r;
@@ -155,9 +155,9 @@ module Top(
   
 //  wire ext_bus_busy;
   
-  tri0 dispatcher_q;
+  tri dispatcher_q;
   
-  tri0 [7:0] cpu_msg;
+  tri [7:0] cpu_msg;
   
   
   
@@ -171,7 +171,7 @@ parameter STEP = 20;
 
 
 
-parameter CPU_QUANTITY = 50;
+parameter CPU_QUANTITY = 5;
 
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;
@@ -180,7 +180,7 @@ assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
 assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
 
 
-trior rw_halt;
+tri0 rw_halt;
 tri0 halt_q;
 
 
@@ -285,7 +285,7 @@ Cpu cpu2(
 
 
 
-
+/**/
 DispatcherOfCpus disp_1(
             .clk(CLK),
             .rst(RESET),
@@ -317,7 +317,7 @@ DispatcherOfCpus disp_1(
           );
           
 defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;
-
+/**/
 
 
 /**

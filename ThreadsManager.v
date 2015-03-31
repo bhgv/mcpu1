@@ -28,7 +28,7 @@ module ThreadsManager(
 parameter PROC_QUANTITY = 8;
 
                       
-  input wire clk;                      
+  input wire clk;
 
   inout [`DATA_SIZE0:0] proc;
   reg [`DATA_SIZE0:0] proc_r;

@@ -36,6 +36,11 @@ module StartManager (
             
             rst
             );
+            
+  input wire disp_online;
+  
+            
+            
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
   inout [31:0] command;
@@ -107,7 +112,7 @@ module StartManager (
 //  output reg read_e;
 //  output reg write_e;
   
-  input wire disp_online;
+//  input wire disp_online;
   
   output reg next_state;
   
