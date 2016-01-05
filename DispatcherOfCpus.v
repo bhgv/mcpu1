@@ -116,6 +116,7 @@ parameter PROC_QUANTITY = 8;
 
 
   wire [`DATA_SIZE0:0] next_proc;
+  wire [`DATA_SIZE0:0] proc;
 
   ThreadsManager trds_mngr (
                     .clk(clk),
@@ -124,7 +125,7 @@ parameter PROC_QUANTITY = 8;
                     
                     .cpu_msg(cpu_msg),
                     
-                    //.proc,
+                    .proc(proc),
 
                     .next_proc(next_proc),
                     

@@ -39,9 +39,15 @@ module Alu(
   reg [`DATA_SIZE0:0] src0_r;
   reg [`DATA_SIZE0:0] dst_r;
   
-  wire [`DATA_SIZE0:0] src1 = src1_r;
-  wire [`DATA_SIZE0:0] src0 = src0_r;
-  wire [`DATA_SIZE0:0] dst = dst_r;
+  tri [`DATA_SIZE0:0] src1 = state == `ALU_RESULTS 
+                                        ? src1_r 
+                                        : `DATA_SIZE'h zzzzzzzz;
+  tri [`DATA_SIZE0:0] src0 = state == `ALU_RESULTS 
+                                        ? src0_r 
+                                        : `DATA_SIZE'h zzzzzzzz;
+  tri [`DATA_SIZE0:0] dst = state == `ALU_RESULTS 
+                                        ? dst_r 
+                                        : `DATA_SIZE'h zzzzzzzz;
 
   output reg next_state;
   
@@ -63,10 +69,10 @@ module Alu(
       is_bus_busy_r = 1'b z;
 
     if(rst == 1) begin
-      src1_r = `DATA_SIZE'h zzzzzzzz;
-      src0_r = `DATA_SIZE'h zzzzzzzz;
-      dst_r =  `DATA_SIZE'h zzzzzzzz;
-      dst_h =  `DATA_SIZE'h zzzzzzzz;
+      src1_r = 0; //`DATA_SIZE'h zzzzzzzz;
+      src0_r = 0; //`DATA_SIZE'h zzzzzzzz;
+      dst_r =  0; //`DATA_SIZE'h zzzzzzzz;
+      dst_h =  0; //`DATA_SIZE'h zzzzzzzz;
       
 		mlt_state = 0;
 		
@@ -76,6 +82,10 @@ module Alu(
       case(state)
         `ALU_BEGIN: begin
           dst_h = 0;
+          
+          src1_r = src1;
+          src0_r = src0;
+          
           case(cmd_code)
             `CMD_MOV: begin
               //dst_h = src1;
@@ -182,8 +192,9 @@ module Alu(
               next_state = 1;
             end
             
-//            `: begin
-//            end
+            default: begin
+              next_state = 1;       
+            end
             
 //            `: begin
 //            end

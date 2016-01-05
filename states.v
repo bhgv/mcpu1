@@ -28,6 +28,7 @@
 `define READ_SRC0_P  11
 
 `define ALU_BEGIN  12
+`define ALU_RESULTS 20
 
 //`define WRITE_DATA 7
 `define WRITE_PREP 13

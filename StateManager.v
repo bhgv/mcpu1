@@ -35,7 +35,7 @@ module StateManager(
   assign regNumCnd = command[15:12];
   
   
- wire isRegS1Ptr;
+  wire isRegS1Ptr;
   assign isRegS1Ptr = command[16];
   
   wire isRegS0Ptr;
@@ -61,17 +61,50 @@ module StateManager(
   assign regCondFlags = command[27:26];
 
 
-  inout wire [`DATA_SIZE0:0] cond;
+  input wire [`DATA_SIZE0:0] cond;
   
   input wire next_state;
   
   input wire rst;
   
+  
+  reg anti_continuous;
+  
   always @(negedge clk) begin
     if( rst == 1 ) begin
       state = `WAIT_FOR_START;
+      
+      anti_continuous = 1;
     end
-    else if(next_state == 1) begin
+    else if(next_state !== 1) begin
+      anti_continuous = 1;
+    end
+    else if(
+      next_state === 1 && 
+      (
+        anti_continuous == 1
+        || state == `WAIT_FOR_START
+        || state == `PREEXECUTE
+        || state == `START_BEGIN
+        || state == `ALU_BEGIN
+        || state == `ALU_RESULTS
+      )
+    ) begin
+    
+    
+      /*
+      if(
+        state == `WAIT_FOR_START
+        || state == `START_BEGIN
+        || state == `ALU_BEGIN
+      ) begin
+        anti_continuous = 1;
+      end else begin
+        anti_continuous = 0;
+      end
+      */
+        anti_continuous = 0;
+      
       case(state)
 /**
         `START_READ_CMD: begin
@@ -95,7 +128,7 @@ module StateManager(
         `PREEXECUTE: begin
           if(
             (&regDFlags == 0 && regNumD == 4'h f) ||
-            (^regCondFlags && regNumCnd == 4'h f) ||
+//            (^regCondFlags && regNumCnd == 4'h f) ||
             (^regS1Flags && regNumS1 == 4'h f) ||
             (^regS0Flags && regNumS0 == 4'h f)
           ) begin
@@ -139,8 +172,9 @@ module StateManager(
               state = `FINISH_BEGIN; //WRITE_DATA;
             end else if(isRegCondPtr == 1) begin
               state = `READ_COND_P;
+//            end else begin
+//              state = `ALU_BEGIN;
             end
-//          end
         end
         
         `READ_COND_P: begin
@@ -153,6 +187,7 @@ module StateManager(
         
           if(cond == 0) begin
             state = `FINISH_BEGIN; //WRITE_DATA;
+//          end else begin
           end
         end
         
@@ -193,6 +228,10 @@ module StateManager(
         end
 
         `ALU_BEGIN: begin
+            state = `ALU_RESULTS;
+        end
+        
+        `ALU_RESULTS: begin
             state = `WRITE_PREP;
         end
 
@@ -210,19 +249,19 @@ module StateManager(
 */
           if(
             &regDFlags == 0 && 
-            (regNumCnd != regNumD || ^regCondFlags == 0) &&
+//            (regNumCnd != regNumD || ^regCondFlags == 0) &&
             (regNumS1  != regNumD || ^regS1Flags == 0) &&
             (regNumS0  != regNumD || ^regS0Flags == 0)
           ) begin
             state = `WRITE_DST;
           end else
-          if(
-            ^regCondFlags == 1 && 
-            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
-            (regNumS0  != regNumCnd || ^regS0Flags == 0)
-          ) begin
-            state = `WRITE_COND;
-          end else
+//          if(
+//            ^regCondFlags == 1 && 
+//            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
+//            (regNumS0  != regNumCnd || ^regS0Flags == 0)
+//          ) begin
+//            state = `WRITE_COND;
+//          end else
           if(
             ^regS1Flags == 1 && 
             (regNumS0  != regNumS1 || ^regS0Flags == 0)
@@ -240,14 +279,14 @@ module StateManager(
         end
         
         `WRITE_DST: begin
-          if(
-            ^regCondFlags == 1 && 
-            (regNumS1  != regNumCnd &&
-             regNumS0  != regNumCnd
-            )
-          ) begin
-            state = `WRITE_COND;
-          end else
+//          if(
+//            ^regCondFlags == 1 && 
+//            (regNumS1  != regNumCnd &&
+//             regNumS0  != regNumCnd
+//            )
+//          ) begin
+//            state = `WRITE_COND;
+//          end else
           if(
             ^regS1Flags == 1 && 
             (regNumS0  != regNumS1

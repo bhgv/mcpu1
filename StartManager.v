@@ -122,13 +122,19 @@ module StartManager (
   reg ip_addr_saved;
   reg ip_addr_to_read;
   
+  reg write_wait;
+  
   reg single;
+  
+  reg started;
   
   
   
   always @(posedge clk) begin
     addr_r = 32'h zzzzzzzz;
     data_r = 32'h zzzzzzzz;
+    
+    next_state = 1'b z;
     
 
     rw_halt_r = 1'bz;
@@ -138,7 +144,11 @@ module StartManager (
 //        `WRITE_REG_IP,
 //        `START_READ_CMD: begin
           if(cpu_ind_rel === 2'b01) begin
-            if(ip_addr_saved == 0 && state <= `WRITE_REG_IP) begin
+            if(
+              ip_addr_saved == 0 
+              && write_wait == 1
+//              && state <= `WRITE_REG_IP
+            ) begin
               rw_halt_r = (addr === ip_addr) ? 1 : 1'bz;
               
 //              ip_addr_to_read = 0;
@@ -176,12 +186,16 @@ module StartManager (
     
     halt_q_r = 1'b z;
     
+    write_wait = 0;
+    
     single = 1;
+    
+    started = 0;
   end
   else begin
     
 //    data_r = `DATA_SIZE'h zzzzzzzz;
-    next_state = 1'b z;
+//    next_state = 1'b z;
 //    read_e = 1'b z;
 //    write_e = 1'b z;
 
@@ -216,6 +230,9 @@ module StartManager (
         `WRITE_REG_IP: begin
           if(write_dn === 1 && addr === ip_addr) begin
             ip_addr_saved = 1;
+            
+            write_wait = 0;
+            
             next_state = 1;
           end
         end
@@ -226,14 +243,18 @@ module StartManager (
      
       case(state)
         `START_BEGIN: begin
-          //if(read_dn == 1) begin
+//          if(started == 0) begin
             data_r = `DATA_SIZE'h zzzzzzzz;
             base_addr = data;
             
             cmd_ptr = ip_addr;
             
+            write_wait = 1;
+            
+            started = 1;
+            
             next_state = 1;
-          //end
+//          end
         end
         
         `START_READ_CMD: begin
@@ -269,6 +290,8 @@ module StartManager (
         
         `PREEXECUTE: begin
             cmd_ptr = cmd_ptr + 1;
+            
+            next_state = 1;
         end
 
         `WRITE_REG_IP: begin

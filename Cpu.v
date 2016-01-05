@@ -40,7 +40,7 @@ module Cpu(
           
   input wire clk;
   
-  inout wire [`ADDR_SIZE0:0] addr;
+  inout tri [`ADDR_SIZE0:0] addr;
   
   wire int_read_q;
   wire int_write_q;
@@ -55,10 +55,10 @@ module Cpu(
 //  wire read_e;
 //  wire write_e;
   
-  inout wire [`DATA_SIZE0:0] data;
+  inout tri [`DATA_SIZE0:0] data;
   
-  inout wire rw_halt;
-  wire int_rw_halt;
+  inout tri rw_halt;
+  tri int_rw_halt;
   
   inout wire halt_q;
   
