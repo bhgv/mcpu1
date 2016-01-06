@@ -43,9 +43,9 @@ module StartManager (
             
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
-  inout [31:0] command;
+  input [31:0] command;
   reg [31:0] command_r;
-  wire [31:0] command = command_r;
+//  wire [31:0] command = command_r;
   
   output reg [`ADDR_SIZE0:0] cmd_ptr;
 //  reg cmd_ptr_waiting;
@@ -77,9 +77,9 @@ module StartManager (
                 ;
   */
   
-  inout [`ADDR_SIZE0:0] addr;
+  input [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
-  tri [`ADDR_SIZE0:0] addr = (
+  wire [`ADDR_SIZE0:0] addr /*= (
                         state == `START_READ_CMD   ||
                         state == `START_READ_CMD_P   ||
                         state == `WRITE_REG_IP
@@ -87,7 +87,8 @@ module StartManager (
                         disp_online == 1 
 //                        && (!ext_next_cpu_e == 1)
                         ? addr_r
-                        : `ADDR_SIZE'h zzzzzzzz;
+                        : `ADDR_SIZE'h zzzzzzzz
+                        */;
   
   output reg read_q;
   output reg write_q;
@@ -201,6 +202,7 @@ module StartManager (
 
     if(disp_online == 0) begin single = 1; end
     
+/*
     if(is_bus_busy === 1) begin
 //      addr_r = `ADDR_SIZE'h zzzzzzzz;
 
@@ -240,12 +242,13 @@ module StartManager (
       endcase
 
     end else begin
-     
+*/
+ 
       case(state)
         `START_BEGIN: begin
 //          if(started == 0) begin
             data_r = `DATA_SIZE'h zzzzzzzz;
-            base_addr = data;
+//            base_addr = data;
             
             cmd_ptr = ip_addr;
             
@@ -253,10 +256,11 @@ module StartManager (
             
             started = 1;
             
-            next_state = 1;
+//            next_state = 1;
 //          end
         end
-        
+
+/*        
         `START_READ_CMD: begin
           if(read_q === 1) begin
             read_q = 1'b z;
@@ -309,11 +313,12 @@ module StartManager (
             single = 0;
           end
         end
+*/
         
       endcase
       
-    end
-    
+//    end
+  
   end
   
   end

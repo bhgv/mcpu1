@@ -88,6 +88,7 @@ module StateManager(
         || state == `START_BEGIN
         || state == `ALU_BEGIN
         || state == `ALU_RESULTS
+        || state == `WRITE_PREP
       )
     ) begin
     

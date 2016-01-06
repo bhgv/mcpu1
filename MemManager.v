@@ -53,7 +53,8 @@ module MemManager (
             
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
-  input wire [31:0] command_word;
+  
+  output wire [31:0] command_word;
 
   wire [3:0] regNumS1;
   assign regNumS1 = command_word[3:0];
@@ -150,6 +151,52 @@ module MemManager (
 //  output reg read_e;
 //  output reg write_e;
   
+
+
+
+
+  reg [`SIZE_REG_OP-1:0] cmd_op;
+  
+  RegisterManager cmd_dev (
+            .clk(clk), 
+            .state(state),
+            
+            .base_addr(base_addr),
+            .reg_op(cmd_op),
+            
+            .cpu_ind_rel(cpu_ind_rel),
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
+            
+            .is_bus_busy(is_bus_busy),
+            .addr(addr),
+            .data(data),
+            
+            .register(command_word),
+            
+            .isRegPtr(1),      //ip is ptr of cmd
+            .regFlags(2'b 01), //post-increment
+            .regNum(4'b 1111), //0xf is the number of ip reg
+            
+            .isNeedSave(1'b 1),
+            
+            .read_q(read_q),
+            .write_q(write_q),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            
+            .cmd_ptr(cmd_ptr),
+            
+            .disp_online(disp_online),
+            
+            .next_state(next_state),
+            
+            .rst(rst)
+            );
+
+
+
+
 
   inout tri [`DATA_SIZE0:0] src1;
 //  reg [`DATA_SIZE0:0] src1_r_adr;
@@ -278,7 +325,7 @@ module MemManager (
             .regFlags(regDFlags),
             .regNum(regNumD),
             
-            .isNeedSave(1'b 1),
+            .isNeedSave(1),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -367,7 +414,7 @@ module MemManager (
     
     is_bus_busy_r = 1'b z;
     
-    src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL; 
+    src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL; cmd_op = `REG_OP_NULL; 
 
     
 //    halt_q_r = 1'bz;
@@ -458,13 +505,13 @@ module MemManager (
 //    if(disp_online == 0) single = 1;
     
     
-    if(is_bus_busy == 1) begin
+//    if(is_bus_busy == 1) begin
       
 //        addr_r = `ADDR_SIZE'h zzzzzzzz;
         
-        case(state)
-          `READ_COND: begin
-            cond_op = `REG_OP_READ;
+//        case(state)
+//          `READ_COND: begin
+//            cond_op = `REG_OP_READ;
             /*
             if(read_dn == 1 && cond_waiting == 1) begin
                 if(addr == cond_r_adr) begin
@@ -474,10 +521,10 @@ module MemManager (
                 end
             end
             */
-          end
+//          end
         
-          `READ_COND_P: begin
-            cond_op = `REG_OP_READ_P;
+//          `READ_COND_P: begin
+//            cond_op = `REG_OP_READ_P;
             /*
             if(read_dn == 1) begin
                 if(addr == cond_r) begin
@@ -487,10 +534,10 @@ module MemManager (
                 end
             end
             */
-          end
+//          end
 
-          `READ_SRC1: begin
-            src1_op = `REG_OP_READ;
+//          `READ_SRC1: begin
+//            src1_op = `REG_OP_READ;
             /*
             if(read_dn == 1 && src1_waiting == 1) begin
                 if(addr == src1_r_adr) begin
@@ -500,10 +547,10 @@ module MemManager (
                 end
             end
             */
-          end
+//          end
         
-          `READ_SRC1_P: begin
-            src1_op = `REG_OP_READ_P;
+//          `READ_SRC1_P: begin
+//            src1_op = `REG_OP_READ_P;
             /*
             if(read_dn == 1) begin
                 if(addr == src1_r) begin
@@ -513,10 +560,10 @@ module MemManager (
                 end
             end
             */
-          end
+//          end
         
-          `READ_SRC0: begin
-            src0_op = `REG_OP_READ;
+//          `READ_SRC0: begin
+//            src0_op = `REG_OP_READ;
             /*
             if(read_dn == 1 && src0_waiting == 1) begin
                 if(addr == src0_r_adr) begin
@@ -526,10 +573,10 @@ module MemManager (
                 end
             end
             */
-          end
+//          end
         
-          `READ_SRC0_P: begin
-            src0_op = `REG_OP_READ_P;
+//          `READ_SRC0_P: begin
+//            src0_op = `REG_OP_READ_P;
             /*
             if(read_dn == 1) begin
                 if(addr == src0_r) begin
@@ -539,53 +586,53 @@ module MemManager (
                 end
             end
             */
-          end
+//          end
           
-          `WRITE_PREP: begin
+//          `WRITE_PREP: begin
 //            next_state = 1;
-          end
+//          end
 
-          `WRITE_DST: begin
-            dst_op = `REG_OP_WRITE;
+//          `WRITE_DST: begin
+//            dst_op = `REG_OP_WRITE;
             /*
             if(write_dn == 1 && addr == (/ *base_addr +* / regNumD)) begin
               dstw_waiting = 0;
 //              next_state = 1;
             end
             */
-          end
+//          end
            
-          `WRITE_COND: begin
-            cond_op = `REG_OP_WRITE;
+//          `WRITE_COND: begin
+//            cond_op = `REG_OP_WRITE;
             /*
             if(write_dn == 1 && addr == (/ *base_addr +* / regNumCnd)) begin
               condw_waiting = 0;
 //              next_state = 1;
             end
             */
-          end
+//          end
            
-          `WRITE_SRC1: begin
-            src1_op = `REG_OP_WRITE;
+//          `WRITE_SRC1: begin
+//            src1_op = `REG_OP_WRITE;
             /*
             if(write_dn == 1 && addr == (/ *base_addr +* / regNumS1)) begin
               src1w_waiting = 0;
 //              next_state = 1;
             end
             */
-          end
+//          end
            
-          `WRITE_SRC0: begin
-            src0_op = `REG_OP_WRITE;
+//          `WRITE_SRC0: begin
+//            src0_op = `REG_OP_WRITE;
             /*
             if(write_dn == 1 && addr == (/ *base_addr +* / regNumS0)) begin
               src0w_waiting = 0;
 //              next_state  = 1;
             end
             */
-          end
+//          end
           
-          endcase
+//          endcase
         
 /*
         if(src1_waiting == 1) begin if(
@@ -623,9 +670,35 @@ module MemManager (
         next_state = 1;
       end
 */
-    end else begin
+//    end else begin
      
       case(state)
+        `START_BEGIN: begin
+          cmd_op = `REG_OP_PREEXECUTE;
+        end
+
+        `START_READ_CMD: begin
+          cmd_op = `REG_OP_READ;
+        end
+        
+        `START_READ_CMD_P: begin
+          cmd_op = `REG_OP_READ_P;
+        end
+        
+        `WRITE_REG_IP: begin
+          cmd_op = `REG_OP_WRITE;
+        end
+        
+        `ALU_RESULTS: begin
+//            src0_op = `REG_OP_CATCH_DATA;
+//            src1_op = `REG_OP_CATCH_DATA;
+            dst_op = `REG_OP_CATCH_DATA;
+//            cond_op = `REG_OP_CATCH_DATA;
+            
+//            next_state = 1;
+        end
+        
+        
 //        `START_READ_CMD: begin
 //          dst_waiting = 1;
 //        end
@@ -645,6 +718,8 @@ module MemManager (
             src1_op = `REG_OP_PREEXECUTE;
             dst_op = `REG_OP_PREEXECUTE;
             cond_op = `REG_OP_PREEXECUTE;
+
+            cmd_op = `REG_OP_WRITE_PREP;
           
 //          next_state = 1;
         end
@@ -913,7 +988,7 @@ module MemManager (
 
       endcase
       
-    end
+//    end
     
   end
   
