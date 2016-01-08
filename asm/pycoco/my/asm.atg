@@ -1,0 +1,346 @@
+COMPILER Asm
+
+   funcs = {}
+   variables  = {}
+   labels = {}
+   ip = 0
+   #cmd = 0
+   curfunc = None
+   
+   code = []
+   #code_ip = 0
+   
+   
+   
+   def isNext(self, ch):
+      self.scanner.ResetPeek()
+      s = self.scanner.Peek().val
+      return s == ch
+
+
+
+
+
+
+CHARACTERS
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit    = "0123456789" .
+  hexdigit = digit + "ABCDEFabcdef" .
+  tab      = CHR(9) .
+  eol      = CHR(10) .
+  files    = letter + digit + ":\\." .
+  chars    = CHR(32) .. CHR(255) - "'" .
+  strings  = CHR(32) .. CHR(255) - '"'.
+  macros   = ANY - eol .
+
+TOKENS
+  identifier = ( "_" | letter) { "_" | letter | digit } .
+  number     = digit { digit } [ "." { digit }] [ "U" | "u" | "L" | "l" ] .
+  hexnumber  = "0" ( "x" | "X" ) hexdigit { hexdigit } [ "U" | "u" | "L" | "l" ] .
+  string     = '"' { strings } '"' .
+  char       = "'" [ "\\" ] chars "'" .
+  library    = "<" files { files } ">" .
+
+PRAGMAS
+  PreProcessor = "#" {macros} .
+
+COMMENTS FROM "/*" TO "*/"
+
+IGNORE tab + eol + CHR(13)
+
+PRODUCTIONS
+
+  Asm                    = { Definition } EOF 
+													(.
+													   for i in xrange(0, self.ip):
+													      cmd = self.code[i]
+													      print "%08x : 0x%X" % (cmd, i)
+													.)
+						.
+
+/* Variable and Type Definitions */
+
+  Definition           = identifier					(. 
+									   name = self.token.val
+									   idip = self.ip 
+									.)
+                            (   FunctionDefinition<name, idip>
+			      | VarList ";" ) .
+
+
+  VarList              = ArraySize { "," identifier ArraySize } .
+
+  ArraySize            = { "[" (number | hexnumber) "]" } .
+
+/* Function Definitions */
+
+  FunctionDefinition<fname, idip>
+			= FunctionHeader<fname> ( ";" | FunctionBody<fname, idip> ) .
+
+  FunctionHeader<fname>
+			= "(" [ FormalParamList ] ")"	(.
+									   if (fname in self.funcs) and self.funcs[fname]['ip'] != None:
+									      self.SemErr( "Error: dublicated function name '%s'" % (fname,) )
+									   else:
+									      regs = []
+									      for i in xrange(0,16) :
+									         regs.append(0)
+									      self.funcs[fname] = {'ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, }
+									      self.curfunc = fname
+									.)
+			.
+
+  FunctionBody<fname, idip> 
+			= CompoundStatement<fname>				(. 
+									   #if (fname in self.funcs) and self.funcs[fname]['ip'] != None:
+									   #   print "// error dublicated function name"
+									   #else:
+									   self.funcs[fname]['ip'] = idip
+									   #print "// '%s' -> 0x%X\n%s" % (fname, idip, self.funcs[fname])
+									.)   
+			.
+
+  FormalParamList      = FormalParameter { "," FormalParameter } .
+
+  FormalParameter      = identifier 
+				ArraySize .
+
+/* Statements */
+
+  Statement            = {IF(self.isNext(':')) Label }
+                         (  AssignmentExpression 
+//				| BreakStatement
+//                           | CompoundStatement | ContinueStatement
+//                           | DoStatement | ForStatement
+//                           | IfStatement 
+				| NullStatement
+//                           | ReturnStatement | SwitchStatement
+//                           | WhileStatement 
+			) .
+
+  Label                = 
+						identifier						(. 
+									   lbl = self.token.val
+													.)
+						":"								(.
+									   if not (lbl in self.funcs[self.curfunc]['lbls']) :
+									      self.funcs[self.curfunc]['lbls'][lbl] = self.ip
+									   else:
+									      self.SemErr( "Error: dublicated label '%s'" % (lbl,) )
+													.)
+			.
+//			"case" ConstExpression ":"  |  "default" ":" .
+
+/* There is no requirement that a switch statement be followed by a compound
+   statement.  Actually labels may be even more general */
+
+  AssignmentExpression = Expression<out cmd> ";" .
+
+//  BreakStatement       = "break" ";" .
+
+  CompoundStatement<fname>	= "{" ["init" "{" {   
+								RegName< out r > "=" Const<out num> ";"		(. self.funcs[fname]['regs'][r['r']] = num .)
+							} "}" ] 					(.
+														   for i in xrange(0, 16) :
+														      self.code.append(self.funcs[fname]['regs'][i])
+														      self.ip += 1
+														.)
+							[ "var" "{" { LocalDeclaration } "}" ]
+							{ Statement } "}" 
+							.
+
+//  ContinueStatement    = "continue" ";" .
+
+//  DoStatement          = "do" Statement "while" "(" Expression ")" ";" .
+
+//  ForStatement         = "for"  "(" [ Expression ] ";" [ Expression ] ";" [ Expression ] ")" Statement .
+
+//  IfStatement          = "if" "(" Expression ")" Statement [ "else" Statement ] .
+
+  NullStatement        = ";" .
+
+//  ReturnStatement      = "return" [ Expression ] ";" .
+                         /* Expression usually in parentheses */
+
+//  SwitchStatement      = "switch" "(" Expression ")" Statement .
+
+//  WhileStatement       = "while" "(" Expression ")" Statement .
+
+/* LocalDeclarations */
+
+  LocalDeclaration     = identifier					(. 
+									   name = self.token.val
+									   idip = self.ip 
+									.)
+                          ( /*FunctionHeader<name> |*/ VarList ) ";"  .
+
+/* Expressions, based on Kernighan and Ritchie: "The C Programming Language".
+   There does not seem to be a way to make this work in an LL(1) fashion,
+   but this generates a "working" parser */
+
+//  ConstExpression      = Expression<out cmd> .
+
+  Expression<out cmd>	= 						(. 
+									   cmd = 0 
+									   cond = {'r': 0, 'rop': 3, 'isptr': 0}
+									.)
+			 (
+			   [ "if" "(" Cond<out cond> 
+			     ")" ] 
+			   Dst<out dst> "=" 
+					(
+					    Src<out src0> 
+					    Operation<out op> 
+					    Src<out src1>
+					  | "call" 			(. op = 15 .)
+					    Src<out src0> 
+					    "(" Src<out src1> ")"
+					)				(.
+									   cmd |= (cond['r'] << 12) | (cond['rop'] << 26) | (cond['isptr'] << 19)
+									   cmd |= (dst['r'] << 8) | (dst['rop'] << 24) | (dst['isptr'] << 18)
+									   cmd |= (src1['r'] << 0) | (src1['rop'] << 20) | (src1['isptr'] << 16)
+									   cmd |= (src0['r'] << 4) | (src0['rop'] << 22) | (src0['isptr'] << 17)
+									   cmd |= (op << 28)
+									.)
+			 | Const<out num>                               (. cmd = num .)
+			)						(.
+									   self.code.append(cmd)
+									   #self.ip += 1
+									   #print "%08x\t// 0x%X" % (cmd, self.ip)
+									   self.ip += 1
+									.)
+			.
+//Conditional { AssignmentOperator Expression }.
+
+  Operation<out op>	= 						(. op = 0 .)
+			(
+			    "|"						(. op = 9 .)
+			  | "^"						(. op = 7 .)
+			  | "&"						(. op = 8 .)
+			  | "<<"					(. op = 6 .)
+			  | ">>"					(. op = 5 .)
+			  | "+"						(. op = 1 .)
+			  | "-"						(. op = 2 .)
+			  | "*"						(. op = 3 .)
+			  | "/"						(. op = 4 .)
+//			  | 
+//			  | 
+//			  | 
+			).
+
+  Const<out num> 	= Conditional<out num>.
+
+  Conditional<out num>	= LogORExp<out num> .
+
+  LogORExp<out num>	= LogANDExp<out num>   { "||" LogANDExp<out num> } .
+
+  LogANDExp<out num>	= InclORExp<out num>   { "&&" InclORExp<out num> }.
+
+  InclORExp<out num>	= ExclORExp<out num>   { "|" ExclORExp<out num> } .
+
+  ExclORExp<out num>	= ANDExp<out num>      { "^" ANDExp<out num> } .
+
+  ANDExp<out num>	= EqualExp<out num>    { "&" EqualExp<out num> } .
+
+  EqualExp<out num>	= RelationExp<out num> { ( "==" | "!=" ) RelationExp<out num> } .
+
+  RelationExp<out num>	= ShiftExp<out num>    { ( "<" | ">" | "<=" | ">=" ) ShiftExp<out num> }.
+
+  ShiftExp<out num>	= AddExp<out num>      { ( "<<" | ">>" ) AddExp<out num> } .
+
+  AddExp<out num>	= MultExp<out num>     { ( "+" | "-" ) MultExp<out num> } .
+
+  MultExp<out num>	= CastExp<out num>     { ( "*" | "/" | "%" ) CastExp<out num> } .
+
+  CastExp<out num>	= UnaryExp<out num> .
+
+/* we should really add
+                         | "(" identifier ")" CastExp .
+   but this breaks it badly */
+
+  UnaryExp<out num>	=  PostFixExp<out num>
+//                         | ( "++" | "--" ) UnaryExp
+                         | UnaryOperator CastExp<out num> .
+
+/* we should really add
+                         | "sizeof" ( UnaryExp | "(" Type ")" ) .
+   but this breaks it badly */
+
+  PostFixExp<out num>	= Primary<out num>
+                         { 
+//			      "[" Expression "]"
+//                          | FunctionCall
+                            "." identifier
+//                          | "->" identifier
+//                          | "++"
+//                          | "--"
+                         } .
+
+  Primary<out num>	= 						(. num = 0 .)
+			(
+			  identifier 					(. 
+									   lbl = self.token.val
+									   if lbl in self.funcs[self.curfunc]['lbls'] :
+									      num = self.funcs[self.curfunc]['lbls'][lbl]
+									   else:
+									      self.SemErr( "Error: use of not defined label '%s'" % (lbl,) )
+									.)
+			| string 
+			| char 
+			| number 					(. num = int( self.token.val ) .)
+			| "(" Conditional<out num> ")" 
+			) .
+
+//  FunctionCall         = "(" [ ActualParameters ] ")" .
+
+//  ActualParameters     = Expression { "," Expression } .
+
+//  AssignmentOperator   = "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "&="
+//                         | "^=" | "|=" | "<<=" | ">>=" .
+
+  UnaryOperator        = ("+" | "-" | "|" | "^" | "!" | "&" | "~") .
+
+
+  Cond<out r>		= Src<out r> . 
+			/*( RegName | "[" RegName "]" ) . */
+
+
+  Dst<out r>		= Src<out r> .
+
+
+  Src<out r>		= ( 
+			     ("Z" | "z")		(. r = {'r': 0, 'rop': 3, 'isptr': 0} .)
+			   | RegOp<out r>		(. r['isptr'] = 0 .)
+			   | "[" RegOp<out r> "]"	(. r['isptr'] = 1 .)
+			  ) .
+
+
+  RegOp<out r>		= RegName<out r> 		(. r['rop'] = 0 .)
+				     [ 
+					  "++"		(. r['rop'] = 1 .)
+					| "--"		(. r['rop'] = 2 .)
+				     ] .
+
+
+  RegName< out r >	= 				(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
+			  (
+			     "r0"			(. r['r'] = 0 .)
+			   | "r1"			(. r['r'] = 1 .)
+			   | "r2"			(. r['r'] = 2 .)
+			   | "r3"			(. r['r'] = 3 .)
+			   | "r4"			(. r['r'] = 4 .)
+			   | "r5"			(. r['r'] = 5 .)
+			   | "r6"			(. r['r'] = 6 .)
+			   | "r7"			(. r['r'] = 7 .)
+			   | "r8"			(. r['r'] = 8 .)
+			   | "r9"			(. r['r'] = 9 .)
+			   | "r10"			(. r['r'] = 10 .)
+			   | "r11"			(. r['r'] = 11 .)
+			   | "r12"			(. r['r'] = 12 .)
+			   | "r13"			(. r['r'] = 13 .)
+			   | "r14"			(. r['r'] = 14 .)
+			   | "r15"			(. r['r'] = 15 .)
+			  ) .
+
+
+END Asm.
