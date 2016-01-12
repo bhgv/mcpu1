@@ -91,7 +91,7 @@ module BridgeToOutside (
   
   inout [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
-  tri [`ADDR_SIZE0:0] addr = addr_r;
+  tri [`ADDR_SIZE0:0] addr; // = addr_r;
   
   input tri read_q;
   input tri  write_q;
@@ -183,6 +183,7 @@ module BridgeToOutside (
                         state == `READ_SRC1_P ||
                         state == `READ_SRC0 ||
                         state == `READ_SRC0_P ||
+                        state == `READ_DST ||
                         state == `START_READ_CMD ||
                         state == `START_READ_CMD_P
                         ) &&
@@ -193,6 +194,7 @@ module BridgeToOutside (
   inout ext_write_q;
   tri ext_write_q   = (state == `WRITE_REG_IP ||
                         state == `WRITE_DST    ||
+                        state == `WRITE_DST_P  ||
                         state == `WRITE_SRC1   ||
                         state == `WRITE_SRC0   ||
                         state == `WRITE_COND

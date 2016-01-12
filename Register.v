@@ -22,12 +22,14 @@ module RegisterManager (
             data,
             
             register,
+            reg_ptr,
             
             isRegPtr,
             regFlags,
             regNum,
             
             isNeedSave,
+            isDinamic,
             
             read_q,
             write_q,
@@ -73,23 +75,27 @@ module RegisterManager (
   
   input wire isNeedSave;
   
+  input wire isDinamic;
+  
   input wire [`ADDR_SIZE0:0] base_addr;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
 
 
 
   inout [`DATA_SIZE0:0] register;
-  reg [`DATA_SIZE0:0] register_r_adr;
+  inout [`DATA_SIZE0:0] reg_ptr;
+  wire [`DATA_SIZE0:0] register_r_adr = /*base_addr +*/ regNum /* `DATA_SIZE*/;
   reg [`DATA_SIZE0:0] register_r_ptr;
   reg [`DATA_SIZE0:0] register_r;
-  tri [`DATA_SIZE0:0] register = (reg_op == `REG_OP_CATCH_DATA) //(state == `ALU_BEGIN) 
+  tri [`DATA_SIZE0:0] register = (reg_op == `REG_OP_CATCH_DATA) 
                                               ? `ADDR_SIZE'h zzzzzzzz
                                               : register_r
                                               ;  // tri or wire ??
+
                                               
-  wire [`DATA_SIZE0:0] data_to_save = (isRegPtr == 1) 
-                                              ? register_r_ptr
-                                              : register_r
+  wire [`DATA_SIZE0:0] data_to_save = (isRegPtr == 0 || reg_op == `REG_OP_WRITE) 
+                                              ? register_r
+                                              : register_r_ptr
                                               ;
                                               
   wire [`DATA_SIZE0:0] data_post_inc_dec = (regFlags == 2'b 01)
@@ -98,6 +104,13 @@ module RegisterManager (
                                                   ? data_to_save - 1
                                                   : data_to_save
                                               ;
+
+
+  tri [`DATA_SIZE0:0] reg_ptr = (reg_op == `REG_OP_CATCH_DATA) 
+                                              ? `ADDR_SIZE'h zzzzzzzz
+                                              : data_post_inc_dec
+                                              ;  // tri or wire ??
+                                              
   
   reg register_waiting;
   reg registerptr_waiting;
@@ -110,7 +123,8 @@ module RegisterManager (
   tri [`ADDR_SIZE0:0] addr  = (
                         reg_op == `REG_OP_READ ||
                         reg_op == `REG_OP_READ_P ||
-                        reg_op == `REG_OP_WRITE 
+                        reg_op == `REG_OP_WRITE ||
+                        reg_op == `REG_OP_WRITE_P
 /*                        
                         state == `READ_COND ||
                         state == `READ_COND_P ||
@@ -128,8 +142,11 @@ module RegisterManager (
                         disp_online == 1 
 //                        && (!ext_next_cpu_e == 1)
                         ? addr_r
-                        : `ADDR_SIZE'h zzzzzzzz;
+                        : `ADDR_SIZE'h zzzzzzzz
+                        ;
   
+  wire [`ADDR_SIZE0:0] addr_to_save = (isRegPtr && reg_op == `REG_OP_WRITE) ? register_r_ptr : /*base_addr +*/ regNum;
+
 
 
   input wire [1:0] cpu_ind_rel;
@@ -168,8 +185,12 @@ module RegisterManager (
   
   inout [`DATA_SIZE0:0] data;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data =  reg_op == `REG_OP_WRITE  
-                              //&& write_q === 1'b 1 
+  tri [`DATA_SIZE0:0] data =  (
+                                reg_op == `REG_OP_WRITE 
+                                || reg_op == `REG_OP_WRITE_P
+                                //&& write_q === 1'b 1 
+                              ) &&
+                              disp_online == 1 
                                         ? data_r
                                         : `DATA_SIZE'h zzzzzzzz;
 //  assign data = write_q==1 ? dst_r : 32'h z;
@@ -363,12 +384,21 @@ module RegisterManager (
         
 
 //    end else begin
+      if(reg_op != `REG_OP_CATCH_DATA) catched = 0;
+      
+//      if(state == `ALU_BEGIN) begin
+//        catched = 0;
+//      end
      
       case(reg_op)
       
         `REG_OP_CATCH_DATA: begin
           if(catched == 0) begin
-            register_r = register;
+            register_r = state == `ALU_RESULTS ? register : reg_ptr;
+            
+            if(state != `ALU_RESULTS) begin
+              register_r_ptr = reg_ptr;
+            end
             catched = 1;
           end
             
@@ -377,7 +407,7 @@ module RegisterManager (
 
         `REG_OP_PREEXECUTE: begin
 //          dst_waiting = 1;
-          register_r_adr = /*base_addr +*/ regNum /* `DATA_SIZE*/;
+          //register_r_adr = /*base_addr +*/ regNum /* `DATA_SIZE*/;
                     
 //          if(&regDFlags == 0) dstw_waiting = 1;
 //          if(^regCondFlags == 1) condw_waiting = 1;
@@ -397,7 +427,7 @@ module RegisterManager (
                   if(addr === register_r_adr) begin
                     register_r = data;
                     register_r_ptr = data;
-                    register_waiting = 0;
+                    /*if(! isDinamic )*/ register_waiting = 0;
                     next_state = 1;
                   end
               end
@@ -415,10 +445,6 @@ module RegisterManager (
                 addr_r = `ADDR_SIZE'h zzzzzzzz;
                 read_q_r = 1'bz;
               end else 
-//              if(register_r_adr == 15) begin // 4'h f <- ip reg
-//                register_r = cmd_ptr;
-//                next_state = 1;
-//              end else 
               if(disp_online == 1 && single == 1) begin
                 addr_r = register_r_adr;
                 read_q_r = 1;
@@ -436,10 +462,10 @@ module RegisterManager (
         `REG_OP_READ_P: begin
           if(is_bus_busy == 1) begin
             if(read_dn == 1 && registerptr_waiting == 1) begin
-                if(addr === register_r) begin
+                if(addr === register_r_ptr) begin
 //                  register_r_ptr = register_r;
                   register_r = data;
-                  registerptr_waiting = 0;
+                  /*if(! isDinamic )*/ registerptr_waiting = 0;
                   next_state = 1;
                 end
             end
@@ -456,15 +482,10 @@ module RegisterManager (
               addr_r = `ADDR_SIZE'h zzzzzzzz;
               read_q_r = 1'bz;
             end else
-//            if(register_r == 15) begin // 4'h f <- ip reg
-//              register_r_adr = register_r;
-//              register_r = cmd_ptr;
-//              next_state = 1;
-//            end else 
             if(disp_online == 1 && single == 1) begin
 //              register_r_ptr = register_r;
-              addr_r = register_r; //cond_r_aux;
-              register_r_adr = register_r;
+              addr_r = register_r_ptr; //register_r; //cond_r_aux;
+//              register_r_adr = register_r;
               read_q_r = 1;
               halt_q_r = 1;
               registerptr_waiting = 1;
@@ -510,9 +531,12 @@ module RegisterManager (
         end
 
         
-        `REG_OP_WRITE: begin
+        `REG_OP_WRITE, `REG_OP_WRITE_P: begin
           if(is_bus_busy == 1) begin
-            if(write_dn == 1 && addr === (/*base_addr +*/ regNum)) begin
+            if(
+                write_dn == 1 && 
+                addr === addr_to_save
+            ) begin
               registerw_waiting = 0;
               next_state = 1;
             end
@@ -521,8 +545,8 @@ module RegisterManager (
               write_q_r = 1'bz;
             end else //if(write_dn == 0) 
             if(disp_online == 1 && single == 1) begin
-              data_r = data_post_inc_dec; //register_r;
-              addr_r = /*base_addr +*/ regNum;
+              data_r = /*reg_op == `REG_OP_WRITE_P ?*/ data_post_inc_dec; // : register_r; //register_r;
+              addr_r = addr_to_save;
               write_q_r = 1;
               
               single = 0;
@@ -532,9 +556,9 @@ module RegisterManager (
           end
         end
                 
-        `REG_OP_FINISH_BEGIN: begin
-          registerw_waiting = 0;
-        end
+//        `REG_OP_FINISH_BEGIN: begin
+//          registerw_waiting = 0;
+//        end
 
       endcase
       

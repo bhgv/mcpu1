@@ -89,6 +89,9 @@ module StateManager(
         || state == `ALU_BEGIN
         || state == `ALU_RESULTS
         || state == `WRITE_PREP
+        || state == `FILL_COND
+        || state == `FILL_SRC1
+        || state == `FILL_SRC0
       )
     ) begin
     
@@ -128,17 +131,19 @@ module StateManager(
         
         `PREEXECUTE: begin
           if(
-            (&regDFlags == 0 && regNumD == 4'h f) ||
-//            (^regCondFlags && regNumCnd == 4'h f) ||
-            (^regS1Flags && regNumS1 == 4'h f) ||
-            (^regS0Flags && regNumS0 == 4'h f)
+            (&regDFlags == 0 && regNumD == `REG_IP) ||
+            (^regCondFlags && regNumCnd == `REG_IP) ||
+            (^regS1Flags && regNumS1 == `REG_IP) ||
+            (^regS0Flags && regNumS0 == `REG_IP)
           ) begin
             if(&regCondFlags == 0) 
-              state = `READ_COND;
+              state = (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
             else if(&regS1Flags == 0) 
-              state = `READ_SRC1;
+              state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
             else if(&regS0Flags == 0) 
-              state = `READ_SRC0;
+              state = (regNumS0 == `REG_IP || regNumS0 == regNumCnd || regNumS0 == regNumS1) ? `FILL_SRC0 : `READ_SRC0;
+            else if(isRegDPtr == 1) 
+              state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
             else
               state = `ALU_BEGIN;
           end else begin
@@ -149,21 +154,25 @@ module StateManager(
 /**/
         `WRITE_REG_IP: begin
           if(&regCondFlags == 0) 
-            state = `READ_COND;
+            state = (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
           else if(&regS1Flags == 0) 
-            state = `READ_SRC1;
-          else if(&regS0Flags == 0) 
-            state = `READ_SRC0;
+            state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
+          else if(isRegDPtr == 1) 
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
         end
 /**/
         
-        `READ_COND: begin
+        `READ_COND, `FILL_COND: begin
           if(&regS1Flags == 0) 
-            state = `READ_SRC1;
+            state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
-            state = `READ_SRC0;
+            state = (regNumS0 == `REG_IP || regNumS0 == regNumCnd || regNumS0 == regNumS1) ? `FILL_SRC0 : `READ_SRC0;
+          else if(&regS0Flags == 0) 
+            state = (regNumS0 == `REG_IP || regNumS0 == regNumCnd || regNumS0 == regNumS1) ? `FILL_SRC0 : `READ_SRC0;
+          else if(isRegDPtr == 1) 
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
         
@@ -180,9 +189,11 @@ module StateManager(
         
         `READ_COND_P: begin
           if(&regS1Flags == 0) 
-            state = `READ_SRC1;
+            state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
-            state = `READ_SRC0;
+            state = (regNumS0 == `REG_IP || regNumS0 == regNumCnd || regNumS0 == regNumS1) ? `FILL_SRC0 : `READ_SRC0;
+          else if(isRegDPtr == 1) 
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
         
@@ -192,9 +203,11 @@ module StateManager(
           end
         end
         
-        `READ_SRC1: begin
+        `READ_SRC1, `FILL_SRC1: begin
           if(&regS0Flags == 0) 
-            state = `READ_SRC0;
+            state = (regNumS0 == `REG_IP || regNumS0 == regNumCnd || regNumS0 == regNumS1) ? `FILL_SRC0 : `READ_SRC0;
+          else if(isRegDPtr == 1) 
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
 
@@ -208,25 +221,44 @@ module StateManager(
 
         `READ_SRC1_P: begin
           if(&regS0Flags == 0) 
-            state = `READ_SRC0;
+            state = (regNumS0 == `REG_IP || regNumS0 == regNumCnd || regNumS0 == regNumS1) ? `FILL_SRC0 : `READ_SRC0;
+          else if(isRegDPtr == 1) 
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
         end
 
-        `READ_SRC0: begin
+        `READ_SRC0, `FILL_SRC0: begin
           if(
 //            &regS0Flags == 0 &&
             isRegS0Ptr == 1
           ) begin
             state = `READ_SRC0_P;
+          end
+          else if(isRegDPtr == 1) begin
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           end else begin
             state = `ALU_BEGIN;
           end
         end
 
         `READ_SRC0_P: begin
-          state = `ALU_BEGIN;
+          if(isRegDPtr == 1) 
+            state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
+          else
+            state = `ALU_BEGIN;
         end
+        
+        `FILL_DST_P, `READ_DST: begin
+//          if(regNumD == `REG_IP)
+//            state = `READ_DST_P;
+//          else
+            state = `ALU_BEGIN;
+        end
+        
+//        `READ_DST_P: begin
+//          state = `ALU_BEGIN;
+//        end
 
         `ALU_BEGIN: begin
             state = `ALU_RESULTS;
@@ -249,20 +281,20 @@ module StateManager(
                     );
 */
           if(
-            &regDFlags == 0 && 
-//            (regNumCnd != regNumD || ^regCondFlags == 0) &&
+//            &regDFlags == 0 && 
+            (regNumCnd != regNumD || ^regCondFlags == 0) &&
             (regNumS1  != regNumD || ^regS1Flags == 0) &&
             (regNumS0  != regNumD || ^regS0Flags == 0)
           ) begin
-            state = `WRITE_DST;
+            state = isRegDPtr == 1'b 1 ? `WRITE_DST_P : `WRITE_DST;
           end else
-//          if(
-//            ^regCondFlags == 1 && 
-//            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
-//            (regNumS0  != regNumCnd || ^regS0Flags == 0)
-//          ) begin
-//            state = `WRITE_COND;
-//          end else
+          if(
+            ^regCondFlags == 1 && 
+            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
+            (regNumS0  != regNumCnd || ^regS0Flags == 0)
+          ) begin
+            state = `WRITE_COND;
+          end else
           if(
             ^regS1Flags == 1 && 
             (regNumS0  != regNumS1 || ^regS0Flags == 0)
@@ -279,18 +311,26 @@ module StateManager(
           end
         end
         
-        `WRITE_DST: begin
-//          if(
-//            ^regCondFlags == 1 && 
-//            (regNumS1  != regNumCnd &&
-//             regNumS0  != regNumCnd
-//            )
-//          ) begin
-//            state = `WRITE_COND;
-//          end else
+        `WRITE_DST, `WRITE_DST_P: begin
+          if(
+//            isRegDPtr == 1 && 
+//            ^regDFlags == 1 && 
+            state == `WRITE_DST_P
+          ) begin
+            state = `WRITE_DST;
+          end else
+          if(
+            ^regCondFlags == 1 && 
+            (regNumS1  != regNumCnd &&
+             regNumS0  != regNumCnd
+            )
+          ) begin
+            state = `WRITE_COND;
+          end else
           if(
             ^regS1Flags == 1 && 
             (regNumS0  != regNumS1
+             || ^regS0Flags == 0
             )
           ) begin
             state = `WRITE_SRC1;

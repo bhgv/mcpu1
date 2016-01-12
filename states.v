@@ -8,24 +8,33 @@
 
 
 
-`define WAIT_FOR_START 0
+`define WAIT_FOR_START   0
 
-`define START_BEGIN 1
-`define START_READ_CMD 2
+`define START_BEGIN      1
+`define START_READ_CMD   2
 `define START_READ_CMD_P 3
-`define PREEXECUTE   4
-`define WRITE_REG_IP 5
+`define PREEXECUTE       4
+`define WRITE_REG_IP     5
 
 
 //`define BASE_ADDR_SET 3
 
+`define FILL_COND    23
 `define READ_COND    6
 `define READ_COND_P  7
 //`define READ_DATA  5
+
+`define FILL_SRC1    21
 `define READ_SRC1    8
 `define READ_SRC1_P  9
+
+`define FILL_SRC0    22
 `define READ_SRC0    10
 `define READ_SRC0_P  11
+
+`define FILL_DST_P   25
+`define READ_DST     26
+`define READ_DST_P   27
 
 `define ALU_BEGIN  12
 `define ALU_RESULTS 20
@@ -38,6 +47,8 @@
 `define WRITE_COND 15
 `define WRITE_SRC1 16
 `define WRITE_SRC0 17
+
+`define WRITE_DST_P  24
 
 
 `define FINISH_BEGIN 18

@@ -150,12 +150,21 @@ module MemManager (
   input  wire write_dn;
 //  output reg read_e;
 //  output reg write_e;
+
+
   
+  inout [`DATA_SIZE0:0] cond;
+  inout [`DATA_SIZE0:0] src1;
+  inout [`DATA_SIZE0:0] src0;
+  inout [`DATA_SIZE0:0] dst;
 
 
+
+  tri [`DATA_SIZE0:0] cond_ptr;
 
 
   reg [`SIZE_REG_OP-1:0] cmd_op;
+  tri [`DATA_SIZE0:0] ip_ptr;
   
   RegisterManager cmd_dev (
             .clk(clk), 
@@ -173,12 +182,14 @@ module MemManager (
             .data(data),
             
             .register(command_word),
+            .reg_ptr(ip_ptr),
             
             .isRegPtr(1),      //ip is ptr of cmd
             .regFlags(2'b 01), //post-increment
             .regNum(4'b 1111), //0xf is the number of ip reg
             
             .isNeedSave(1'b 1),
+            .isDinamic(1'b 0),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -198,7 +209,6 @@ module MemManager (
 
 
 
-  inout tri [`DATA_SIZE0:0] src1;
 //  reg [`DATA_SIZE0:0] src1_r_adr;
 //  reg [`DATA_SIZE0:0] src1_r;
 //  wire [`DATA_SIZE0:0] src1 = src1_r;
@@ -206,7 +216,39 @@ module MemManager (
 //  reg src1ptr_waiting;
 //  reg src1w_waiting;
   
-  reg [`SIZE_REG_OP-1:0] src1_op;
+  wire [`SIZE_REG_OP-1:0] src1_op = (state == `FILL_SRC1)
+                                    ? `REG_OP_CATCH_DATA
+                                    : (state == `READ_SRC1)
+                                    ? `REG_OP_READ
+                                    : (state == `READ_SRC1_P)
+                                    ? `REG_OP_READ_P
+                                    : (state == `WRITE_PREP)
+                                    ? `REG_OP_WRITE_PREP
+                                    : (state == `WRITE_SRC1)
+                                    ? `REG_OP_WRITE
+                                    : (state == `PREEXECUTE)
+                                    ? `REG_OP_PREEXECUTE
+                                    : `REG_OP_NULL
+                                  ;
+  
+  tri [`DATA_SIZE0:0] src1_ptr = (src1_op == `REG_OP_CATCH_DATA) 
+                                              ? ( regNumS1 == `REG_IP 
+                                                            ? ip_ptr 
+                                                            : ( regNumS1 == regNumCnd
+                                                                          ? cond_ptr
+                                                                          : `ADDR_SIZE'h zzzzzzzz 
+                                                              )
+                                                )
+                                              : `ADDR_SIZE'h zzzzzzzz
+                                              ;
+                                              
+  tri [`DATA_SIZE0:0] src1 = (state == `FILL_SRC1) 
+                                  ? (regNumS1 == regNumCnd
+                                       ? cond
+                                       : `ADDR_SIZE'h zzzzzzzz
+                                    )
+                                  : `ADDR_SIZE'h zzzzzzzz
+                                  ;
   
   RegisterManager src1_dev (
             .clk(clk), 
@@ -224,12 +266,14 @@ module MemManager (
             .data(data),
             
             .register(src1),
+            .reg_ptr(src1_ptr),
             
             .isRegPtr(isRegS1Ptr),
             .regFlags(regS1Flags),
             .regNum(regNumS1),
             
             .isNeedSave(1'b 0),
+            .isDinamic(1'b 0),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -246,7 +290,6 @@ module MemManager (
             );
 
 
-  inout tri [`DATA_SIZE0:0] src0;
 //  reg [`DATA_SIZE0:0] src0_r_adr;
 //  reg [`DATA_SIZE0:0] src0_r;
 //  wire [`DATA_SIZE0:0] src0 = src0_r;
@@ -254,8 +297,45 @@ module MemManager (
 //  reg src0ptr_waiting;
 //  reg src0w_waiting;
   
-  reg [`SIZE_REG_OP-1:0] src0_op;
-  
+  wire [`SIZE_REG_OP-1:0] src0_op = (state == `FILL_SRC0)
+                                    ? `REG_OP_CATCH_DATA
+                                    : (state == `READ_SRC0)
+                                    ? `REG_OP_READ
+                                    : (state == `READ_SRC0_P)
+                                    ? `REG_OP_READ_P
+                                    : (state == `WRITE_PREP)
+                                    ? `REG_OP_WRITE_PREP
+                                    : (state == `WRITE_SRC0)
+                                    ? `REG_OP_WRITE
+                                    : (state == `PREEXECUTE)
+                                    ? `REG_OP_PREEXECUTE
+                                    : `REG_OP_NULL
+                                  ;
+
+  tri [`DATA_SIZE0:0] src0_ptr = (src0_op == `REG_OP_CATCH_DATA) 
+                                              ? ( regNumS0 == `REG_IP 
+                                                            ? ip_ptr 
+                                                            : ( regNumS0 == regNumCnd
+                                                                          ? cond_ptr
+                                                                          : (regNumS0 == regNumS1 
+                                                                                       ? src1_ptr
+                                                                                       : `ADDR_SIZE'h zzzzzzzz 
+                                                                            )
+                                                              )
+                                                )
+                                              : `ADDR_SIZE'h zzzzzzzz
+                                              ;
+
+  tri [`DATA_SIZE0:0] src0 =  (src0_op == `REG_OP_CATCH_DATA) 
+                                   ? (regNumS0 == regNumCnd
+                                         ? cond
+                                         : (regNumS0 == regNumS1)
+                                                   ? src1 
+                                                   : `ADDR_SIZE'h zzzzzzzz
+                                     )
+                                   : `ADDR_SIZE'h zzzzzzzz
+                              ;
+ 
   RegisterManager src0_dev (
             .clk(clk), 
             .state(state),
@@ -272,12 +352,14 @@ module MemManager (
             .data(data),
             
             .register(src0),
+            .reg_ptr(src0_ptr),
             
             .isRegPtr(isRegS0Ptr),
             .regFlags(regS0Flags),
             .regNum(regNumS0),
             
             .isNeedSave(1'b 0),
+            .isDinamic(1'b 0),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -294,7 +376,6 @@ module MemManager (
             );
 
 
-  inout tri [`DATA_SIZE0:0] dst;
 //  reg [`DATA_SIZE0:0] dst_r_adr;
 //  reg [`DATA_SIZE0:0] dst_r;
 //  wire [`DATA_SIZE0:0] dst = dst_r;
@@ -302,7 +383,43 @@ module MemManager (
 //  reg dstptr_waiting;
 //  reg dstw_waiting;
   
-  reg [`SIZE_REG_OP-1:0] dst_op;
+  wire [`SIZE_REG_OP-1:0] dst_op = (state == `ALU_RESULTS)
+                                    ? `REG_OP_CATCH_DATA
+                                    :(state == `FILL_DST_P)
+                                    ? `REG_OP_CATCH_DATA
+                                    : (state == `READ_DST)
+                                    ? `REG_OP_READ
+//                                    : (state == `READ_DST_P)
+//                                    ? `REG_OP_READ_P
+                                    :(state == `WRITE_PREP)
+                                    ? `REG_OP_WRITE_PREP
+                                    : (state == `WRITE_DST)
+                                    ? `REG_OP_WRITE
+                                    : (state == `WRITE_DST_P)
+                                    ? `REG_OP_WRITE_P
+                                    : (state == `PREEXECUTE)
+                                    ? `REG_OP_PREEXECUTE
+                                    : `REG_OP_NULL
+                                  ;
+                                  
+  tri [`DATA_SIZE0:0] dst_ptr = (dst_op == `REG_OP_CATCH_DATA) 
+                                              ? ( regNumD == `REG_IP 
+                                                            ? ip_ptr 
+                                                            : (regNumD == regNumCnd
+                                                                        ? cond_ptr
+                                                                        : (regNumD == regNumS1 
+                                                                                    ? src1_ptr
+                                                                                    : (regNumD == regNumS0 
+                                                                                                ? src0_ptr
+                                                                                                : `ADDR_SIZE'h zzzzzzzz 
+                                                                                      )
+                                                                          )
+                                                              )
+                                                )
+                                              : `ADDR_SIZE'h zzzzzzzz
+                                              ;
+                                              
+  tri [`DATA_SIZE0:0] dst;
   
   RegisterManager dst_dev (
             .clk(clk), 
@@ -320,12 +437,14 @@ module MemManager (
             .data(data),
             
             .register(dst),
+            .reg_ptr(dst_ptr),
             
             .isRegPtr(isRegDPtr),
             .regFlags(regDFlags),
             .regNum(regNumD),
             
             .isNeedSave(1),
+            .isDinamic(1'b 0),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -347,7 +466,7 @@ module MemManager (
 
 
 
-  inout tri [`DATA_SIZE0:0] cond;
+//  inout tri [`DATA_SIZE0:0] cond;
 //  reg [`DATA_SIZE0:0] cond_r_adr;
 //  reg [`DATA_SIZE0:0] cond_r;
 //  wire [`DATA_SIZE0:0] cond = cond_r;
@@ -355,7 +474,27 @@ module MemManager (
 //  reg condptr_waiting;
 //  reg condw_waiting;
   
-  reg [`SIZE_REG_OP-1:0] cond_op;
+  wire [`SIZE_REG_OP-1:0] cond_op = (state == `FILL_COND)
+                                    ? `REG_OP_CATCH_DATA
+                                    : (state == `READ_COND)
+                                    ? `REG_OP_READ
+                                    : (state == `READ_COND_P)
+                                    ? `REG_OP_READ_P
+                                    : (state == `WRITE_PREP)
+                                    ? `REG_OP_WRITE_PREP
+                                    : (state == `WRITE_COND)
+                                    ? `REG_OP_WRITE
+                                    : (state == `PREEXECUTE)
+                                    ? `REG_OP_PREEXECUTE
+                                    : `REG_OP_NULL
+                                  ;
+
+    assign cond_ptr = (cond_op == `REG_OP_CATCH_DATA) 
+                                              ? ( regNumCnd == `REG_IP ? ip_ptr : `ADDR_SIZE'h zzzzzzzz )
+                                              : `ADDR_SIZE'h zzzzzzzz
+                                              ;
+                                              
+  tri [`DATA_SIZE0:0] cond;
   
   RegisterManager cond_dev (
             .clk(clk), 
@@ -373,12 +512,14 @@ module MemManager (
             .data(data),
             
             .register(cond),
+            .reg_ptr(cond_ptr),
             
             .isRegPtr(isRegCondPtr),
             .regFlags(regCondFlags),
             .regNum(regNumCnd),
             
             .isNeedSave(1'b 0),
+            .isDinamic(1'b 1),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -414,55 +555,7 @@ module MemManager (
     
     is_bus_busy_r = 1'b z;
     
-    src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL; cmd_op = `REG_OP_NULL; 
-
-    
-//    halt_q_r = 1'bz;
-
-//    rw_halt_r = 1'bz;
-//    if(halt_q === 1) begin
-//      if(cpu_ind_rel == 2'b01) begin
-
-/*
-        if(condw_waiting == 1 && rw_halt_r !== 1) begin
-//          if(isRegCondPtr == 0) begin
-            rw_halt_r = addr === (/ *base_addr +* / regNumCnd) ? 1 : 1'bz;
-//          end else begin
-//            rw_halt_r = addr == cond_r_adr ? 1 : 1'bz;
-//          end
-          cond_waiting = 0;
-        end
-      
-        if(src1w_waiting == 1 && rw_halt_r !== 1) begin
-//          if(isRegS1Ptr == 0) begin
-            rw_halt_r = addr === (/ *base_addr +* / regNumS1) ? 1 : 1'bz;
-//          end else begin
-//            rw_halt_r = addr == src1_r_adr ? 1 : 1'bz;
-//          end
-          src1_waiting = 0;
-        end 
-      
-        if(src0w_waiting == 1 && rw_halt_r !== 1) begin
-//          if(isRegS0Ptr == 0) begin
-            rw_halt_r = addr === (base_addr + regNumS0) ? 1 : 1'bz;
-//          end else begin
-//            rw_halt_r = addr == src0_r_adr ? 1 : 1'bz;
-//          end
-          src0_waiting = 0;
-        end 
-
-        if(dstw_waiting == 1 && rw_halt_r !== 1) begin
-//          if(isRegDPtr == 0) begin
-            rw_halt_r = addr === (/ *base_addr +* / regNumD) ? 1 : 1'bz;
-//          end else begin
-//            rw_halt_r = addr == dst_r_adr ? 1 : 1'bz;
-//          end
-//          dst_waiting = 0;
-        end 
-*/
-
-//      end
-//    end
+    /*src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL;*/ cmd_op = `REG_OP_NULL; 
     
     
 //    if(rw_halt == 1) begin
@@ -495,184 +588,12 @@ module MemManager (
 //    src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL; 
   end
   else begin
-     
-//    next_state = 1'b z;
-
-//    read_q = 1'b z;
-//    write_q = 1'b z;
-    
-    
-//    if(disp_online == 0) single = 1;
-    
-    
-//    if(is_bus_busy == 1) begin
-      
-//        addr_r = `ADDR_SIZE'h zzzzzzzz;
-        
-//        case(state)
-//          `READ_COND: begin
-//            cond_op = `REG_OP_READ;
-            /*
-            if(read_dn == 1 && cond_waiting == 1) begin
-                if(addr == cond_r_adr) begin
-                  cond_r = data;
-////                  cond_waiting = 0;
-//                  next_state = 1;
-                end
-            end
-            */
-//          end
-        
-//          `READ_COND_P: begin
-//            cond_op = `REG_OP_READ_P;
-            /*
-            if(read_dn == 1) begin
-                if(addr == cond_r) begin
-                  cond_r = data;
-                  condptr_waiting = 0;
-//                  next_state = 1;
-                end
-            end
-            */
-//          end
-
-//          `READ_SRC1: begin
-//            src1_op = `REG_OP_READ;
-            /*
-            if(read_dn == 1 && src1_waiting == 1) begin
-                if(addr == src1_r_adr) begin
-                  src1_r = data;
-////                  src1_waiting = 0;
-//                  next_state = 1;
-                end
-            end
-            */
-//          end
-        
-//          `READ_SRC1_P: begin
-//            src1_op = `REG_OP_READ_P;
-            /*
-            if(read_dn == 1) begin
-                if(addr == src1_r) begin
-                  src1_r = data;
-                  src1ptr_waiting = 0;
-//                  next_state = 1;
-                end
-            end
-            */
-//          end
-        
-//          `READ_SRC0: begin
-//            src0_op = `REG_OP_READ;
-            /*
-            if(read_dn == 1 && src0_waiting == 1) begin
-                if(addr == src0_r_adr) begin
-                  src0_r = data;
-////                  src0_waiting = 0;
-//                  next_state = 1;
-                end
-            end
-            */
-//          end
-        
-//          `READ_SRC0_P: begin
-//            src0_op = `REG_OP_READ_P;
-            /*
-            if(read_dn == 1) begin
-                if(addr == src0_r) begin
-                  src0_r = data;
-                  src0ptr_waiting = 0;
-//                  next_state = 1;
-                end
-            end
-            */
-//          end
           
-//          `WRITE_PREP: begin
-//            next_state = 1;
-//          end
-
-//          `WRITE_DST: begin
-//            dst_op = `REG_OP_WRITE;
-            /*
-            if(write_dn == 1 && addr == (/ *base_addr +* / regNumD)) begin
-              dstw_waiting = 0;
-//              next_state = 1;
-            end
-            */
-//          end
-           
-//          `WRITE_COND: begin
-//            cond_op = `REG_OP_WRITE;
-            /*
-            if(write_dn == 1 && addr == (/ *base_addr +* / regNumCnd)) begin
-              condw_waiting = 0;
-//              next_state = 1;
-            end
-            */
-//          end
-           
-//          `WRITE_SRC1: begin
-//            src1_op = `REG_OP_WRITE;
-            /*
-            if(write_dn == 1 && addr == (/ *base_addr +* / regNumS1)) begin
-              src1w_waiting = 0;
-//              next_state = 1;
-            end
-            */
-//          end
-           
-//          `WRITE_SRC0: begin
-//            src0_op = `REG_OP_WRITE;
-            /*
-            if(write_dn == 1 && addr == (/ *base_addr +* / regNumS0)) begin
-              src0w_waiting = 0;
-//              next_state  = 1;
-            end
-            */
-//          end
-          
-//          endcase
-        
-/*
-        if(src1_waiting == 1) begin if(
-              (src1ptr_waiting == 0 && addr == src1_r_adr) || 
-              (src1ptr_waiting == 1 && addr == src1_r)
-        ) begin
-          src1_r = data;
-          
-          src1_waiting = 0;
-          if(isRegS1Ptr==1 && src1ptr_waiting==0) begin
-            src1ptr_waiting = 1;
-          end else begin
-            src1ptr_waiting = 0;
-          end
-          
-          next_state = 1;
-
-        end end
-        ... ... ...
-*/
-/*
-      end
-      else
-      if(
-          write_dn == 1  && 
-          (
-          (state == `WRITE_DST  && addr == base_addr + regNumD) ||
-          (state == `WRITE_SRC1 && addr == base_addr + regNumS1) ||
-          (state == `WRITE_SRC0 && addr == base_addr + regNumS0) ||
-          (state == `WRITE_COND && addr == base_addr + regNumCnd)
-          )
-      ) begin
-        addr_r = 32'h zzzzzzzz;
-        data_r = 32'h zzzzzzzz;
-        next_state = 1;
-      end
-*/
-//    end else begin
-     
       case(state)
+//        `ALU_BEGIN: begin
+//          cmd_op = `REG_OP_NULL;
+//        end
+      
         `START_BEGIN: begin
           cmd_op = `REG_OP_PREEXECUTE;
         end
@@ -686,13 +607,13 @@ module MemManager (
         end
         
         `WRITE_REG_IP: begin
-          cmd_op = `REG_OP_WRITE;
+          cmd_op = `REG_OP_WRITE_P;
         end
         
         `ALU_RESULTS: begin
 //            src0_op = `REG_OP_CATCH_DATA;
 //            src1_op = `REG_OP_CATCH_DATA;
-            dst_op = `REG_OP_CATCH_DATA;
+//            dst_op = `REG_OP_CATCH_DATA;
 //            cond_op = `REG_OP_CATCH_DATA;
             
 //            next_state = 1;
@@ -703,7 +624,6 @@ module MemManager (
 //          dst_waiting = 1;
 //        end
         
-        //`WRITE_REG_IP
         `PREEXECUTE: begin
 //          dst_waiting = 1;
 //          cond_r_adr = /*base_addr +*/ regNumCnd /* `DATA_SIZE*/;
@@ -714,157 +634,50 @@ module MemManager (
 //          if(^regCondFlags == 1) condw_waiting = 1;
 //          if(^regS1Flags == 1) src1w_waiting = 1;
 //          if(^regS0Flags == 1) src0w_waiting = 1;
-            src0_op = `REG_OP_PREEXECUTE;
-            src1_op = `REG_OP_PREEXECUTE;
-            dst_op = `REG_OP_PREEXECUTE;
-            cond_op = `REG_OP_PREEXECUTE;
+//            src0_op = `REG_OP_PREEXECUTE;
+//            src1_op = `REG_OP_PREEXECUTE;
+//            dst_op = `REG_OP_PREEXECUTE;
+//            cond_op = `REG_OP_PREEXECUTE;
 
             cmd_op = `REG_OP_WRITE_PREP;
           
 //          next_state = 1;
         end
         
+        `FILL_COND: begin
+//          cond_op = `REG_OP_CATCH_DATA;
+        end
+        
         `READ_COND: begin
-          cond_op = `REG_OP_READ;
-          /*
-          if(read_q == 1) begin
-            addr_r = `ADDR_SIZE'h zzzzzzzz;
-//            read_q = 1'bz;
-          end else
-          if(cond_r_adr == 15) begin // 4'h f <- ip reg
-            cond_r = cmd_ptr;
-//            next_state = 1;
-          end else 
-          if(disp_online == 1 && single == 1) begin
-            addr_r = cond_r_adr;
-//            read_q = 1;
-            halt_q_r = 1;
-            if(^regCondFlags == 1) condptr_waiting = 1;
-            cond_waiting = 1;
-                
-            single = 0;
-          end
-          */
+//          cond_op = `REG_OP_READ;
         end
           
         `READ_COND_P: begin
-          cond_op = `REG_OP_READ_P;
-          /*
-          if(read_q == 1) begin
-            addr_r = `ADDR_SIZE'h zzzzzzzz;
-//            read_q = 1'bz;
-          end else
-          if(cond_r == 15) begin // 4'h f <- ip reg
-            cond_r_adr = cond_r;
-            cond_r = cmd_ptr;
-//            next_state = 1;
-          end else 
-          if(disp_online == 1 && single == 1) begin
-            addr_r = cond_r; //cond_r_aux;
-            cond_r_adr = cond_r;
-//            read_q = 1;
-            halt_q_r = 1;
-//            condptr_waiting = 1;
-            
-            single = 0;
-          end
-          */
+//          cond_op = `REG_OP_READ_P;
         end
 
+        `FILL_SRC1: begin
+//          src1_op = `REG_OP_CATCH_DATA;
+        end
+        
         `READ_SRC1: begin
-          src1_op = `REG_OP_READ;
-          /*
-          if(read_q == 1) begin
-            addr_r = `ADDR_SIZE'h zzzzzzzz;
-//            read_q = 1'bz;
-          end else 
-          if(src1_r_adr == 15) begin // 4'h f <- ip reg
-            src1_r = cmd_ptr;
-//            next_state = 1;
-          end else 
-          if(disp_online == 1 && single == 1) begin
-            addr_r = src1_r_adr;
-//            read_q = 1;
-            halt_q_r = 1;
-            
-            if(^regS1Flags == 1) src1ptr_waiting = 1;
-            src1_waiting = 1;
-
-            single = 0;
-          end
-          */
+//          src1_op = `REG_OP_READ;
         end
           
         `READ_SRC1_P: begin
-          src1_op = `REG_OP_READ_P;
-          /*
-          if(read_q == 1) begin
-            addr_r = `ADDR_SIZE'h zzzzzzzz;
-//            read_q = 1'bz;
-          end else
-          if(src1_r == 15) begin // 4'h f <- ip reg
-            src1_r_adr = src1_r;
-            src1_r = cmd_ptr;
-//            next_state = 1;
-          end else 
-          if(disp_online == 1 && single == 1) begin
-            addr_r = src1_r; //cond_r_aux;
-            src1_r_adr = src1_r;
-//            read_q = 1;
-            halt_q_r = 1;
-//            src1ptr_waiting = 1;
-            
-            single = 0;
-          end
-          */
+//          src1_op = `REG_OP_READ_P;
         end
 
+        `FILL_SRC0: begin
+//          src0_op = `REG_OP_CATCH_DATA;
+        end
+        
         `READ_SRC0: begin
-          src0_op = `REG_OP_READ;
-          /*
-          if(read_q == 1) begin
-            addr_r = `ADDR_SIZE'h zzzzzzzz;
-//            read_q = 1'bz;
-          end else //begin
-          if(src0_r_adr == 15) begin // 4'h f <- ip reg
-            src0_r = cmd_ptr;
-//            next_state = 1;
-          end else 
-          if(disp_online == 1 && single == 1) begin
-            addr_r = src0_r_adr;
-//            read_q = 1;
-            halt_q_r = 1;
-            
-            if(^regS0Flags == 1) src0ptr_waiting = 1;
-            src0_waiting = 1;
-
-            single = 0;
-          end
-          */
+//          src0_op = `REG_OP_READ;
         end
          
         `READ_SRC0_P: begin
-          src0_op = `REG_OP_READ_P;
-          /*
-          if(read_q == 1) begin
-            addr_r = `ADDR_SIZE'h zzzzzzzz;
-//            read_q = 1'bz;
-          end else
-          if(src0_r == 15) begin // 4'h f <- ip reg
-            src0_r_adr = src0_r;
-            src0_r = cmd_ptr;
-//            next_state = 1;
-          end else 
-          if(disp_online == 1 && single == 1) begin
-            addr_r = src0_r; //cond_r_aux;
-            src0_r_adr = src0_r;
-//            read_q = 1;
-            halt_q_r = 1;
-//            src0ptr_waiting = 1;
-            
-            single = 0;
-          end
-          */
+//          src0_op = `REG_OP_READ_P;
         end
         
         `WRITE_PREP: begin
@@ -894,92 +707,32 @@ module MemManager (
 //              src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
 //            end
             
-            src1_op = `REG_OP_WRITE_PREP;
-            src0_op = `REG_OP_WRITE_PREP;
-            dst_op = `REG_OP_WRITE_PREP;
-            cond_op = `REG_OP_WRITE_PREP;
+//            src1_op = `REG_OP_WRITE_PREP;
+//            src0_op = `REG_OP_WRITE_PREP;
+//            dst_op = `REG_OP_WRITE_PREP;
+//            cond_op = `REG_OP_WRITE_PREP;
             
 //            next_state = 1;
         end
 
         `WRITE_DST: begin
-          dst_op = `REG_OP_WRITE;
-          /*
-          if(write_q == 1) begin
-//            write_q = 1'bz;
-          end else
-          if(disp_online == 1 && single == 1) begin
-            data_r = dst_r;
-            addr_r = / *base_addr +* / regNumD / * ((`DATA_SIZE0+1)/8)* /;
-//            write_q = 1;
-            
-            single = 0;
-          end
-          */
+//          dst_op = `REG_OP_WRITE;
         end
 
         `WRITE_COND: begin
-//          dstw_waiting = 0;
-        
-          cond_op = `REG_OP_WRITE;
-          /*
-          if(write_q == 1) begin
-//            write_q = 1'bz;
-          end else
-          if(disp_online == 1 && single == 1) begin
-            data_r = cond_r;
-            addr_r = / *base_addr +* / regNumCnd;
-//            write_q = 1;
-            
-            single = 0;
-          end
-          */
         end
         
         `WRITE_SRC1: begin
-//          dstw_waiting = 0;
-//          condw_waiting = 0;
-          
-          src1_op = `REG_OP_WRITE;
-          /*
-          if(write_q == 1) begin
-//            write_q = 1'bz;
-          end else
-          if(disp_online == 1 && single == 1) begin
-            data_r = src1_r;
-            addr_r = / *base_addr +* / regNumS1;
-//            write_q = 1;
-            
-            single = 0;
-          end
-          */
         end
         
         `WRITE_SRC0: begin
-//          dstw_waiting = 0;
-//          condw_waiting = 0;
-//          src1w_waiting = 0;
-
-          src0_op = `REG_OP_WRITE;
-          /*
-          if(write_q == 1) begin
-//            write_q = 1'bz;
-          end else
-          if(disp_online == 1 && single == 1) begin
-            data_r = src0_r;
-            addr_r = / *base_addr +* / regNumS0;
-//            write_q = 1;
-            
-            single = 0;
-          end
-          */
         end
         
         `FINISH_BEGIN: begin
-          dst_op = `REG_OP_FINISH_BEGIN;
-          cond_op = `REG_OP_FINISH_BEGIN;
-          src1_op = `REG_OP_FINISH_BEGIN;
-          src0_op = `REG_OP_FINISH_BEGIN;
+          //dst_op = `REG_OP_FINISH_BEGIN;
+          //cond_op = `REG_OP_FINISH_BEGIN;
+          //src1_op = `REG_OP_FINISH_BEGIN;
+          //src0_op = `REG_OP_FINISH_BEGIN;
 //          dstw_waiting = 0;
 //          condw_waiting = 0;
 //          src1w_waiting = 0;

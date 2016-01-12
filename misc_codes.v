@@ -13,11 +13,11 @@
 
 `define SIZE_REG_OP 3
 
-`define REG_OP_NULL        3'b000
-`define REG_OP_PREEXECUTE  3'b001
-`define REG_OP_READ        3'b010
-`define REG_OP_READ_P      3'b011
-`define REG_OP_WRITE       3'b100
-`define REG_OP_WRITE_PREP  3'b101
-`define REG_OP_FINISH_BEGIN 3'b110
-`define REG_OP_CATCH_DATA  3'b111
+`define REG_OP_NULL        0 //3'b000
+`define REG_OP_PREEXECUTE  1 //3'b001
+`define REG_OP_READ        2 //3'b010
+`define REG_OP_READ_P      3 //3'b011
+`define REG_OP_WRITE       4 //3'b100
+`define REG_OP_WRITE_PREP  5 //3'b101
+`define REG_OP_WRITE_P     6 //3'b110
+`define REG_OP_CATCH_DATA  7 //3'b111

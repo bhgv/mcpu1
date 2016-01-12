@@ -94,7 +94,7 @@ module Cpu(
   inout wire [`DATA_SIZE0:0] ext_cpu_index;
   
   input wire ext_cpu_q;
-  output wire ext_cpu_e;
+  output tri ext_cpu_e;
   
   wire [7:0] int_cpu_msg;
   inout wire [7:0] cpu_msg;
