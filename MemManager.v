@@ -163,8 +163,28 @@ module MemManager (
   tri [`DATA_SIZE0:0] cond_ptr;
 
 
-  reg [`SIZE_REG_OP-1:0] cmd_op;
+  wire [`SIZE_REG_OP-1:0] cmd_op = (state == `START_READ_CMD)
+                                    ? `REG_OP_READ
+                                    : (state == `START_READ_CMD_P)
+                                    ? `REG_OP_READ_P
+                                    
+//                                    : (state == `WRITE_PREP)
+//                                    ? `REG_OP_WRITE_PREP
+                                    
+                                    : (state == `WRITE_REG_IP)
+                                    ? `REG_OP_WRITE_P
+                                    
+                                    : (
+                                        state == `PREEXECUTE ||
+                                        state == `START_BEGIN
+                                      )
+                                    ? `REG_OP_PREEXECUTE
+                                    : `REG_OP_NULL
+                                  ;
+                                  
   tri [`DATA_SIZE0:0] ip_ptr;
+  
+  wire isIpSaveAllowed;
   
   RegisterManager cmd_dev (
             .clk(clk), 
@@ -190,6 +210,8 @@ module MemManager (
             
             .isNeedSave(1'b 1),
             .isDinamic(1'b 0),
+            .isSaveAllowed(isIpSaveAllowed),
+            .isSavePtrAllowed(1'b 0),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -250,6 +272,9 @@ module MemManager (
                                   : `ADDR_SIZE'h zzzzzzzz
                                   ;
   
+  wire isS1SaveAllowed;
+  wire isS1SavePtrAllowed;
+  
   RegisterManager src1_dev (
             .clk(clk), 
             .state(state),
@@ -274,6 +299,8 @@ module MemManager (
             
             .isNeedSave(1'b 0),
             .isDinamic(1'b 0),
+            .isSaveAllowed(isS1SaveAllowed),
+            .isSavePtrAllowed(isS1SavePtrAllowed),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -336,6 +363,9 @@ module MemManager (
                                    : `ADDR_SIZE'h zzzzzzzz
                               ;
  
+  wire isS0SaveAllowed;
+  wire isS0SavePtrAllowed;
+  
   RegisterManager src0_dev (
             .clk(clk), 
             .state(state),
@@ -360,6 +390,8 @@ module MemManager (
             
             .isNeedSave(1'b 0),
             .isDinamic(1'b 0),
+            .isSaveAllowed(isS0SaveAllowed),
+            .isSavePtrAllowed(isS0SavePtrAllowed),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -421,6 +453,9 @@ module MemManager (
                                               
   tri [`DATA_SIZE0:0] dst;
   
+  wire isDSaveAllowed;
+  wire isDSavePtrAllowed;
+  
   RegisterManager dst_dev (
             .clk(clk), 
             .state(state),
@@ -445,6 +480,8 @@ module MemManager (
             
             .isNeedSave(1),
             .isDinamic(1'b 0),
+            .isSaveAllowed(isDSaveAllowed),
+            .isSavePtrAllowed(isDSavePtrAllowed),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -496,6 +533,9 @@ module MemManager (
                                               
   tri [`DATA_SIZE0:0] cond;
   
+  wire isCndSaveAllowed;
+  wire isCndSavePtrAllowed;
+  
   RegisterManager cond_dev (
             .clk(clk), 
             .state(state),
@@ -520,6 +560,8 @@ module MemManager (
             
             .isNeedSave(1'b 0),
             .isDinamic(1'b 1),
+            .isSaveAllowed(isCndSaveAllowed),
+            .isSavePtrAllowed(isCndSavePtrAllowed),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -535,6 +577,50 @@ module MemManager (
             .rst(rst)
             );
   
+  
+  
+  assign isIpSaveAllowed = ~(
+            (&regDFlags == 0 && regNumD == `REG_IP) ||
+            (^regCondFlags && regNumCnd == `REG_IP) ||
+            (^regS1Flags && regNumS1 == `REG_IP) ||
+            (^regS0Flags && regNumS0 == `REG_IP)
+          )
+          ;
+  
+  assign isDSaveAllowed = (
+            (regNumCnd != regNumD || ^regCondFlags == 0) &&
+            (regNumS1  != regNumD || ^regS1Flags == 0) &&
+            (regNumS0  != regNumD || ^regS0Flags == 0)
+          )
+          ;
+  assign isDSavePtrAllowed = (
+            (regNumCnd != regNumD || ^regCondFlags == 0) &&
+            (regNumS1  != regNumD || ^regS1Flags == 0) &&
+            (regNumS0  != regNumD || ^regS0Flags == 0) &&
+            isRegDPtr == 1'b 1
+          )
+          ;
+  
+  assign isCndSaveAllowed = (
+            ^regCondFlags == 1 && 
+            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
+            (regNumS0  != regNumCnd || ^regS0Flags == 0)
+          )
+          ;
+  assign isCndSavePtrAllowed = 0 ;
+  
+  assign isS1SaveAllowed = (
+            ^regS1Flags == 1 && 
+            (regNumS0  != regNumS1 || ^regS0Flags == 0)
+          )
+          ;
+  assign isS1SavePtrAllowed = 0 ;
+  
+  assign isS0SaveAllowed = (
+            ^regS0Flags == 1
+          )
+          ;
+  assign isS0SavePtrAllowed = 0 ;
   
 //  input wire [`DATA_SIZE0:0] cmd_ptr;
   
@@ -555,7 +641,7 @@ module MemManager (
     
     is_bus_busy_r = 1'b z;
     
-    /*src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL;*/ cmd_op = `REG_OP_NULL; 
+    /*src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL;* / cmd_op = `REG_OP_NULL; */
     
     
 //    if(rw_halt == 1) begin
@@ -573,19 +659,8 @@ module MemManager (
 //    addr_r = 32'h zzzzzzzz;
 
 //    next_state = 1'b z;
-    
-//    cond_r = 1; //32'h zzzzzzzz;
-//    src1_r = 1; //32'h zzzzzzzz;
-//    src0_r = 1; //32'h zzzzzzzz;
-//    dst_r = 32'h zzzzzzzz;
-   
-//    src1_waiting = 0; src0_waiting = 0; dst_waiting = 0; cond_waiting = 0; 
-//    src1ptr_waiting = 0; src0ptr_waiting = 0; dstptr_waiting = 0; condptr_waiting = 0; 
-//    src1w_waiting = 0; src0w_waiting = 0; dstw_waiting = 0; condw_waiting = 0;
-    
+        
 //    single = 0;
-    
-//    src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL; 
   end
   else begin
           
@@ -595,19 +670,19 @@ module MemManager (
 //        end
       
         `START_BEGIN: begin
-          cmd_op = `REG_OP_PREEXECUTE;
+//          cmd_op = `REG_OP_PREEXECUTE;
         end
 
         `START_READ_CMD: begin
-          cmd_op = `REG_OP_READ;
+//          cmd_op = `REG_OP_READ;
         end
         
         `START_READ_CMD_P: begin
-          cmd_op = `REG_OP_READ_P;
+//          cmd_op = `REG_OP_READ_P;
         end
         
         `WRITE_REG_IP: begin
-          cmd_op = `REG_OP_WRITE_P;
+//          cmd_op = `REG_OP_WRITE_P;
         end
         
         `ALU_RESULTS: begin
@@ -638,8 +713,9 @@ module MemManager (
 //            src1_op = `REG_OP_PREEXECUTE;
 //            dst_op = `REG_OP_PREEXECUTE;
 //            cond_op = `REG_OP_PREEXECUTE;
+//            cmd_op = `REG_OP_PREEXECUTE;
 
-            cmd_op = `REG_OP_WRITE_PREP;
+//            cmd_op = `REG_OP_WRITE_PREP;
           
 //          next_state = 1;
         end
@@ -741,8 +817,6 @@ module MemManager (
 
       endcase
       
-//    end
-    
   end
   
   end

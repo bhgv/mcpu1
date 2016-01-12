@@ -139,6 +139,7 @@ module StartManager (
     
 
     rw_halt_r = 1'bz;
+/*
     if(halt_q === 1) begin
 //      case(state)
 //        `START_READ_CMD_P,
@@ -159,7 +160,7 @@ module StartManager (
 //        
 //      endcase
     end
-    
+*/
     
     if(rw_halt === 1) begin
       ip_addr_to_read = 0;
