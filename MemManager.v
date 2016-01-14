@@ -4,6 +4,7 @@
 `include "states.v"
 `include "misc_codes.v"
 
+`include "cmd_codes.v"
 
 
 module MemManager (
@@ -93,6 +94,10 @@ module MemManager (
   
   wire [1:0] regCondFlags;
   assign regCondFlags = command_word[27:26];
+  
+  
+  wire [3:0] cmd_code = command_word[31:28];
+  
   
 //  wire ifPtr;
   
@@ -206,7 +211,7 @@ module MemManager (
             
             .isRegPtr(1),      //ip is ptr of cmd
             .regFlags(2'b 01), //post-increment
-            .regNum(4'b 1111), //0xf is the number of ip reg
+            .regNum(`REG_IP), //0xf is the number of ip reg
             
             .isNeedSave(1'b 1),
             .isDinamic(1'b 0),
@@ -388,7 +393,7 @@ module MemManager (
             .regFlags(regS0Flags),
             .regNum(regNumS0),
             
-            .isNeedSave(1'b 0),
+            .isNeedSave(1'b 0),  //cmd_code == `CMD_MOV),
             .isDinamic(1'b 0),
             .isSaveAllowed(isS0SaveAllowed),
             .isSavePtrAllowed(isS0SavePtrAllowed),

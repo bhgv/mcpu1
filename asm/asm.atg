@@ -16,11 +16,41 @@ COMPILER Asm
       self.scanner.ResetPeek()
       s = self.scanner.Peek().val
       return s == ch
+   
+   def compoundCode(self, entry):
+      sz = 0
+      if entry in self.funcs :
+         foo = self.funcs[entry]
+         self.code.append(0)
+         sz_ip = self.ip
+         self.ip += 1
+         sz = self.addFooToCode(foo)
+         self.code[sz_ip] = sz
+      return sz
+										   
+   
+   def addFooToCode(self, foo):
+      sz = foo['ip']
+      for i in xrange(0, foo['ip']) :
+         self.code.append(foo['code'][i])
+         self.ip += 1
+      for nm in foo['names'] :
+         o = foo['names'][nm]
+         if o['type'] == 'foo' :
+            self.code.append(0)
+            isz_ip = self.ip
+            self.ip += 1
+            isz = self.addFooToCode(o['foo'])
+            self.code[isz_ip] = isz
+            sz += isz
+      return sz
 
 
-
-
-
+   def getCode(self):
+      return self.code
+      
+      
+      
 
 CHARACTERS
   letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
@@ -45,109 +75,197 @@ PRAGMAS
   PreProcessor = "#" {macros} .
 
 COMMENTS FROM "/*" TO "*/"
+COMMENTS FROM "//" TO eol
 
 IGNORE tab + eol + CHR(13)
 
 PRODUCTIONS
 
-  Asm                    = { Definition } EOF 
-													(.
-													   for i in xrange(0, self.ip):
-													      cmd = self.code[i]
-													      print "%08x : 0x%X" % (cmd, i)
-													.)
-						.
+  Asm				= 						(. entry = None .)
+				{ 
+				  Definition<None, None> 
+				} 
+				[
+				  "entry" ":" identifier 			(. entry = self.token.val .)
+				  "."
+				]
+				EOF 
+										(.
+										   self.compoundCode(entry)
+										   
+										   #for i in xrange(0, self.ip):
+										   #   cmd = self.code[i]
+										   #   print "%08x : 0x%X" % (cmd, i)
+										.)
+				.
 
 /* Variable and Type Definitions */
 
-  Definition           = identifier					(. 
-									   name = self.token.val
-									   idip = self.ip 
-									.)
-                            (   FunctionDefinition<name, idip>
-			      | VarList ";" ) .
+  Definition<upperfname, upperfoo> 
+				= 
+				(
+				    "def" identifier				(. 
+										   name = self.token.val
+										   #if upperfname != None :
+										      #name = upperfname + '.' + name
+										      #name = name
+										   idip = self.ip 
+										.)
+				   FunctionDefinition<name, idip, upperfoo>
+//				";" 
+				) 
+				.
 
 
-  VarList              = ArraySize { "," identifier ArraySize } .
+  VarList<foo>			= identifier 					(. name = self.token.val .)
+				    ArraySize<out dims>				(. 
+										   #print name
+										   #print dims
+										   if dims['cnt'] == 0 :
+										      dims['size'] = 1
+										   size = dims['size']
+										   foo['vars'][name] = {'name': name, 'size': size, 'ip': None, 'dims': dims, }
+										   foo['names'][name] = {'type': 'var', 'name': name, 'size': size, 'ip': None, 'dims': dims, }
+										.)
+				.
 
-  ArraySize            = { "[" (number | hexnumber) "]" } .
+  ArraySize<out dims>		= 						(. dims = {'size': 1, 'dim': [], 'cnt': 0, } .)
+				{ "[" (
+				     number 					(. i = int( self.token.val ) .)
+				   | hexnumber
+				  ) "]"						(.
+										   dims['size'] *= i
+										   dims['cnt']  += 1
+										   dims['dim'].append(i)
+										.)
+				} 
+				.
 
 /* Function Definitions */
 
-  FunctionDefinition<fname, idip>
-			= FunctionHeader<fname> ( ";" | FunctionBody<fname, idip> ) .
+  FunctionDefinition<fname, idip, upperfoo>
+				= FunctionHeader<out foo, fname> 
+				( 
+				  ";" 
+				| FunctionBody<fname, idip, foo> 		(.
+										   if upperfoo != None :
+										      upperfoo['foos'].append(foo)
+										      upperfoo['names'][fname] = {'type': 'foo', 'ip': 0, 'foo': foo, }
+										      #print upperfoo['names'][fname]
+										      #print fname
+										.)
+				) 
+				.
 
-  FunctionHeader<fname>
-			= "(" [ FormalParamList ] ")"	(.
-									   if (fname in self.funcs) and self.funcs[fname]['ip'] != None:
-									      self.SemErr( "Error: dublicated function name '%s'" % (fname,) )
-									   else:
-									      regs = []
-									      for i in xrange(0,16) :
-									         regs.append(0)
-									      self.funcs[fname] = {'ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, }
-									      self.curfunc = fname
-									.)
-			.
+  FunctionHeader<out foo, fname>
+				= "(" [ FormalParamList ] ")"			(.
+										   if (fname in self.funcs) and self.funcs[fname]['f_ip'] != None:
+										      self.SemErr( "Error: dublicated function name '%s'" % (fname,) )
+										   else:
+										      regs = []
+										      for i in xrange(0,16) :
+										         regs.append(0)
+										      foo = {'fname': fname, 'f_ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, 'code': [], 'xref': {}, 'ip': 0, 'names': {}, 'foos': [], }
+										      self.funcs[fname] = foo
+										      self.curfunc = fname
+										.)
+				.
 
-  FunctionBody<fname, idip> 
-			= CompoundStatement<fname>				(. 
-									   #if (fname in self.funcs) and self.funcs[fname]['ip'] != None:
-									   #   print "// error dublicated function name"
-									   #else:
-									   self.funcs[fname]['ip'] = idip
-									   #print "// '%s' -> 0x%X\n%s" % (fname, idip, self.funcs[fname])
-									.)   
-			.
+  FunctionBody<fname, idip, foo> 
+				= CompoundStatement<fname, foo>			(. 
+										   #if (fname in self.funcs) and self.funcs[fname]['ip'] != None:
+										   #   print "// error dublicated function name"
+										   #else:
+										   self.funcs[fname]['f_ip'] = 0 #idip
+										   #print "// '%s' -> 0x%X\n%s" % (fname, idip, self.funcs[fname])
+										   
+										   for lbl in foo['xref'] :
+										      #print lbl
+										      if lbl not in foo['names'] :
+										         self.SemErr( "Error: use of not defined label '%s'" % (lbl,) )
+										      ptlst = foo['xref'][lbl]
+										      nmo = foo['names'][lbl]
+										      if nmo['type'] == 'var' :
+										         nmip = foo['ip']
+										         nmo['ip'] = nmip
+										         for i in xrange(0, nmo['size']) :
+										            foo['code'].append(0)
+										         foo['ip'] += nmo['size']
+										      elif nmo['type'] == 'label' :
+										         nmip = nmo['ip']
+										      for n in ptlst :
+										         #print "nmip = , n = " 
+										         #print nmip
+										         #print n
+										         foo['code'][n] += nmip
+										.)
+				.
 
   FormalParamList      = FormalParameter { "," FormalParameter } .
 
   FormalParameter      = identifier 
-				ArraySize .
+//				ArraySize 
+				.
 
 /* Statements */
 
-  Statement            = {IF(self.isNext(':')) Label }
-                         (  AssignmentExpression 
+  Statement<foo>		= 
+				(
+				    IF(self.isNext(':')) Label<foo> 
+				  | AssignmentExpression<foo> 
 //				| BreakStatement
 //                           | CompoundStatement | ContinueStatement
 //                           | DoStatement | ForStatement
 //                           | IfStatement 
-				| NullStatement
+				  | NullStatement
 //                           | ReturnStatement | SwitchStatement
 //                           | WhileStatement 
-			) .
+				) 
+				.
 
-  Label                = 
-						identifier						(. 
-									   lbl = self.token.val
-													.)
-						":"								(.
-									   if not (lbl in self.funcs[self.curfunc]['lbls']) :
-									      self.funcs[self.curfunc]['lbls'][lbl] = self.ip
-									   else:
-									      self.SemErr( "Error: dublicated label '%s'" % (lbl,) )
-													.)
+  Label<foo>			= 
+				identifier					(. 
+										   lbl = self.token.val
+										.)
+				":"						(.
+										   if not (lbl in self.funcs[self.curfunc]['lbls']) :
+										      foo['lbls'][lbl] = foo['ip']
+										      foo['names'][lbl] = {'type': 'label', 'ip': foo['ip']}
+										   else:
+										      self.SemErr( "Error: dublicated label '%s'" % (lbl,) )
+										.)
 			.
 //			"case" ConstExpression ":"  |  "default" ":" .
 
 /* There is no requirement that a switch statement be followed by a compound
    statement.  Actually labels may be even more general */
 
-  AssignmentExpression = Expression<out cmd> ";" .
+  AssignmentExpression<foo>	= 
+				Expression<out cmd, foo> ";" 			(.
+										   foo['code'].append(cmd)
+										   foo['ip'] += 1
+										.)
+				.
 
 //  BreakStatement       = "break" ";" .
 
-  CompoundStatement<fname>	= "{" ["init" "{" {   
-								RegName< out r > "=" Const<out num> ";"		(. self.funcs[fname]['regs'][r['r']] = num .)
-							} "}" ] 					(.
-														   for i in xrange(0, 16) :
-														      self.code.append(self.funcs[fname]['regs'][i])
-														      self.ip += 1
-														.)
-							[ "var" "{" { LocalDeclaration } "}" ]
-							{ Statement } "}" 
-							.
+  CompoundStatement<fname, foo>	= 
+				"{" 
+				 ["init" "{" { 
+				   RegName< out r > "=" Const<out num, foo> 
+				   ";"						(. foo['regs'][r['r']] = num .)
+				 } "}" ] 					(.
+										   for i in xrange(0, 16) :
+										      foo['code'].append(foo['regs'][i])
+										      foo['ip'] += 1
+										.)
+				 [ "var" "{" { LocalDeclaration<foo> } "}" ]
+				 { 
+				    Statement<foo> 
+				  | Definition<fname, foo>
+				 } 
+				 "}" 
+				.
 
 //  ContinueStatement    = "continue" ";" .
 
@@ -157,7 +275,9 @@ PRODUCTIONS
 
 //  IfStatement          = "if" "(" Expression ")" Statement [ "else" Statement ] .
 
-  NullStatement        = ";" .
+  NullStatement 		= 
+				";" 
+				.
 
 //  ReturnStatement      = "return" [ Expression ] ";" .
                          /* Expression usually in parentheses */
@@ -168,11 +288,17 @@ PRODUCTIONS
 
 /* LocalDeclarations */
 
-  LocalDeclaration     = identifier					(. 
-									   name = self.token.val
-									   idip = self.ip 
-									.)
-                          ( /*FunctionHeader<name> |*/ VarList ) ";"  .
+  LocalDeclaration<foo>
+				= 
+//				identifier					(. 
+//										   name = self.token.val
+//										   idip = self.ip 
+//										.)
+//                          ( /*FunctionHeader<name> |*/ 
+				VarList<foo> 
+//						  ) 
+				";"  
+				.
 
 /* Expressions, based on Kernighan and Ritchie: "The C Programming Language".
    There does not seem to be a way to make this work in an LL(1) fashion,
@@ -180,116 +306,161 @@ PRODUCTIONS
 
 //  ConstExpression      = Expression<out cmd> .
 
-  Expression<out cmd>	= 						(. 
-									   cmd = 0 
-									   cond = {'r': 0, 'rop': 3, 'isptr': 0}
-									.)
-			 (
-			   [ "if" "(" Cond<out cond> 
-			     ")" ] 
-			   Dst<out dst> "=" 
-					(
-					    Src<out src0> 
-					    Operation<out op> 
-					    Src<out src1>
-					  | "call" 			(. op = 15 .)
-					    Src<out src0> 
-					    "(" Src<out src1> ")"
-					)				(.
-									   cmd |= (cond['r'] << 12) | (cond['rop'] << 26) | (cond['isptr'] << 19)
-									   cmd |= (dst['r'] << 8) | (dst['rop'] << 24) | (dst['isptr'] << 18)
-									   cmd |= (src1['r'] << 0) | (src1['rop'] << 20) | (src1['isptr'] << 16)
-									   cmd |= (src0['r'] << 4) | (src0['rop'] << 22) | (src0['isptr'] << 17)
-									   cmd |= (op << 28)
-									.)
-			 | Const<out num>                               (. cmd = num .)
-			)						(.
-									   self.code.append(cmd)
-									   #self.ip += 1
-									   #print "%08x\t// 0x%X" % (cmd, self.ip)
-									   self.ip += 1
-									.)
-			.
+  Expression<out cmd, foo>	= 						(. 
+										   cmd = 0 
+										   cond = {'r': 0, 'rop': 3, 'isptr': 0}
+										.)
+				(
+				   Dst<out dst> ("=" | "<-") 
+						(
+						    Src<out src0> 
+						    Operation<out op> 
+						    Src<out src1>
+						  | "fork" 			(. op = 15 .)
+						    Src<out src0> 
+						    "(" Src<out src1> ")"
+						)
+				   [ "if" "(" Cond<out cond> 
+				     ")" 
+				   ] 
+										(.
+										   cmd |= (cond['r'] << 12) | (cond['rop'] << 26) | (cond['isptr'] << 19)
+										   cmd |= (dst['r'] << 8) | (dst['rop'] << 24) | (dst['isptr'] << 18)
+										   cmd |= (src1['r'] << 0) | (src1['rop'] << 20) | (src1['isptr'] << 16)
+										   cmd |= (src0['r'] << 4) | (src0['rop'] << 22) | (src0['isptr'] << 17)
+										   cmd |= (op << 28)
+										.)
+				 | Const<out num, foo>				(. cmd = num .)
+				)						(.
+										   #self.code.append(cmd)
+										   #self.ip += 1
+										   #print "%08x\t// 0x%X" % (cmd, self.ip)
+										   #self.ip += 1
+										.)
+				.
+				
 //Conditional { AssignmentOperator Expression }.
 
-  Operation<out op>	= 						(. op = 0 .)
-			(
-			    "|"						(. op = 9 .)
-			  | "^"						(. op = 7 .)
-			  | "&"						(. op = 8 .)
-			  | "<<"					(. op = 6 .)
-			  | ">>"					(. op = 5 .)
-			  | "+"						(. op = 1 .)
-			  | "-"						(. op = 2 .)
-			  | "*"						(. op = 3 .)
-			  | "/"						(. op = 4 .)
-//			  | 
-//			  | 
-//			  | 
-			).
+  Operation<out op>		= 						(. op = 0 .)
+				(
+				    "|"						(. op = 9 .)
+				  | "^"						(. op = 7 .)
+				  | "&"						(. op = 8 .)
+				  | "<<"					(. op = 6 .)
+				  | ">>"					(. op = 5 .)
+				  | "+"						(. op = 1 .)
+				  | "-"						(. op = 2 .)
+				  | "*"						(. op = 3 .)
+				  | "/"						(. op = 4 .)
+				  | "<-"					(. op = 0 .)
+//				  | 
+//				  | 
+//				  | 
+//				  |
+				)
+				.
 
-  Const<out num> 	= Conditional<out num>.
+  Const<out num, foo> 	= Conditional<out num, foo>.
 
-  Conditional<out num>	= LogORExp<out num> .
+  Conditional<out num, foo>	= LogORExp<out num, foo> .
 
-  LogORExp<out num>	= LogANDExp<out num>   { "||" LogANDExp<out num> } .
+  LogORExp<out num, foo>	= LogANDExp<out num, foo>   { "||" LogANDExp<out num, foo> } .
 
-  LogANDExp<out num>	= InclORExp<out num>   { "&&" InclORExp<out num> }.
+  LogANDExp<out num, foo>	= InclORExp<out num, foo>   { "&&" InclORExp<out num, foo> }.
 
-  InclORExp<out num>	= ExclORExp<out num>   { "|" ExclORExp<out num> } .
+  InclORExp<out num, foo>	= ExclORExp<out num, foo>   { "|" ExclORExp<out num, foo> } .
 
-  ExclORExp<out num>	= ANDExp<out num>      { "^" ANDExp<out num> } .
+  ExclORExp<out num, foo>	= ANDExp<out num, foo>      { "^" ANDExp<out num, foo> } .
 
-  ANDExp<out num>	= EqualExp<out num>    { "&" EqualExp<out num> } .
+  ANDExp<out num, foo>	= EqualExp<out num, foo>    { "&" EqualExp<out num, foo> } .
 
-  EqualExp<out num>	= RelationExp<out num> { ( "==" | "!=" ) RelationExp<out num> } .
+  EqualExp<out num, foo>	= RelationExp<out num, foo> { ( "==" | "!=" ) RelationExp<out num, foo> } .
 
-  RelationExp<out num>	= ShiftExp<out num>    { ( "<" | ">" | "<=" | ">=" ) ShiftExp<out num> }.
+  RelationExp<out num, foo>	= ShiftExp<out num, foo>    { ( "<" | ">" | "<=" | ">=" ) ShiftExp<out num, foo> }.
 
-  ShiftExp<out num>	= AddExp<out num>      { ( "<<" | ">>" ) AddExp<out num> } .
+  ShiftExp<out num, foo>	= AddExp<out num, foo>      { ( "<<" | ">>" ) AddExp<out num, foo> } .
 
-  AddExp<out num>	= MultExp<out num>     { ( "+" | "-" ) MultExp<out num> } .
+  AddExp<out num, foo>	= MultExp<out num, foo>     { ( "+" | "-" ) MultExp<out num, foo> } .
 
-  MultExp<out num>	= CastExp<out num>     { ( "*" | "/" | "%" ) CastExp<out num> } .
+  MultExp<out num, foo>	= CastExp<out num, foo>     { ( "*" | "/" | "%" ) CastExp<out num, foo> } .
 
-  CastExp<out num>	= UnaryExp<out num> .
+  CastExp<out num, foo>	= UnaryExp<out num, foo> .
 
 /* we should really add
                          | "(" identifier ")" CastExp .
    but this breaks it badly */
 
-  UnaryExp<out num>	=  PostFixExp<out num>
+  UnaryExp<out num, foo>	=  PostFixExp<out num, foo>
 //                         | ( "++" | "--" ) UnaryExp
-                         | UnaryOperator CastExp<out num> .
+                         | UnaryOperator CastExp<out num, foo> .
 
 /* we should really add
                          | "sizeof" ( UnaryExp | "(" Type ")" ) .
    but this breaks it badly */
 
-  PostFixExp<out num>	= Primary<out num>
-                         { 
-//			      "[" Expression "]"
-//                          | FunctionCall
-                            "." identifier
-//                          | "->" identifier
-//                          | "++"
-//                          | "--"
-                         } .
+  PostFixExp<out num, foo>	= 
+				Primary<out num, foo>
+				{ 
+//				    "[" Expression "]"
+//				  | FunctionCall
+				    "." identifier
+//				  | "->" identifier
+//				  | "++"
+//				  | "--"
+				} 
+				.
 
-  Primary<out num>	= 						(. num = 0 .)
-			(
-			  identifier 					(. 
-									   lbl = self.token.val
-									   if lbl in self.funcs[self.curfunc]['lbls'] :
-									      num = self.funcs[self.curfunc]['lbls'][lbl]
-									   else:
-									      self.SemErr( "Error: use of not defined label '%s'" % (lbl,) )
-									.)
-			| string 
-			| char 
-			| number 					(. num = int( self.token.val ) .)
-			| "(" Conditional<out num> ")" 
-			) .
+  Primary<out num, foo>		= 						(. num = 0 .)
+				(
+				    identifier 					(. 
+										   lbl = self.token.val
+										   num = 0
+										   #if lbl in foo['lbls'] :
+										   #   num = foo['lbls'][lbl]
+										   #else:
+										   #   self.SemErr( "Error: use of not defined label '%s'" % (lbl,) )
+										   if lbl not in foo['xref'] :
+										      foo['xref'][lbl] = []
+										   xref = foo['ip']
+										   #
+										   dim_cnt = 0
+										   o_desc = None
+										   o_dims = None
+										   if lbl in foo['names'] :
+										      o_desc = foo['names'][lbl]
+										   #
+										   if o_desc != None and o_desc['type'] == 'var' :
+										      o_dims = o_desc['dims']
+										.)
+				     { "["					(.
+										   if o_desc == None :
+										      self.SemErr( "Error: variable '%s' is not defined" % (lbl,) )
+										   #
+										   if o_desc['type'] != 'var' :
+										      self.SemErr( "Error: %s '%s' used as varible" % (o_desc['type'], lbl,) )
+										   #
+										   if o_dims['cnt'] <= dim_cnt :
+										      self.SemErr( "Error: variable '%s' has only %d dimensions" % (lbl, o_dims['cnt'], ) )
+										.)
+				          Const<out i, foo> 
+				        "]"					(.
+										   if o_dims['cnt'] > dim_cnt :
+										      if o_dims['dim'][dim_cnt] <= i :
+										         self.SemErr( "Error: variable '%s' has dimension %d  [0 .. %d], but [%d]" % (lbl, dim_cnt, o_dims['dim'][dim_cnt] - 1, i, ) )
+										      num *= o_dims['dim'][dim_cnt]
+										      num += i
+										   dim_cnt += 1
+										.)
+				     }						(. foo['xref'][lbl].append(xref) .)
+				  | string					(.
+										   #print self.token.val
+										   num = 0
+										.)
+				  | char 
+				  | number 					(. num = int( self.token.val ) .)
+				  | "(" Conditional<out num, foo> ")" 
+				) 
+				.
 
 //  FunctionCall         = "(" [ ActualParameters ] ")" .
 
@@ -298,49 +469,55 @@ PRODUCTIONS
 //  AssignmentOperator   = "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "&="
 //                         | "^=" | "|=" | "<<=" | ">>=" .
 
-  UnaryOperator        = ("+" | "-" | "|" | "^" | "!" | "&" | "~") .
+  UnaryOperator			= 
+				("+" | "-" | "|" | "^" | "!" | "&" | "~") 
+				.
 
 
-  Cond<out r>		= Src<out r> . 
+  Cond<out r>			= Src<out r> . 
 			/*( RegName | "[" RegName "]" ) . */
 
 
-  Dst<out r>		= Src<out r> .
+  Dst<out r>			= Src<out r> .
 
 
-  Src<out r>		= ( 
-			     ("Z" | "z")		(. r = {'r': 0, 'rop': 3, 'isptr': 0} .)
-			   | RegOp<out r>		(. r['isptr'] = 0 .)
-			   | "[" RegOp<out r> "]"	(. r['isptr'] = 1 .)
-			  ) .
+  Src<out r>			= 						(. r = {'r': 0, 'rop': 3, 'isptr': 0} .)
+				( 
+				    ("Z" | "z")	
+				  | RegOp<out r>				(. r['isptr'] = 0 .)
+				  | "[" RegOp<out r> "]"			(. r['isptr'] = 1 .)
+				) 
+				.
 
 
-  RegOp<out r>		= RegName<out r> 		(. r['rop'] = 0 .)
-				     [ 
-					  "++"		(. r['rop'] = 1 .)
-					| "--"		(. r['rop'] = 2 .)
-				     ] .
+  RegOp<out r>			= 
+				RegName<out r> 					(. r['rop'] = 0 .)
+				[ 
+				    "++"					(. r['rop'] = 1 .)
+				  | "--"					(. r['rop'] = 2 .)
+				] 
+				.
 
-
-  RegName< out r >	= 				(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
-			  (
-			     "r0"			(. r['r'] = 0 .)
-			   | "r1"			(. r['r'] = 1 .)
-			   | "r2"			(. r['r'] = 2 .)
-			   | "r3"			(. r['r'] = 3 .)
-			   | "r4"			(. r['r'] = 4 .)
-			   | "r5"			(. r['r'] = 5 .)
-			   | "r6"			(. r['r'] = 6 .)
-			   | "r7"			(. r['r'] = 7 .)
-			   | "r8"			(. r['r'] = 8 .)
-			   | "r9"			(. r['r'] = 9 .)
-			   | "r10"			(. r['r'] = 10 .)
-			   | "r11"			(. r['r'] = 11 .)
-			   | "r12"			(. r['r'] = 12 .)
-			   | "r13"			(. r['r'] = 13 .)
-			   | "r14"			(. r['r'] = 14 .)
-			   | ("r15" | "ip")	(. r['r'] = 15 .)
-			  ) .
+  RegName< out r >		= 						(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
+				(
+				    "r0"					(. r['r'] = 0 .)
+				  | "r1"					(. r['r'] = 1 .)
+				  | "r2"					(. r['r'] = 2 .)
+				  | "r3"					(. r['r'] = 3 .)
+				  | "r4"					(. r['r'] = 4 .)
+				  | "r5"					(. r['r'] = 5 .)
+				  | "r6"					(. r['r'] = 6 .)
+				  | "r7"					(. r['r'] = 7 .)
+				  | "r8"					(. r['r'] = 8 .)
+				  | "r9"					(. r['r'] = 9 .)
+				  | "r10"					(. r['r'] = 10 .)
+				  | "r11"					(. r['r'] = 11 .)
+				  | "r12"					(. r['r'] = 12 .)
+				  | "r13"					(. r['r'] = 13 .)
+				  | "r14"					(. r['r'] = 14 .)
+				  | ("r15" | "ip")				(. r['r'] = 15 .)
+				) 
+				.
 
 
 END Asm.

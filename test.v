@@ -154,7 +154,7 @@ module test;
 parameter STEP = 20;
 
 
-parameter CPU_QUANTITY = 2; //5;
+parameter CPU_QUANTITY = 3;
 
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;
@@ -387,7 +387,7 @@ initial begin
            #(STEP)  RESET_r = 1'bz;
            //#(STEP*20) RESET = 1'b1;
            //#STEP      RESET = 1'b0;
-           #(STEP*220) //stage = 0; cpu_running = 0;
+           #(STEP*420) //stage = 0; cpu_running = 0;
            //#(STEP*125); //90)
           $finish;
         end

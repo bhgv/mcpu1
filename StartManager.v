@@ -119,7 +119,7 @@ module StartManager (
   
   input wire rst;
   
-  wire [`ADDR_SIZE0:0] ip_addr = /*base_addr +*/ `REG_IP;
+  wire [`ADDR_SIZE0:0] ip_addr = base_addr + `REG_IP;
   reg ip_addr_saved;
   reg ip_addr_to_read;
   
@@ -178,7 +178,7 @@ module StartManager (
     read_q = 1'b z;
     write_q = 1'b z;
 
-    base_addr = 0;
+    base_addr = 1;
     next_state = 1'b z;
     
 //    cmd_waiting = 0; cmd_ptr_waiting = 0;

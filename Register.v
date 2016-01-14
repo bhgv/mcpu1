@@ -78,7 +78,7 @@ module RegisterManager (
 
   inout [`DATA_SIZE0:0] register;
   inout [`DATA_SIZE0:0] reg_ptr;
-  wire [`DATA_SIZE0:0] register_r_adr = /*base_addr +*/ regNum /* `DATA_SIZE*/;
+  wire [`DATA_SIZE0:0] register_r_adr = base_addr + regNum /* `DATA_SIZE*/;
   reg [`DATA_SIZE0:0] register_r_ptr;
   reg [`DATA_SIZE0:0] register_r;
   tri [`DATA_SIZE0:0] register = (reg_op == `REG_OP_CATCH_DATA) 
@@ -126,7 +126,7 @@ module RegisterManager (
                         : `ADDR_SIZE'h zzzzzzzz
                         ;
   
-  wire [`ADDR_SIZE0:0] addr_to_save = (isRegPtr && reg_op == `REG_OP_WRITE) ? register_r_ptr : /*base_addr +*/ regNum;
+  wire [`ADDR_SIZE0:0] addr_to_save = ((isRegPtr && reg_op == `REG_OP_WRITE) ? register_r_ptr : regNum) + base_addr;
 
 
 
@@ -351,7 +351,7 @@ module RegisterManager (
         `REG_OP_READ_P: begin
           if(is_bus_busy == 1) begin
             if(read_dn == 1 && registerptr_waiting == 1) begin
-                if(addr === register_r_ptr) begin
+                if(addr === register_r_ptr + base_addr) begin
 //                  register_r_ptr = register_r;
                   register_r = data;
                   /*if(! isDinamic )*/ registerptr_waiting = 0;
@@ -373,7 +373,7 @@ module RegisterManager (
             end else
             if(disp_online == 1 && single == 1) begin
 //              register_r_ptr = register_r;
-              addr_r = register_r_ptr; //register_r; //cond_r_aux;
+              addr_r = register_r_ptr + base_addr; //register_r; //cond_r_aux;
 //              register_r_adr = register_r;
               read_q_r = 1;
               halt_q_r = 1;

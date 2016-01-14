@@ -39,6 +39,8 @@ from Parser import *
 srcName = sys.argv[1]
 dirName, fileName = os.path.split(srcName)
 
+dstName = sys.argv[2]
+
 # Initialize the Scanner
 try:
    s = open( fileName, 'r' )
@@ -64,5 +66,19 @@ Errors.Summarize( scanner.buffer )
 
 if Errors.count != 0:
    sys.exit(1)
+else:
+   d = open(dstName, "w")
+   try:
+      code = parser.getCode()
+      for cmd in code :
+         d.write("%08x\n" % (cmd,))
+   except IOError:
+      sys.stdout.write( '-- Compiler Error: Failed to write to destination file "%s"\n' % fileName )
+
+   try:
+      d.close( )
+   except IOError:
+      raise RuntimeError( '-- Compiler Error: cannot close destination file "%s"' % fileName )
+      
 
 $$$

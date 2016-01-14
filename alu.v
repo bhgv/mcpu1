@@ -88,8 +88,8 @@ module Alu(
           
           case(cmd_code)
             `CMD_MOV: begin
-              //dst_h = src1;
-              //dst_r = src0;
+              {dst_r, src0_r} = {src0, src1};
+              //src = src0;
               //src0_r = dst_h;
               
               next_state = 1;
