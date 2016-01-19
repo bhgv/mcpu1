@@ -16,7 +16,7 @@ module RegisterManager (
             cpu_ind_rel,
             halt_q,
             rw_halt,
-//            want_write,
+            want_write,
             
             is_bus_busy,
             addr,
@@ -141,7 +141,7 @@ module RegisterManager (
   input wire [1:0] cpu_ind_rel;
   inout halt_q;
   reg halt_q_r;
-  wire halt_q = halt_q_r;
+  wire halt_q = disp_online == 1 ? halt_q_r : 1'b z;
   
   inout rw_halt;
   reg rw_halt_r;
@@ -163,9 +163,9 @@ module RegisterManager (
             ;
             
             
-//  inout want_write;
-//  reg want_write_r;
-//  tri want_write = want_write_r;
+  inout want_write;
+  reg want_write_r;
+  tri want_write = disp_online == 1 ? want_write_r : 1'b z;
 
   
   output read_q;
@@ -246,12 +246,14 @@ module RegisterManager (
   end
 */
   
+/*
   if
   (rw_halt === 1 && addr === 15)
 //  (halt_q === 1 && cpu_ind_rel == 2'b01) 
   begin
             catched = catched & 1;
   end
+*/
 
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
@@ -278,7 +280,7 @@ module RegisterManager (
     isTopR = 0;
     isTopP = 0;
     
-//    want_write_r = 1'b z;
+    want_write_r = 1'b z;
   end
 //  else if(state == `ALU_RESULTS) begin
 //    register_r = register;
@@ -345,7 +347,7 @@ module RegisterManager (
                     /*if(! isDinamic )*/ register_waiting = 0;
                     next_state = 1;
                     
-//                    want_write_r = 1'b z;
+                    want_write_r = 1'b z;
                   end
               end
               
@@ -358,10 +360,10 @@ module RegisterManager (
                 addr_r = `ADDR_SIZE'h zzzzzzzz;
                 read_q_r = 1'bz;
                 
-//                want_write_r = 1'b z;
+                want_write_r = 1'b z;
                 
                 // VV thinking if it possible to make read in time of write
-                if(cpu_ind_rel === 2'b10) begin
+                if(cpu_ind_rel === 2'b10 && want_write === 1) begin
                   isTopR = 0;
                 end else 
 //                if(cpu_ind_rel === 2'b01) 
@@ -385,7 +387,7 @@ module RegisterManager (
                 if(^regFlags == 1) registerptr_waiting = 1;
                 register_waiting = 1;
                 
-//                want_write_r = isSavePtrAllowed;
+                want_write_r = isSaveAllowed;
     
                 single = 0;
               end
@@ -404,6 +406,8 @@ module RegisterManager (
                   register_r = data;
                   /*if(! isDinamic )*/ registerptr_waiting = 0;
                   next_state = 1;
+                  
+                  want_write_r = 1'b z;
                 end
             end
           end else begin
@@ -414,9 +418,11 @@ module RegisterManager (
 
               addr_r = `ADDR_SIZE'h zzzzzzzz;
               read_q_r = 1'bz;
+              
+              want_write_r = 1'b z;
                 
               // VV thinking if it possible to make read in time of write
-              if(cpu_ind_rel === 2'b10) begin
+              if(cpu_ind_rel === 2'b10 && want_write === 1) begin
                 isTopP = 0;
               end else 
 //              if(cpu_ind_rel === 2'b01) 
@@ -438,6 +444,8 @@ module RegisterManager (
               halt_q_r = 1;
               registerptr_waiting = 1;
               
+              want_write_r = isSavePtrAllowed;
+    
               single = 0;
             end
           end

@@ -59,7 +59,7 @@ module StartManager (
   
   inout halt_q;
   reg halt_q_r;
-  tri halt_q = halt_q_r;
+  tri halt_q; // = halt_q_r;
   
   inout rw_halt;
   reg rw_halt_r;

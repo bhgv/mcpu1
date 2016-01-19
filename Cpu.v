@@ -18,6 +18,8 @@ module Cpu(
             halt_q,
             rw_halt,
             
+            want_write,
+            
             read_q,
             write_q,
             read_dn,
@@ -60,7 +62,9 @@ module Cpu(
   inout tri rw_halt;
   tri int_rw_halt;
   
-  inout wire halt_q;
+  inout tri halt_q;
+  
+  inout tri want_write;
   
   wire [1:0] cpu_ind_rel;
    
@@ -171,6 +175,8 @@ BridgeToOutside outside_bridge (
             .halt_q(halt_q),
             .rw_halt(rw_halt), //(int_rw_halt),
             .cpu_ind_rel(cpu_ind_rel),
+            
+            .want_write(want_write),
             
             .bus_busy(bus_busy),
             .addr(addr),

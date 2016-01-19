@@ -17,6 +17,7 @@ module MemManager (
             cpu_ind_rel,
             halt_q,
             rw_halt,
+            want_write,
             
             is_bus_busy,
             addr,
@@ -167,6 +168,9 @@ module MemManager (
 //  output reg write_e;
 
 
+
+  inout tri want_write;
+  
   
   inout [`DATA_SIZE0:0] cond;
   inout [`DATA_SIZE0:0] src1;
@@ -211,6 +215,8 @@ module MemManager (
             .cpu_ind_rel(cpu_ind_rel),
             .halt_q(halt_q),
             .rw_halt(rw_halt),
+            
+            .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
             .addr(addr),
@@ -300,6 +306,8 @@ module MemManager (
             .cpu_ind_rel(cpu_ind_rel),
             .halt_q(halt_q),
             .rw_halt(rw_halt),
+            
+            .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
             .addr(addr),
@@ -392,6 +400,8 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
+            .want_write(want_write),
+            
             .is_bus_busy(is_bus_busy),
             .addr(addr),
             .data(data),
@@ -482,6 +492,8 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
+            .want_write(want_write),
+            
             .is_bus_busy(is_bus_busy),
             .addr(addr),
             .data(data),
@@ -561,6 +573,8 @@ module MemManager (
             .cpu_ind_rel(cpu_ind_rel),
             .halt_q(halt_q),
             .rw_halt(rw_halt),
+            
+            .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
             .addr(addr),

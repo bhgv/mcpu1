@@ -366,6 +366,7 @@ module BridgeToOutside (
             write_q == 1
           ) begin
             ext_next_cpu_e_r = 1;
+//            disp_online = 0;
           end 
           else if(ext_next_cpu_e_r === 1) begin
             ext_next_cpu_e_r = 1'bz;

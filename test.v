@@ -166,6 +166,8 @@ assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
 trior rw_halt;
 tri0 halt_q;
 
+tri want_write;
+
 
 
 /**/
@@ -174,6 +176,8 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             
             .halt_q(halt_q),
             .rw_halt(rw_halt),
+            
+            .want_write(want_write),
             
             .addr(addr_out),
             .data(data_wire),

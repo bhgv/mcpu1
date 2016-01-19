@@ -19,6 +19,8 @@ module InternalBus(
         rw_halt,
         cpu_ind_rel,
         
+        want_write,
+        
             addr,
             data,
             
@@ -56,6 +58,9 @@ module InternalBus(
   inout tri halt_q;
   inout tri rw_halt;
   input tri [1:0] cpu_ind_rel;
+  
+  inout tri want_write;
+  
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
   inout tri [`ADDR_SIZE0:0] addr; //= addr_out_r;
@@ -188,6 +193,8 @@ module InternalBus(
             .cpu_ind_rel(cpu_ind_rel),
             .halt_q(halt_q),
             .rw_halt(rw_halt),
+            
+            .want_write(want_write),
             
             .is_bus_busy(bus_busy),
             .addr(addr),
