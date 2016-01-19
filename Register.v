@@ -96,9 +96,9 @@ module RegisterManager (
                                               ;
 // dst(reg:0, op:4, res:3(+)), src0(p:1, op:4, r:11h(+)), src0(p:1, op:4, r:11h(+))?, ip(p:1, op:6, r:12h(+))
 
-  wire [`DATA_SIZE0:0] data_post_inc_dec = //(reg_op == `REG_OP_WRITE)
-                                           //? data_to_save
-                                           // : 
+  wire [`DATA_SIZE0:0] data_post_inc_dec = (reg_op == `REG_OP_WRITE_P)
+                                           ? data_to_save
+                                            : 
                                             (regFlags == 2'b 01) // && reg_op === `REG_OP_WRITE)
                                               ? data_to_save + 1
                                               : (regFlags == 2'b 10) // && reg_op === `REG_OP_WRITE)
