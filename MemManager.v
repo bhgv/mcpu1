@@ -40,6 +40,16 @@ module MemManager (
             
             next_state,
             
+            isIpSaveAllowed,
+            isDSaveAllowed,
+            isDSavePtrAllowed,
+            isCndSaveAllowed,
+            isCndSavePtrAllowed,
+            isS1SaveAllowed,
+            isS1SavePtrAllowed,
+            isS0SaveAllowed,
+            isS0SavePtrAllowed,
+            
             rst
             );
             
@@ -177,7 +187,7 @@ module MemManager (
 //                                    ? `REG_OP_WRITE_PREP
                                     
                                     : (state == `WRITE_REG_IP)
-                                    ? `REG_OP_WRITE_P
+                                    ? `REG_OP_WRITE
                                     
                                     : (
                                         state == `PREEXECUTE ||
@@ -189,7 +199,7 @@ module MemManager (
                                   
   tri [`DATA_SIZE0:0] ip_ptr;
   
-  wire isIpSaveAllowed;
+  input wire isIpSaveAllowed;
   
   RegisterManager cmd_dev (
             .clk(clk), 
@@ -277,8 +287,8 @@ module MemManager (
                                   : `ADDR_SIZE'h zzzzzzzz
                                   ;
   
-  wire isS1SaveAllowed;
-  wire isS1SavePtrAllowed;
+  input wire isS1SaveAllowed;
+  input wire isS1SavePtrAllowed;
   
   RegisterManager src1_dev (
             .clk(clk), 
@@ -368,8 +378,8 @@ module MemManager (
                                    : `ADDR_SIZE'h zzzzzzzz
                               ;
  
-  wire isS0SaveAllowed;
-  wire isS0SavePtrAllowed;
+  input wire isS0SaveAllowed;
+  input wire isS0SavePtrAllowed;
   
   RegisterManager src0_dev (
             .clk(clk), 
@@ -458,8 +468,8 @@ module MemManager (
                                               
   tri [`DATA_SIZE0:0] dst;
   
-  wire isDSaveAllowed;
-  wire isDSavePtrAllowed;
+  input wire isDSaveAllowed;
+  input wire isDSavePtrAllowed;
   
   RegisterManager dst_dev (
             .clk(clk), 
@@ -538,8 +548,8 @@ module MemManager (
                                               
   tri [`DATA_SIZE0:0] cond;
   
-  wire isCndSaveAllowed;
-  wire isCndSavePtrAllowed;
+  input wire isCndSaveAllowed;
+  input wire isCndSavePtrAllowed;
   
   RegisterManager cond_dev (
             .clk(clk), 
@@ -583,7 +593,7 @@ module MemManager (
             );
   
   
-  
+/*
   assign isIpSaveAllowed = ~(
             (&regDFlags == 0 && regNumD == `REG_IP) ||
             (^regCondFlags && regNumCnd == `REG_IP) ||
@@ -626,6 +636,8 @@ module MemManager (
           )
           ;
   assign isS0SavePtrAllowed = 0 ;
+*/
+
   
 //  input wire [`DATA_SIZE0:0] cmd_ptr;
   

@@ -164,6 +164,16 @@ module InternalBus(
             
             .next_state(next_state),
             
+            .isIpSaveAllowed(isIpSaveAllowed),
+            .isDSaveAllowed(isDSaveAllowed),
+            .isDSavePtrAllowed(isDSavePtrAllowed),
+            .isCndSaveAllowed(isCndSaveAllowed),
+            .isCndSavePtrAllowed(isCndSavePtrAllowed),
+            .isS1SaveAllowed(isS1SaveAllowed),
+            .isS1SavePtrAllowed(isS1SavePtrAllowed),
+            .isS0SaveAllowed(isS0SaveAllowed),
+            .isS0SavePtrAllowed(isS0SavePtrAllowed),
+
             .rst(rst)
             );
             
@@ -200,6 +210,16 @@ module InternalBus(
             .disp_online(disp_online),
             
             .next_state(next_state),
+            
+            .isIpSaveAllowed(isIpSaveAllowed),
+            .isDSaveAllowed(isDSaveAllowed),
+            .isDSavePtrAllowed(isDSavePtrAllowed),
+            .isCndSaveAllowed(isCndSaveAllowed),
+            .isCndSavePtrAllowed(isCndSavePtrAllowed),
+            .isS1SaveAllowed(isS1SaveAllowed),
+            .isS1SavePtrAllowed(isS1SavePtrAllowed),
+            .isS0SaveAllowed(isS0SaveAllowed),
+            .isS0SavePtrAllowed(isS0SavePtrAllowed),
             
             .rst(rst)
             );

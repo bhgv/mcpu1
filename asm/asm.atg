@@ -320,8 +320,7 @@ PRODUCTIONS
 						    Src<out src0> 
 						    "(" Src<out src1> ")"
 						)
-				   [ "if" "(" Cond<out cond> 
-				     ")" 
+				   [ "?" Cond<out cond>  
 				   ] 
 										(.
 										   cmd |= (cond['r'] << 12) | (cond['rop'] << 26) | (cond['isptr'] << 19)

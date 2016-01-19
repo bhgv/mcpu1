@@ -86,15 +86,22 @@ module RegisterManager (
                                               : register_r
                                               ;  // tri or wire ??
 
+  wire is_data_not_ptr_to_data = (isRegPtr == 0 && reg_op == `REG_OP_WRITE)
+                                 || (isRegPtr == 1 && reg_op == `REG_OP_WRITE_P)
+                                 ;
                                               
-  wire [`DATA_SIZE0:0] data_to_save = (isRegPtr == 0 || reg_op == `REG_OP_WRITE) 
+  wire [`DATA_SIZE0:0] data_to_save = ( is_data_not_ptr_to_data ) 
                                               ? register_r
                                               : register_r_ptr
                                               ;
-                                              
-  wire [`DATA_SIZE0:0] data_post_inc_dec = (regFlags == 2'b 01)
+// dst(reg:0, op:4, res:3(+)), src0(p:1, op:4, r:11h(+)), src0(p:1, op:4, r:11h(+))?, ip(p:1, op:6, r:12h(+))
+
+  wire [`DATA_SIZE0:0] data_post_inc_dec = //(reg_op == `REG_OP_WRITE)
+                                           //? data_to_save
+                                           // : 
+                                            (regFlags == 2'b 01) // && reg_op === `REG_OP_WRITE)
                                               ? data_to_save + 1
-                                              : (regFlags == 2'b 10)
+                                              : (regFlags == 2'b 10) // && reg_op === `REG_OP_WRITE)
                                                   ? data_to_save - 1
                                                   : data_to_save
                                               ;
@@ -126,9 +133,9 @@ module RegisterManager (
                         : `ADDR_SIZE'h zzzzzzzz
                         ;
   
-  wire [`ADDR_SIZE0:0] addr_to_save = ((isRegPtr && reg_op == `REG_OP_WRITE) ? register_r_ptr : regNum) + base_addr;
+  wire [`ADDR_SIZE0:0] addr_to_save = ((/*isRegPtr &&*/ reg_op == `REG_OP_WRITE_P) ? register_r_ptr : regNum) + base_addr;
 
-
+ // dst(p:0, op:4, r:8(+)), src0(p:1, op:4, r:fh(+)), src0(p:1, op:4, r:fh(+))?, ip(p:1, op:6, 12:fh(-))
 
   input wire [1:0] cpu_ind_rel;
   inout halt_q;
@@ -199,6 +206,9 @@ module RegisterManager (
   
   reg catched;
   
+  reg isTopR;
+  reg isTopP;
+  
 
   always @(posedge clk) begin
     addr_r = 32'h zzzzzzzz;
@@ -214,6 +224,8 @@ module RegisterManager (
     
     
     rw_halt_r = rw_halt_stim;
+    if(rw_halt_stim === 1)
+    $display("%f) %m, regw_wt = %b, rw_hlt = %b", ($realtime/1000), registerw_waiting, rw_halt_stim);
 
 //    rw_halt_r = 1'bz;
 
@@ -256,6 +268,9 @@ module RegisterManager (
     single = 0;
     
     catched = 0;
+    
+    isTopR = 1;
+    isTopP = 1;
   end
 //  else if(state == `ALU_RESULTS) begin
 //    register_r = register;
@@ -312,7 +327,10 @@ module RegisterManager (
         `REG_OP_READ: begin
             if(is_bus_busy == 1) begin
             
-              if(read_dn == 1 && register_waiting == 1) begin
+              if(
+                  (read_dn == 1 && register_waiting == 1) 
+//                  || (write_dn && register_waiting == 1 && isTopR == 1) 
+              ) begin
                   if(addr === register_r_adr) begin
                     register_r = data;
                     register_r_ptr = data;
@@ -329,6 +347,15 @@ module RegisterManager (
 
                 addr_r = `ADDR_SIZE'h zzzzzzzz;
                 read_q_r = 1'bz;
+                
+//                if(cpu_ind_rel === 2'b10) begin
+//                  isTopR = 0;
+//                end else 
+//                if(cpu_ind_rel === 2'b01) begin
+//                  register_waiting = 1;
+//                end
+                
+                $display(cpu_ind_rel);
               end else
               if(read_q_r === 1) begin
                 addr_r = `ADDR_SIZE'h zzzzzzzz;
@@ -416,6 +443,8 @@ module RegisterManager (
 //              src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
 //            end
             
+            registerw_waiting = isSaveAllowed;
+
             next_state = 1;
         end
 

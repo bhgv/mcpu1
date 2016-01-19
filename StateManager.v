@@ -13,6 +13,16 @@ module StateManager(
             
             next_state,
             
+            isIpSaveAllowed,
+            isDSaveAllowed,
+            isDSavePtrAllowed,
+            isCndSaveAllowed,
+            isCndSavePtrAllowed,
+            isS1SaveAllowed,
+            isS1SavePtrAllowed,
+            isS0SaveAllowed,
+            isS0SavePtrAllowed,
+            
             rst
             );
   input wire clk;
@@ -68,11 +78,82 @@ module StateManager(
   input wire rst;
   
   
+  
+  
+  output isDSaveAllowed;
+  wire isDSaveAllowed = (
+             &regDFlags == 1'b 0 &&
+//            (regNumCnd != regNumD || ^regCondFlags == 0) &&
+//            (regNumS1  != regNumD || ^regS1Flags == 0) &&
+//            (regNumS0  != regNumD || ^regS0Flags == 0) &&
+            ((&regCondFlags == 0 && cond != 0) || &regCondFlags == 1 ) 
+          )
+          ;
+  output isDSavePtrAllowed;
+  wire isDSavePtrAllowed = (
+             &regDFlags != 1'b 0 &&
+//            (regNumCnd != regNumD || ^regCondFlags == 0) &&
+//            (regNumS1  != regNumD || ^regS1Flags == 0) &&
+//            (regNumS0  != regNumD || ^regS0Flags == 0) &&
+            isRegDPtr == 1'b 1 &&
+            ((&regCondFlags == 0 && cond != 0) || &regCondFlags == 1)
+          )
+          ;
+  
+  
+  output isIpSaveAllowed;
+  wire isIpSaveAllowed = ~(
+            (regNumD == `REG_IP && isDSaveAllowed) ||
+            (^regCondFlags && regNumCnd == `REG_IP) ||
+            (^regS1Flags && regNumS1 == `REG_IP) ||
+            (^regS0Flags && regNumS0 == `REG_IP)
+          )
+          ;
+  
+
+  output isCndSaveAllowed;
+  wire isCndSaveAllowed = (
+            ^regCondFlags == 1 && 
+            (regNumD   != regNumCnd || ~isDSaveAllowed) &&
+            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
+            (regNumS0  != regNumCnd || ^regS0Flags == 0)
+          )
+          ;
+  output isCndSavePtrAllowed;
+  wire isCndSavePtrAllowed = 0 ;
+  
+  output isS1SaveAllowed;
+  wire isS1SaveAllowed = (
+            ^regS1Flags == 1 && 
+            (regNumD   != regNumS1 || ~isDSaveAllowed) &&
+            (regNumS0  != regNumS1 || ^regS0Flags == 0)
+          )
+          ;
+  output isS1SavePtrAllowed ;
+  wire isS1SavePtrAllowed = 0 ;
+  
+  output isS0SaveAllowed;
+  wire isS0SaveAllowed = (
+            ^regS0Flags == 1 &&
+            (regNumD   != regNumS0 || ~isDSaveAllowed)
+          )
+          ;
+  output isS0SavePtrAllowed;
+  wire isS0SavePtrAllowed = 0 ;
+
+  
+  
   reg anti_continuous;
+  
+  reg condIsReaden;
+  reg ipIsWriten;
   
   always @(negedge clk) begin
     if( rst == 1 ) begin
       state = `WAIT_FOR_START;
+      
+      condIsReaden = 0;
+      ipIsWriten = 0;
       
       anti_continuous = 1;
     end
@@ -131,10 +212,7 @@ module StateManager(
         
         `PREEXECUTE: begin
           if(
-            (&regDFlags == 0 && regNumD == `REG_IP) ||
-            (^regCondFlags && regNumCnd == `REG_IP) ||
-            (^regS1Flags && regNumS1 == `REG_IP) ||
-            (^regS0Flags && regNumS0 == `REG_IP)
+              ~isIpSaveAllowed
           ) begin
             if(&regCondFlags == 0) 
               state = (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
@@ -153,7 +231,9 @@ module StateManager(
         
 /**/
         `WRITE_REG_IP: begin
-          if(&regCondFlags == 0) 
+          ipIsWriten = 1;
+          
+          if(&regCondFlags == 0 && ~condIsReaden) 
             state = (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
           else if(&regS1Flags == 0) 
             state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
@@ -165,6 +245,15 @@ module StateManager(
 /**/
         
         `READ_COND, `FILL_COND: begin
+          condIsReaden = 1;
+          
+          if(isRegCondPtr == 1) begin
+            state = `READ_COND_P;
+          end else 
+          if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
+            state = `WRITE_REG_IP;
+          end else
+              
           if(&regS1Flags == 0) 
             state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
@@ -176,18 +265,23 @@ module StateManager(
           else
             state = `ALU_BEGIN;
         
-        
+/*
 //          if(&regCondFlags == 0) begin
-            if(isRegCondPtr == 0 && cond == 0) begin
-              state = `FINISH_BEGIN; //WRITE_DATA;
+            if(isRegCondPtr == 0 && cond == 0 && ~ipIsWriten) begin
+              state = `WRITE_REG_IP; //FINISH_BEGIN; //WRITE_DATA;
             end else if(isRegCondPtr == 1) begin
               state = `READ_COND_P;
 //            end else begin
 //              state = `ALU_BEGIN;
             end
+*/
         end
         
         `READ_COND_P: begin
+          if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
+            state = `WRITE_REG_IP;
+          end else
+              
           if(&regS1Flags == 0) 
             state = (regNumS1 == `REG_IP || regNumS1 == regNumCnd) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
@@ -196,11 +290,13 @@ module StateManager(
             state = (regNumD == `REG_IP || regNumD == regNumCnd || regNumD == regNumS1 || regNumD == regNumS0) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
-        
+
+/*        
           if(cond == 0) begin
-            state = `FINISH_BEGIN; //WRITE_DATA;
+            state = `WRITE_REG_IP; //FINISH_BEGIN; //WRITE_DATA;
 //          end else begin
           end
+*/
         end
         
         `READ_SRC1, `FILL_SRC1: begin
@@ -281,28 +377,27 @@ module StateManager(
                     );
 */
           if(
-//            &regDFlags == 0 && 
-            (regNumCnd != regNumD || ^regCondFlags == 0) &&
-            (regNumS1  != regNumD || ^regS1Flags == 0) &&
-            (regNumS0  != regNumD || ^regS0Flags == 0)
+              isDSaveAllowed
           ) begin
-            state = isRegDPtr == 1'b 1 ? `WRITE_DST_P : `WRITE_DST;
+            state = isRegDPtr ? `WRITE_DST_P : `WRITE_DST;
           end else
           if(
-            ^regCondFlags == 1 && 
-            (regNumS1  != regNumCnd || ^regS1Flags == 0) &&
-            (regNumS0  != regNumCnd || ^regS0Flags == 0)
+            isDSavePtrAllowed
+          ) begin
+            state = `WRITE_DST_P;
+          end else
+          if(
+              isCndSaveAllowed
           ) begin
             state = `WRITE_COND;
           end else
           if(
-            ^regS1Flags == 1 && 
-            (regNumS0  != regNumS1 || ^regS0Flags == 0)
+              isS1SaveAllowed
           ) begin
             state = `WRITE_SRC1;
           end else
           if(
-            ^regS0Flags == 1
+              isS0SaveAllowed
           ) begin
             state = `WRITE_SRC0;
           end else
@@ -315,28 +410,23 @@ module StateManager(
           if(
 //            isRegDPtr == 1 && 
 //            ^regDFlags == 1 && 
-            state == `WRITE_DST_P
+              state == `WRITE_DST_P
+              && ^regDFlags == 1
           ) begin
             state = `WRITE_DST;
           end else
           if(
-            ^regCondFlags == 1 && 
-            (regNumS1  != regNumCnd &&
-             regNumS0  != regNumCnd
-            )
+              isCndSaveAllowed
           ) begin
             state = `WRITE_COND;
           end else
           if(
-            ^regS1Flags == 1 && 
-            (regNumS0  != regNumS1
-             || ^regS0Flags == 0
-            )
+              isS1SaveAllowed
           ) begin
             state = `WRITE_SRC1;
           end else
           if(
-            ^regS0Flags == 1
+              isS0SaveAllowed
           ) begin
             state = `WRITE_SRC0;
           end else
@@ -347,14 +437,12 @@ module StateManager(
 
         `WRITE_COND: begin
           if(
-            ^regS1Flags == 1 && 
-            (regNumS0  != regNumS1
-            )
+              isS1SaveAllowed
           ) begin
             state = `WRITE_SRC1;
           end else
           if(
-            ^regS0Flags == 1
+              isS0SaveAllowed
           ) begin
             state = `WRITE_SRC0;
           end else
@@ -365,7 +453,7 @@ module StateManager(
         
         `WRITE_SRC1: begin
           if(
-            ^regS0Flags == 1
+              isS0SaveAllowed
           ) begin
             state = `WRITE_SRC0;
           end else
