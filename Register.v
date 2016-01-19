@@ -16,6 +16,7 @@ module RegisterManager (
             cpu_ind_rel,
             halt_q,
             rw_halt,
+//            want_write,
             
             is_bus_busy,
             addr,
@@ -160,6 +161,11 @@ module RegisterManager (
             ? 1'b 1
             : 1'b z
             ;
+            
+            
+//  inout want_write;
+//  reg want_write_r;
+//  tri want_write = want_write_r;
 
   
   output read_q;
@@ -224,8 +230,8 @@ module RegisterManager (
     
     
     rw_halt_r = rw_halt_stim;
-    if(rw_halt_stim === 1)
-    $display("%f) %m, regw_wt = %b, rw_hlt = %b", ($realtime/1000), registerw_waiting, rw_halt_stim);
+//    if(rw_halt_stim === 1)
+//    $display("%f) %m, regw_wt = %b, rw_hlt = %b", ($realtime/1000), registerw_waiting, rw_halt_stim);
 
 //    rw_halt_r = 1'bz;
 
@@ -269,8 +275,10 @@ module RegisterManager (
     
     catched = 0;
     
-    isTopR = 1;
-    isTopP = 1;
+    isTopR = 0;
+    isTopP = 0;
+    
+//    want_write_r = 1'b z;
   end
 //  else if(state == `ALU_RESULTS) begin
 //    register_r = register;
@@ -329,13 +337,15 @@ module RegisterManager (
             
               if(
                   (read_dn == 1 && register_waiting == 1) 
-//                  || (write_dn && register_waiting == 1 && isTopR == 1) 
+                  || (write_dn && register_waiting == 0 && isTopR == 1) 
               ) begin
                   if(addr === register_r_adr) begin
                     register_r = data;
                     register_r_ptr = data;
                     /*if(! isDinamic )*/ register_waiting = 0;
                     next_state = 1;
+                    
+//                    want_write_r = 1'b z;
                   end
               end
               
@@ -348,14 +358,20 @@ module RegisterManager (
                 addr_r = `ADDR_SIZE'h zzzzzzzz;
                 read_q_r = 1'bz;
                 
-//                if(cpu_ind_rel === 2'b10) begin
-//                  isTopR = 0;
-//                end else 
-//                if(cpu_ind_rel === 2'b01) begin
-//                  register_waiting = 1;
-//                end
+//                want_write_r = 1'b z;
                 
-                $display(cpu_ind_rel);
+                // VV thinking if it possible to make read in time of write
+                if(cpu_ind_rel === 2'b10) begin
+                  isTopR = 0;
+                end else 
+//                if(cpu_ind_rel === 2'b01) 
+                begin
+                  isTopR = 1;
+//                  register_waiting = 1;
+                end
+                // AA
+                
+//                $display(cpu_ind_rel, ", ", isTopR);
               end else
               if(read_q_r === 1) begin
                 addr_r = `ADDR_SIZE'h zzzzzzzz;
@@ -368,6 +384,8 @@ module RegisterManager (
                 
                 if(^regFlags == 1) registerptr_waiting = 1;
                 register_waiting = 1;
+                
+//                want_write_r = isSavePtrAllowed;
     
                 single = 0;
               end
@@ -377,7 +395,10 @@ module RegisterManager (
           
         `REG_OP_READ_P: begin
           if(is_bus_busy == 1) begin
-            if(read_dn == 1 && registerptr_waiting == 1) begin
+            if(
+                (read_dn == 1 && registerptr_waiting == 1)
+                || (write_dn && registerptr_waiting == 0 && isTopP == 1) 
+            ) begin
                 if(addr === register_r_ptr + base_addr) begin
 //                  register_r_ptr = register_r;
                   register_r = data;
@@ -393,6 +414,17 @@ module RegisterManager (
 
               addr_r = `ADDR_SIZE'h zzzzzzzz;
               read_q_r = 1'bz;
+                
+              // VV thinking if it possible to make read in time of write
+              if(cpu_ind_rel === 2'b10) begin
+                isTopP = 0;
+              end else 
+//              if(cpu_ind_rel === 2'b01) 
+              begin
+                isTopP = 1;
+//                register_waiting = 1;
+              end
+                // AA
             end else
             if(read_q_r === 1) begin
               addr_r = `ADDR_SIZE'h zzzzzzzz;
