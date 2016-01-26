@@ -79,7 +79,7 @@ module Cpu(
   
   inout wire bus_busy;
   
-  //wire [31:0] command;
+  wire [31:0] command;
   
   
   wire disp_online;
@@ -100,8 +100,8 @@ module Cpu(
   input wire ext_cpu_q;
   output tri ext_cpu_e;
   
-  wire [7:0] int_cpu_msg;
-  inout wire [7:0] cpu_msg;
+  tri [7:0] int_cpu_msg;
+  inout tri [7:0] cpu_msg;
   
 //  reg cpu_running;
   
@@ -115,8 +115,8 @@ BridgeToOutside outside_bridge (
             .clk(clk),
             .state(state),
             
-            //base_addr,
-            //.command(command),
+            .base_addr(base_addr),
+            .command(command),
             
             .halt_q(halt_q),
             .cpu_ind_rel(cpu_ind_rel),
@@ -169,8 +169,8 @@ BridgeToOutside outside_bridge (
   InternalBus int_bus (
             .clk(clk), 
             .state(state),
-            //.base_addr(base_addr),
-            //.command(command),
+            .base_addr(base_addr),
+            .command(command),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt), //(int_rw_halt),

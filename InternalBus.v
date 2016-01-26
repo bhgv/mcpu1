@@ -11,7 +11,8 @@ module InternalBus(
         //    state,
         bus_busy,
         
-//        command,
+        base_addr,
+        command,
         
         state,
         
@@ -50,8 +51,7 @@ module InternalBus(
   reg bus_busy_r;
   tri bus_busy = bus_busy_r;
   
-  //output 
-  tri0 [31:0] command;
+  output wire [31:0] command;
     
   input wire rst;
   
@@ -94,13 +94,13 @@ module InternalBus(
   tri0 next_state;
  
                     
-  wire [`ADDR_SIZE0:0] base_addr;
+  input wire [`ADDR_SIZE0:0] base_addr;
   
   
   input wire disp_online;
   
   
-  output tri [7:0] cpu_msg;
+  inout tri [7:0] cpu_msg;
   
   
 //	reg [31:0] mem [0:100]; 
@@ -257,6 +257,8 @@ module InternalBus(
         .clk(clk),
         .is_bus_busy(bus_busy),
         
+        .base_addr(base_addr),
+        
         .command(command),
         
         .state(state),
@@ -265,6 +267,11 @@ module InternalBus(
         .src0(src0),
         .dst(dst),
         .dst_h(dst_h),
+        
+        .data(data),
+        .addr(addr),
+        
+        .disp_online(disp_online),
         
         .cpu_msg(cpu_msg),
         

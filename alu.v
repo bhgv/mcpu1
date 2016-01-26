@@ -193,7 +193,7 @@ module Alu(
             end
             
             default: begin
-              next_state = 1;       
+//              next_state = 1;       
             end
             
 //            `: begin

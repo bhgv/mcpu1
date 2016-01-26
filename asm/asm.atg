@@ -19,6 +19,7 @@ COMPILER Asm
    
    def compoundCode(self, entry):
       sz = 0
+      self.ip = 0
       if entry in self.funcs :
          foo = self.funcs[entry]
          self.code.append(0)
@@ -30,19 +31,31 @@ COMPILER Asm
 										   
    
    def addFooToCode(self, foo):
+      b_ip = self.ip
+      iip = 0
       sz = foo['ip']
       for i in xrange(0, foo['ip']) :
          self.code.append(foo['code'][i])
+         iip += 1
          self.ip += 1
       for nm in foo['names'] :
+         print nm
          o = foo['names'][nm]
          if o['type'] == 'foo' :
-            self.code.append(0)
-            isz_ip = self.ip
-            self.ip += 1
-            isz = self.addFooToCode(o['foo'])
-            self.code[isz_ip] = isz
-            sz += isz
+	    if nm in foo['xref'] :
+               self.code.append(0)
+               isz_ip = self.ip
+               self.ip += 1
+	       ptlst = foo['xref'][nm]
+	       for pt in ptlst :
+                  print "b_ip=%d, pt=%d, isz_ip=%d, old_code=%d" % (b_ip, pt, isz_ip, self.code[b_ip + pt], )
+	          self.code[b_ip + pt] += iip
+               isz = self.addFooToCode(o['foo'])
+               print "isz=", isz, ", isz_ip=", isz_ip
+	       iip += isz
+               self.code[isz_ip] = isz
+               sz += isz
+      print "sz=", sz
       return sz
 
 
@@ -163,8 +176,9 @@ PRODUCTIONS
 										      self.SemErr( "Error: dublicated function name '%s'" % (fname,) )
 										   else:
 										      regs = []
-										      for i in xrange(0,16) :
+										      for i in xrange(0,15) :
 										         regs.append(0)
+										      regs.append(16)
 										      foo = {'fname': fname, 'f_ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, 'code': [], 'xref': {}, 'ip': 0, 'names': {}, 'foos': [], }
 										      self.funcs[fname] = foo
 										      self.curfunc = fname
@@ -181,6 +195,7 @@ PRODUCTIONS
 										   
 										   for lbl in foo['xref'] :
 										      #print lbl
+										      nmip = 0
 										      if lbl not in foo['names'] :
 										         self.SemErr( "Error: use of not defined label '%s'" % (lbl,) )
 										      ptlst = foo['xref'][lbl]
@@ -316,7 +331,7 @@ PRODUCTIONS
 						    Src<out src0> 
 						    Operation<out op> 
 						    Src<out src1>
-						  | "fork" 			(. op = 15 .)
+						  | "fork" 			(. op = 14 .)
 						    Src<out src0> 
 						    "(" Src<out src1> ")"
 						)

@@ -10,12 +10,19 @@ module ThreadCtlr(
         
         command,
         
+        base_addr,
+        
         state,
         
         src1,
         src0,
         dst,
         dst_h,
+        
+        data,
+        addr,
+        
+        disp_online,
         
         cpu_msg,
         
@@ -30,6 +37,10 @@ module ThreadCtlr(
   wire is_bus_busy = is_bus_busy_r;
   
   input wire [31:0] command;
+  
+  wire [3:0] cmd_code = command[31:28];
+  
+  input wire [`ADDR_SIZE0:0] base_addr;
   
   input wire [`STATE_SIZE0:0] state;
   
@@ -46,21 +57,51 @@ module ThreadCtlr(
   wire [`DATA_SIZE0:0] src0 = src0_r;
   wire [`DATA_SIZE0:0] dst  = dst_r;
   
+  
+  reg cpu_msg_in;
   inout [7:0] cpu_msg;
   reg [7:0] cpu_msg_r;
-  wire [7:0] cpu_msg = cpu_msg_r;
+  tri [7:0] cpu_msg = cpu_msg_in == 0 ? cpu_msg_r : 8'h zzzz;
 
+
+  inout [`DATA_SIZE0:0] data;
+  reg [`DATA_SIZE0:0] data_r;
+  tri [`DATA_SIZE0:0] data = (
+                              state == `ALU_BEGIN 
+                              && (
+                                cpu_msg_r === `CPU_R_FORK_THRD
+                                )
+                             )
+                             ? data_r 
+                             : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             ;
+  
+  inout [`ADDR_SIZE0:0] addr;
+  reg [`ADDR_SIZE0:0] addr_r;
+  tri [`ADDR_SIZE0:0] addr = (
+                              state == `ALU_BEGIN 
+                              && (
+                                cpu_msg_r === `CPU_R_FORK_THRD
+                                )
+                             )
+                             ? addr_r 
+                             : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             ;
+  
+
+  input wire disp_online;
+  
   output reg next_state;
   
   input wire rst;
   
   
-  wire [3:0] cmd_code = command[31:28];
+//  wire [3:0] cmd_code = command[31:28];
   
-  
+  reg signal_sent;
   
         
-  always @(posedge clk) begin
+  always @(negedge clk) begin
     next_state = 1'b z;
     
     is_bus_busy_r = 1'b z;
@@ -71,15 +112,58 @@ module ThreadCtlr(
       dst_r =  `DATA_SIZE'h zzzzzzzz;
       dst_h =  `DATA_SIZE'h zzzzzzzz;
       
-      cpu_msg_r = 8'h00;
+      cpu_msg_r = 8'h 00;
       
+      signal_sent = 0;
+      
+      cpu_msg_in = 0;
 //      is_bus_busy_r = 1'b z;
     end else begin
     
       case(state)
         `ALU_BEGIN: begin
           dst_h = 0;
+          
           case(cmd_code)
+            `CMD_FORK: begin
+              if(disp_online == 1) begin
+                if(
+//                  cpu_msg_r !== `CPU_R_FORK_THRD && 
+                  signal_sent == 0
+                ) begin
+                  addr_r = src0 + base_addr;
+                  data_r = src1 == 0 ? 0 : src1 + base_addr;
+                
+                  cpu_msg_r = `CPU_R_FORK_THRD;
+                  
+                  signal_sent = 1;
+                end
+                else begin
+//                  if(signal_sent == 0) begin
+//                    signal_sent = 1;
+//                  end
+//                  else begin
+                    cpu_msg_r = 8'h 00;
+                    cpu_msg_in = 1;
+                  
+                    if(cpu_msg === `CPU_R_FORK_DONE) begin
+                    
+                      signal_sent = 0;
+                      next_state = 1;
+                    end
+//                  end
+                end
+              end
+              else begin
+                cpu_msg_r = 8'h00;
+              end
+            end
+            
+            `CMD_STOP: begin
+              cpu_msg_r = `CPU_R_STOP_THRD;
+            end
+            
+            /**
             `CMD_EXT_CMD: begin
             
               //case(src0)
@@ -95,6 +179,7 @@ module ThreadCtlr(
               //endcase
 
             end
+            **/
             
             
 //            `: begin

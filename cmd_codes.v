@@ -17,6 +17,16 @@
 `define  CMD_OR  09
 
 
+`define  CMD_FADD 10
+`define  CMD_FSUB 11
+
+`define  CMD_FMUL 12
+`define  CMD_FDIV 13
+
+
+`define  CMD_FORK 14
+`define  CMD_STOP 15
+
 `define  CMD_EXT_CMD  15
 
 

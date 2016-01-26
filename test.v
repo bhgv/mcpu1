@@ -154,7 +154,7 @@ module test;
 parameter STEP = 20;
 
 
-parameter CPU_QUANTITY = 3;
+parameter CPU_QUANTITY = 2;
 
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;

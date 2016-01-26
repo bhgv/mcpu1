@@ -67,7 +67,7 @@ parameter PROC_QUANTITY = 8;
   
   inout [`DATA_SIZE0:0] data_wire;
   reg [`DATA_SIZE0:0] data_wire_r;
-  tri [`DATA_SIZE0:0] data_wire = data_wire_r;
+//  tri [`DATA_SIZE0:0] data_wire = data_wire_r;
   
   inout bus_busy;
   reg bus_busy_r;
@@ -114,9 +114,25 @@ parameter PROC_QUANTITY = 8;
 
 
 
-
+  reg [3:0] thrd_cmd_r;
+  wire [1:0] thrd_rslt;
+  
   wire [`DATA_SIZE0:0] next_proc;
   wire [`DATA_SIZE0:0] proc;
+  
+  reg [`ADDR_SIZE0:0] addr_thread_to_op_r;
+  reg [`DATA_SIZE0:0] addr_chan_to_op_r;
+  wire [`DATA_SIZE0:0] addr_chan_to_op =
+                                        (cpu_msg === `CPU_R_FORK_DONE)
+                                        ? `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                        : addr_chan_to_op_r
+                                        ;
+  
+  tri [`DATA_SIZE0:0] data_wire = 
+                                  (cpu_msg === `CPU_R_FORK_DONE)
+                                  ? addr_chan_to_op
+                                  : data_wire_r
+                                  ;
 
   ThreadsManager trds_mngr (
                     .clk(clk),
@@ -128,6 +144,12 @@ parameter PROC_QUANTITY = 8;
                     .proc(proc),
 
                     .next_proc(next_proc),
+                    
+                    .thrd_cmd(thrd_cmd_r),
+                    .thrd_rslt(thrd_rslt),
+                    
+                    .addr(addr_thread_to_op_r),
+                    .data(addr_chan_to_op),
                     
                     .rst(rst)
                       );
@@ -192,6 +214,8 @@ always @(negedge clk) begin
     
     cpu_msg_r = 8'hzz;
     
+    thrd_cmd_r = `THREAD_CMD_NULL;
+    
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
@@ -206,12 +230,18 @@ always @(negedge clk) begin
               state_ctl = `CTL_MEM_WORK;
             end
           end 
+          
 //          else
 //          if(dispatcher_q == 1) begin
 //            
 //          end else begin
 //            state_ctl = `CTL_MEM_WORK;
 //          end
+
+
+          if(thrd_cmd_r == `THREAD_CMD_READY_TO_FORK) begin
+            thrd_cmd_r = `THREAD_CMD_NULL;
+          end
 
 
     case(state_ctl)
@@ -224,10 +254,10 @@ always @(negedge clk) begin
           addr_out_r  = 32'h zzzzzzzz;
         end
           
-        if(bus_busy == 1) begin
+//        if(bus_busy === 1) begin
           //proc_tbl[data_wire] = 0; //32'h ffffffff;
         
-        end
+//        end
         ext_rst_b = 0;
         if(ext_rst_e == 1) begin
           //ext_rst_b = 0;
@@ -239,24 +269,25 @@ always @(negedge clk) begin
       
       `CTL_CPU_LOOP: begin
 //        bus_busy_r  = 1;
-        if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
-          ext_cpu_index_r = `CPU_NONACTIVE;
-          new_cpu_restarted = 1;
-        end else begin
-          cpu_num = cpu_num + 1;
-          if(cpu_num >= cpu_num_a) begin
-            cpu_num = 0;
+        if(bus_busy !== 1) begin
+          if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
+            ext_cpu_index_r = `CPU_NONACTIVE;
+            new_cpu_restarted = 1;
+          end else begin
+            cpu_num = cpu_num + 1;
+            if(cpu_num >= cpu_num_a) begin
+              cpu_num = 0;
+            end
+            ext_cpu_index_r = cpu_num | `CPU_ACTIVE;
+            new_cpu_restarted = 0;
           end
-          ext_cpu_index_r = cpu_num | `CPU_ACTIVE;
-          new_cpu_restarted = 0;
-        end
         
 //        proc_num = proc_num + 1;
 //        if(proc_num >= proc_num_t) begin
 //          proc_num = 0;
 //        end
 
-        addr_out_r = next_proc;   //proc_tbl[proc_num];
+          addr_out_r = next_proc;   //proc_tbl[proc_num];
         
 //        cpu_num = cpu_num + 1;
 //        if(cpu_num >= CPU_QUANTITY) begin
@@ -267,9 +298,12 @@ always @(negedge clk) begin
         
 //        addr_out_r = proc_tbl[cpu_num];
         
-        cpu_q_r = 1;
+          cpu_q_r = 1;
+          
+          $display("cpu_ind= %x", ext_cpu_index_r);
         
-        state_ctl = `CTL_CPU_CMD;
+          state_ctl = `CTL_CPU_CMD;
+        end
       end
       
       `CTL_CPU_CMD: begin
@@ -297,7 +331,7 @@ always @(negedge clk) begin
           mem_rd = 0;
           mem_wr = 1;
         end else 
-        if(ext_cpu_e == 1) begin
+        if(ext_cpu_e === 1) begin
             //cpu_running = 1;
             //addr_out_r = `ADDR_SIZE'h zzzzzzzz;
           ext_cpu_index_r = `DATA_SIZE'h zzzzzzzz;
@@ -312,16 +346,19 @@ always @(negedge clk) begin
                 cpu_num = cpu_num + 1;
 
                 new_cpu_restarted = 0;
+
+                thrd_cmd_r = `THREAD_CMD_READY_TO_FORK;
               end
             
               `CPU_R_END: begin
                 cpu_num_a = cpu_num_a - 1;
                 cpu_num_na = cpu_num_na + 1;
+                
+//                thrd_cmd_r = `THREAD_CMD_READY_TO_FORK;
               end
-              
-              `CPU_R_NEW_THRD: begin
-//                proc_tbl[proc_num_t] = proc_num_t << 4;
-//                proc_num_t = proc_num_t + 1;
+            
+              `CPU_R_FORK_DONE: begin
+                cpu_msg_r = 8'h zz;
               end
             
             endcase
@@ -338,6 +375,39 @@ always @(negedge clk) begin
           end
           
         end
+        
+        else begin
+//          ext_cpu_index_r = `DATA_SIZE'h zzzzzzzz;
+          
+//          data_wire_r = mem_addr_tmp;
+
+            if(thrd_cmd_r == `THREAD_CMD_NULL) begin
+              case(cpu_msg) //data_wire)              
+                `CPU_R_STOP_THRD: begin
+//                  proc_tbl[proc_num_t] = proc_num_t << 4;
+//                  proc_num_t = proc_num_t + 1;
+                end
+              
+                `CPU_R_FORK_THRD: begin
+                  addr_thread_to_op_r = addr_out;
+                  addr_chan_to_op_r = data_wire;
+                  
+                  thrd_cmd_r = `THREAD_CMD_RUN;
+                end
+                
+//                `CPU_R_FORK_DID: begin
+//                  cpu_msg_r = 8'h zz;
+//                end
+            
+              endcase
+            end else
+            if(thrd_cmd_r == `THREAD_CMD_RUN) begin
+              cpu_msg_r = `CPU_R_FORK_DONE;
+              
+              thrd_cmd_r = `THREAD_CMD_NULL;
+            end
+        end
+        
       end
       
       `CTL_MEM_WORK: begin
@@ -348,7 +418,7 @@ always @(negedge clk) begin
 //        data_wire_r = 32'h zzzzzzzz;
 
           if(mem_rd == 1 || mem_wr == 1) begin
-            if(bus_busy_r == 1) begin
+            if(bus_busy_r === 1) begin
               bus_busy_r = 1'b z;
               mem_rd = 0;
               mem_wr = 0;

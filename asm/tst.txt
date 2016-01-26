@@ -12,6 +12,16 @@ var{
 	tst2[5][3];
 }
 
+	r1 = fork[ip++](z);
+	intr;
+	
+	r1 = z + [ip++];
+	intr;
+	r1 = r1 + [ip++];
+	17;
+	
+	r1 = z - [r1];
+	
 	r8 = [ip++] + Z ;
 	2;
 l1:
@@ -35,6 +45,13 @@ l2:
 	}
 
 	r3 <- r2 <- r1;
+	
+	def intr(){
+	l1:
+		r1 = r2 + ip;
+		ip = [ip++] + z;
+		l1;
+	}
 }
 
 entry: main.

@@ -44,7 +44,7 @@ module StartManager (
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
   input [31:0] command;
-  reg [31:0] command_r;
+//  reg [31:0] command_r;
 //  wire [31:0] command = command_r;
   
   output reg [`ADDR_SIZE0:0] cmd_ptr;
@@ -52,7 +52,8 @@ module StartManager (
 //  reg cmd_waiting;
 
   
-  output reg [`ADDR_SIZE0:0] base_addr;
+//  output reg [`ADDR_SIZE0:0] base_addr;
+  input wire [`ADDR_SIZE0:0] base_addr;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
   
   input tri [1:0] cpu_ind_rel;
@@ -173,12 +174,12 @@ module StartManager (
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
   if(rst == 1) begin
-    command_r = 32'h zzzzzzzz;
+//    command_r = 32'h zzzzzzzz;
 
     read_q = 1'b z;
     write_q = 1'b z;
 
-    base_addr = 1;
+//    base_addr = 1;
     next_state = 1'b z;
     
 //    cmd_waiting = 0; cmd_ptr_waiting = 0;
