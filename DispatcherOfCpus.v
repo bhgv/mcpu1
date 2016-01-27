@@ -160,6 +160,9 @@ parameter PROC_QUANTITY = 8;
 //
 //  reg [`DATA_SIZE0:0] proc_tbl [0:PROC_QUANTITY];
 
+//  reg [`ADDR_SIZE0:0] cpu_tbl [0:CPU_QUANTITY + 1];
+//  reg [7:0] cpu_tbl_i;
+
   reg [`DATA_SIZE0:0] cpu_num_a;
   reg [`DATA_SIZE0:0] cpu_num_na;
   
@@ -215,6 +218,10 @@ always @(negedge clk) begin
     cpu_msg_r = 8'hzz;
     
     thrd_cmd_r = `THREAD_CMD_NULL;
+//    thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+    
+//    cpu_tbl[0] = 0;
+//    cpu_tbl_i = 0;
     
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
@@ -239,7 +246,7 @@ always @(negedge clk) begin
 //          end
 
 
-          if(thrd_cmd_r == `THREAD_CMD_READY_TO_FORK) begin
+          if(thrd_cmd_r == `THREAD_CMD_GET_NEXT_STATE) begin
             thrd_cmd_r = `THREAD_CMD_NULL;
           end
 
@@ -287,7 +294,9 @@ always @(negedge clk) begin
 //          proc_num = 0;
 //        end
 
-          addr_out_r = next_proc;   //proc_tbl[proc_num];
+//          if(ext_cpu_index === 0) begin
+            addr_out_r = next_proc; //cpu_tbl[cpu_tbl_i - (ext_cpu_index_r & ~`CPU_ACTIVE)]; //next_proc;   //proc_tbl[proc_num];
+//          end
         
 //        cpu_num = cpu_num + 1;
 //        if(cpu_num >= CPU_QUANTITY) begin
@@ -300,7 +309,7 @@ always @(negedge clk) begin
         
           cpu_q_r = 1;
           
-          $display("cpu_ind= %x", ext_cpu_index_r);
+//          $display("cpu_ind= %x, proc = %x", ext_cpu_index_r, addr_out_r);
         
           state_ctl = `CTL_CPU_CMD;
         end
@@ -347,17 +356,23 @@ always @(negedge clk) begin
 
                 new_cpu_restarted = 0;
 
-                thrd_cmd_r = `THREAD_CMD_READY_TO_FORK;
+                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+                
+//                cpu_tbl_i = cpu_tbl_i +1;
+//                cpu_tbl[cpu_tbl_i /*ext_cpu_index_r & ~`CPU_ACTIVE*/] = next_proc;
+                
               end
             
               `CPU_R_END: begin
                 cpu_num_a = cpu_num_a - 1;
                 cpu_num_na = cpu_num_na + 1;
                 
-//                thrd_cmd_r = `THREAD_CMD_READY_TO_FORK;
+//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
               end
             
               `CPU_R_FORK_DONE: begin
+                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+                
                 cpu_msg_r = 8'h zz;
               end
             
@@ -441,6 +456,8 @@ always @(negedge clk) begin
             bus_busy_r = 1;
 //            halt_q = 1;
 //            mem_rd = 0;
+
+            $display("%m) Read: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end 
 //          else begin
 //         //            data_wire_r = 32'h zzzzzzzz;
@@ -455,6 +472,8 @@ always @(negedge clk) begin
             bus_busy_r = 1;
 //            halt_q = 1;
 //            mem_wr = 0;
+
+            $display("%m) Write: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end
           
           if(dispatcher_q == 1) begin

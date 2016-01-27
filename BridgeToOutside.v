@@ -408,7 +408,7 @@ module BridgeToOutside (
         ) begin
           disp_online = 1;
           
-          base_addr_r = addr + 1;
+//          base_addr_r = addr + 1;
           
           case(state)
             `WAIT_FOR_START: begin
@@ -416,7 +416,7 @@ module BridgeToOutside (
               cpu_msg_r = `CPU_R_START;
 //              cpu_index_r = `CPU_ACTIVE;
               cpu_index_itf = cpu_index_r;
-//              base_addr_r = addr + 1;
+              base_addr_r = addr + 1;
               ext_dispatcher_q = 1'b z;
 //              disp_online = 1;
               

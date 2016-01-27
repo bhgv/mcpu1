@@ -86,7 +86,7 @@ parameter PROC_QUANTITY = 8;
   always @(posedge clk) begin
     if(rst == 1) begin
       proc_r = 32'h zzzzzzzz;
-      next_proc = 32'h zzzzzzzz;
+      next_proc = 0; // 32'h zzzzzzzz;
       
       aproc_b = 0;
       aproc_e = 0;
@@ -105,16 +105,19 @@ parameter PROC_QUANTITY = 8;
     end else begin
 
 
-      if(thrd_cmd == `THREAD_CMD_READY_TO_FORK) begin
+      if(thrd_cmd == `THREAD_CMD_GET_NEXT_STATE) begin
         ready_to_fork_thread = 1;
       end
       
       
       case(ctl_state)
         `CTL_CPU_LOOP: begin
+        
+        if(ready_to_fork_thread) begin
+        
           if(
               pproc_b != pproc_e
-              && ready_to_fork_thread
+//              && ready_to_fork_thread
           ) begin
             next_proc = pproc_tbl[pproc_b];
             
@@ -129,10 +132,10 @@ parameter PROC_QUANTITY = 8;
               aproc_e = 0;
             end
             
-//            ready_to_fork_thread = 0;
+////            ready_to_fork_thread = 0;
             
           end else begin
-            ready_to_fork_thread = 0;
+//            ready_to_fork_thread = 0;
             
             next_proc = aproc_tbl[aproc_i];
             
@@ -145,6 +148,10 @@ parameter PROC_QUANTITY = 8;
               aproc_i = aproc_b;
             end
           end
+        
+          ready_to_fork_thread = 0;
+        end
+        
         end
         
         `CTL_CPU_CMD: begin
