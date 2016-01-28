@@ -11,6 +11,7 @@ module ThreadCtlr(
         command,
         
         base_addr,
+        base_addr_data,
         
         state,
         
@@ -41,6 +42,7 @@ module ThreadCtlr(
   wire [3:0] cmd_code = command[31:28];
   
   input wire [`ADDR_SIZE0:0] base_addr;
+  input wire [`ADDR_SIZE0:0] base_addr_data;
   
   input wire [`STATE_SIZE0:0] state;
   
@@ -66,7 +68,8 @@ module ThreadCtlr(
 
   inout [`DATA_SIZE0:0] data;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data = (
+  tri [`DATA_SIZE0:0] data = 
+                           (
                               state == `ALU_BEGIN 
                               && (
                                 cpu_msg_r === `CPU_R_FORK_THRD
@@ -132,7 +135,7 @@ module ThreadCtlr(
                   signal_sent == 0
                 ) begin
                   addr_r = src0 + base_addr;
-                  data_r = src1 == 0 ? 0 : src1 + base_addr;
+                  data_r = src1 == 0 ? 0 : src1 + base_addr_data;
                 
                   cpu_msg_r = `CPU_R_FORK_THRD;
                   

@@ -146,7 +146,7 @@ module test;
   
   
   
-	reg [31:0] mem [0:100]; 
+	reg [31:0] mem [0:107]; 
   initial $readmemh("mem.txt", mem);
   
 //  reg [7:0] stage;
@@ -154,7 +154,7 @@ module test;
 parameter STEP = 20;
 
 
-parameter CPU_QUANTITY = 3;
+parameter CPU_QUANTITY = 2;
 
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;

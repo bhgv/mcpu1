@@ -10,9 +10,20 @@ init{
 var{
 	tst;
 	tst2[5][3];
+	
+	trd1[25];
 }
 
-	r1 = fork[ip++](z);
+	r11 = [ip++] + z;
+	trd1;
+	
+	r10 = r11 + [ip++];
+	17;
+	
+	[r10] = [ip++] + z;
+	16;
+	
+	r1 = fork[ip++](r11);
 	intr;
 	
 	r1 = z + [ip++];

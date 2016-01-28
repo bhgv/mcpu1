@@ -13,6 +13,7 @@ module BridgeToOutside (
             state,
             
             base_addr,
+            base_addr_data,
             command,
             
             halt_q,
@@ -72,6 +73,10 @@ module BridgeToOutside (
   output [`ADDR_SIZE0:0] base_addr;
   reg [`ADDR_SIZE0:0] base_addr_r;
   wire [`ADDR_SIZE0:0] base_addr = base_addr_r;
+  
+  output [`ADDR_SIZE0:0] base_addr_data;
+  reg [`ADDR_SIZE0:0] base_addr_data_r;
+  wire [`ADDR_SIZE0:0] base_addr_data = base_addr_data_r;
   
   inout halt_q;
   reg halt_q_r;
@@ -416,7 +421,8 @@ module BridgeToOutside (
               cpu_msg_r = `CPU_R_START;
 //              cpu_index_r = `CPU_ACTIVE;
               cpu_index_itf = cpu_index_r;
-              base_addr_r = addr + 1;
+              base_addr_r = addr + 2;
+              base_addr_data_r = data !== 0 ? data + 2 : addr + 2;
               ext_dispatcher_q = 1'b z;
 //              disp_online = 1;
               
@@ -487,7 +493,7 @@ module BridgeToOutside (
             `START_BEGIN: begin
 //              cpu_index_r = cpu_index_r | `CPU_ACTIVE;
             
-              data_r = base_addr_r - 1;
+//              data_r = base_addr_r - 1;
               //read_dn_r = 1;
             end
             

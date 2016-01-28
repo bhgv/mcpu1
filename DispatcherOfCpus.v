@@ -51,7 +51,11 @@ parameter PROC_QUANTITY = 8;
   
   inout [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_out_r;
-  tri [`ADDR_SIZE0:0] addr_out = addr_out_r;
+//  tri [`ADDR_SIZE0:0] addr_out = 
+//                                (ext_cpu_q === 1)
+//                                ? addr_out_r
+//                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+//                                ;
   
   input tri0 read_q;
   input tri0 write_q;
@@ -102,7 +106,7 @@ parameter PROC_QUANTITY = 8;
   reg mem_rd;
   reg mem_wr;
   
-	reg [31:0] mem [0:100]; 
+	reg [31:0] mem [0:400]; 
   initial $readmemh("mem.txt", mem);
   
 
@@ -123,19 +127,41 @@ parameter PROC_QUANTITY = 8;
   reg [`ADDR_SIZE0:0] addr_thread_to_op_r;
   reg [`DATA_SIZE0:0] addr_chan_to_op_r;
   wire [`DATA_SIZE0:0] addr_chan_to_op =
-                                        (cpu_msg === `CPU_R_FORK_DONE)
+                                        //(cpu_msg === `CPU_R_FORK_DONE)
+                                        ext_cpu_q === 1 ||
+                                        (
+                                         (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_FORK_DONE)
+//                                         || (state_ctl == `CTL_CPU_LOOP)
+                                        )
                                         ? `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                                         : addr_chan_to_op_r
                                         ;
   
   tri [`DATA_SIZE0:0] data_wire = 
-                                  (cpu_msg === `CPU_R_FORK_DONE)
+                                  //(cpu_msg === `CPU_R_FORK_DONE)
+                                  ext_cpu_q === 1 ||
+                                  (
+                                   (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_FORK_DONE)
+//                                   || (state_ctl == `CTL_CPU_LOOP)
+                                  )
                                   ? addr_chan_to_op
                                   : data_wire_r
                                   ;
 
+
+  tri [`ADDR_SIZE0:0] addr_out = 
+//                                (ext_cpu_q === 1)
+//                                ? 
+                                  addr_out_r
+//                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                ;
+
+
+
   ThreadsManager trds_mngr (
                     .clk(clk),
+                    
+                    .cpu_q(ext_cpu_q),
                     
                     .ctl_state(state_ctl),
                     
@@ -401,6 +427,11 @@ always @(negedge clk) begin
                 `CPU_R_STOP_THRD: begin
 //                  proc_tbl[proc_num_t] = proc_num_t << 4;
 //                  proc_num_t = proc_num_t + 1;
+
+                  addr_thread_to_op_r = addr_out;
+                  addr_chan_to_op_r = data_wire;
+                  
+                  thrd_cmd_r = `THREAD_CMD_STOP;
                 end
               
                 `CPU_R_FORK_THRD: begin
@@ -457,7 +488,7 @@ always @(negedge clk) begin
 //            halt_q = 1;
 //            mem_rd = 0;
 
-            $display("%m) Read: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
+            $display("-) read: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end 
 //          else begin
 //         //            data_wire_r = 32'h zzzzzzzz;
@@ -473,7 +504,7 @@ always @(negedge clk) begin
 //            halt_q = 1;
 //            mem_wr = 0;
 
-            $display("%m) Write: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
+            $display("+) WRITE: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end
           
           if(dispatcher_q == 1) begin

@@ -21,3 +21,4 @@
 `define REG_OP_WRITE_PREP  5 //3'b101
 `define REG_OP_WRITE_P     6 //3'b110
 `define REG_OP_CATCH_DATA  7 //3'b111
+//`define REG_OP_OUT_TO_DATA  8 //3'b111

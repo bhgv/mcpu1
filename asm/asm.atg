@@ -23,8 +23,10 @@ COMPILER Asm
       if entry in self.funcs :
          foo = self.funcs[entry]
          self.code.append(0)
+         self.code.append(0)
          sz_ip = self.ip
-         self.ip += 1
+         self.ip += 2
+         #self.ip += 1
          sz = self.addFooToCode(foo)
          self.code[sz_ip] = sz
       return sz
@@ -44,8 +46,10 @@ COMPILER Asm
          if o['type'] == 'foo' :
 	    if nm in foo['xref'] :
                self.code.append(0)
+               self.code.append(0)
                isz_ip = self.ip
-               self.ip += 1
+               self.ip += 2
+               #self.ip += 1
 	       ptlst = foo['xref'][nm]
 	       for pt in ptlst :
                   print "b_ip=%d, pt=%d, isz_ip=%d, old_code=%d" % (b_ip, pt, isz_ip, self.code[b_ip + pt], )

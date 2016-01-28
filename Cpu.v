@@ -86,6 +86,7 @@ module Cpu(
           
           
   wire [`ADDR_SIZE0:0] base_addr;
+  wire [`ADDR_SIZE0:0] base_addr_data;
   
   wire rst;
   
@@ -116,6 +117,8 @@ BridgeToOutside outside_bridge (
             .state(state),
             
             .base_addr(base_addr),
+            .base_addr_data(base_addr_data),
+
             .command(command),
             
             .halt_q(halt_q),
@@ -170,6 +173,8 @@ BridgeToOutside outside_bridge (
             .clk(clk), 
             .state(state),
             .base_addr(base_addr),
+            .base_addr_data(base_addr_data),
+
             .command(command),
             
             .halt_q(halt_q),

@@ -12,6 +12,8 @@ module MemManager (
             state,
             
             base_addr,
+            base_addr_data,
+
             command_word,
             
             cpu_ind_rel,
@@ -113,6 +115,7 @@ module MemManager (
 //  wire ifPtr;
   
   input wire [`ADDR_SIZE0:0] base_addr;
+  input wire [`ADDR_SIZE0:0] base_addr_data;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
 
   input wire [1:0] cpu_ind_rel;
@@ -209,7 +212,7 @@ module MemManager (
             .clk(clk), 
             .state(state),
             
-            .base_addr(base_addr),
+            .base_addr((state == `START_READ_CMD_P) ? base_addr : base_addr_data),
             .reg_op(cmd_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -271,6 +274,8 @@ module MemManager (
                                     ? `REG_OP_WRITE
                                     : (state == `PREEXECUTE)
                                     ? `REG_OP_PREEXECUTE
+//                                    : (state == `ALU_BEGIN && cmd_code == `CMD_FORK)
+//                                    ? `REG_OP_OUT_TO_DATA
                                     : `REG_OP_NULL
                                   ;
   
@@ -300,7 +305,7 @@ module MemManager (
             .clk(clk), 
             .state(state),
             
-            .base_addr(base_addr),
+            .base_addr((regNumS1 == `REG_IP && state == `READ_SRC1_P) ? base_addr : base_addr_data),
             .reg_op(src1_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -393,7 +398,7 @@ module MemManager (
             .clk(clk), 
             .state(state),
             
-            .base_addr(base_addr),
+            .base_addr((regNumS0 == `REG_IP && state == `READ_SRC0_P) ? base_addr : base_addr_data),
             .reg_op(src0_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -485,7 +490,12 @@ module MemManager (
             .clk(clk), 
             .state(state),
             
-            .base_addr(base_addr),
+            .base_addr(
+//                      (regNumD == `REG_IP && state == `READ_DST) 
+//                              ? base_addr 
+//                              : 
+                              base_addr_data
+                      ),
             .reg_op(dst_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -567,7 +577,7 @@ module MemManager (
             .clk(clk), 
             .state(state),
             
-            .base_addr(base_addr),
+            .base_addr((regNumCnd == `REG_IP && state == `READ_COND_P) ? base_addr : base_addr_data),
             .reg_op(cond_op),
             
             .cpu_ind_rel(cpu_ind_rel),

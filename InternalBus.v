@@ -12,6 +12,8 @@ module InternalBus(
         bus_busy,
         
         base_addr,
+        base_addr_data,
+        
         command,
         
         state,
@@ -95,6 +97,7 @@ module InternalBus(
  
                     
   input wire [`ADDR_SIZE0:0] base_addr;
+  input wire [`ADDR_SIZE0:0] base_addr_data;
   
   
   input wire disp_online;
@@ -188,6 +191,8 @@ module InternalBus(
             .clk(clk), 
             .state(state),
             .base_addr(base_addr),
+            .base_addr_data(base_addr_data),
+            
             .command_word(command),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -258,6 +263,7 @@ module InternalBus(
         .is_bus_busy(bus_busy),
         
         .base_addr(base_addr),
+        .base_addr_data(base_addr_data),
         
         .command(command),
         

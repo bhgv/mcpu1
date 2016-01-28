@@ -28,6 +28,8 @@ module ThreadsManager(
                     data,
                     addr,
                     
+                    cpu_q,
+                    
                     rst
                       );
                       
@@ -53,11 +55,16 @@ parameter PROC_QUANTITY = 8;
   wire [1:0] thrd_rslt = thrd_rslt_r;
   
   
+  input tri cpu_q;
+  
+  
   inout [`DATA_SIZE0:0] data;
   reg [`DATA_SIZE0:0] data_r;
   tri [`DATA_SIZE0:0] data = (
-                               cpu_msg === `CPU_R_FORK_DONE
+                               (ctl_state == `CTL_CPU_CMD && cpu_msg === `CPU_R_FORK_DONE)
+//                               || (ctl_state == `CTL_CPU_LOOP)
                              )
+                             || cpu_q === 1
                              ? data_r
                              : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                              ;
@@ -69,8 +76,8 @@ parameter PROC_QUANTITY = 8;
   
   
   
-  reg [`DATA_SIZE0:0] aproc_tbl [0:PROC_QUANTITY];
-  reg [`DATA_SIZE0:0] pproc_tbl [0:PROC_QUANTITY];
+  reg [(`DATA_SIZE0 + `ADDR_SIZE):0] aproc_tbl [0:PROC_QUANTITY];
+  reg [(`DATA_SIZE0 + `ADDR_SIZE):0] pproc_tbl [0:PROC_QUANTITY];
 
   reg [`DATA_SIZE0:0] aproc_b;
   reg [`DATA_SIZE0:0] aproc_e;
@@ -119,14 +126,14 @@ parameter PROC_QUANTITY = 8;
               pproc_b != pproc_e
 //              && ready_to_fork_thread
           ) begin
-            next_proc = pproc_tbl[pproc_b];
+            {data_r, next_proc} = pproc_tbl[pproc_b];
             
             pproc_b = pproc_b + 1;
             if(pproc_b >= PROC_QUANTITY) begin
               pproc_b = 0;
             end
             
-            aproc_tbl[aproc_e] = next_proc;
+            aproc_tbl[aproc_e] = {data_r, next_proc};
             aproc_e = aproc_e + 1;
             if(aproc_e >= PROC_QUANTITY) begin
               aproc_e = 0;
@@ -137,7 +144,7 @@ parameter PROC_QUANTITY = 8;
           end else begin
 //            ready_to_fork_thread = 0;
             
-            next_proc = aproc_tbl[aproc_i];
+            {data_r, next_proc} = aproc_tbl[aproc_i];
             
             aproc_i = aproc_i + 1;
             if(aproc_i >= PROC_QUANTITY) begin
@@ -158,6 +165,20 @@ parameter PROC_QUANTITY = 8;
         
           case(thrd_cmd)
             `THREAD_CMD_RUN: begin
+              if(pproc_e < PROC_QUANTITY) begin
+                pproc_tbl[pproc_e] = {data, addr};
+                pproc_e = pproc_e + 1;
+                
+                data_r = -1;
+                thrd_rslt_r = 1;
+              end else
+              begin
+                data_r = 0;
+                thrd_rslt_r = 0;
+              end
+            end
+            
+            `THREAD_CMD_STOP: begin
               if(pproc_e < PROC_QUANTITY) begin
                 pproc_tbl[pproc_e] = addr;
                 pproc_e = pproc_e + 1;

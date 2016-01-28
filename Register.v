@@ -188,9 +188,15 @@ module RegisterManager (
                                 || reg_op == `REG_OP_WRITE_P
                                 //&& write_q === 1'b 1 
                               ) &&
-                              disp_online == 1 
+                                disp_online == 1 
                                         ? data_r
-                                        : `DATA_SIZE'h zzzzzzzz;
+//                                        : (
+//                                            reg_op == `REG_OP_OUT_TO_DATA 
+//                                            && disp_online == 1
+//                                          )
+//                                            ? register_r
+                                            : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                              ;
 //  assign data = write_q==1 ? dst_r : 32'h z;
   
   input  wire read_dn;
