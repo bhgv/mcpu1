@@ -19,6 +19,16 @@ module DispatcherOfCpus(
             addr_out,
             data_wire,
             
+            ext_mem_addr,
+            ext_mem_data,
+            
+            ext_read_q,
+            ext_write_q,
+            ext_read_dn,
+            ext_write_dn,
+            
+            ext_rw_busy,
+            
             read_q,
             write_q,
             read_dn,
@@ -106,8 +116,8 @@ parameter PROC_QUANTITY = 8;
   reg mem_rd;
   reg mem_wr;
   
-	reg [31:0] mem [0:400]; 
-  initial $readmemh("mem.txt", mem);
+//	reg [31:0] mem [0:400]; 
+//  initial $readmemh("mem.txt", mem);
   
 
 
@@ -197,6 +207,38 @@ parameter PROC_QUANTITY = 8;
 //  reg [7:0] state_ctl;
   
   reg new_cpu_restarted;
+  
+  
+
+
+  output reg ext_read_q;
+  output reg ext_write_q;
+  input wire ext_read_dn;
+  input wire ext_write_dn;
+  
+  input wire ext_rw_busy;
+
+  
+  inout [`ADDR_SIZE0:0] ext_mem_addr;
+  tri [`ADDR_SIZE0:0] ext_mem_addr = 
+                                    (
+                                     ext_read_q == 1
+                                     || ext_write_q == 1
+                                    )
+                                    ? mem_addr_tmp
+                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                    ;
+
+  inout [`DATA_SIZE0:0] ext_mem_data;
+  tri [`DATA_SIZE0:0] ext_mem_data = 
+                                    (
+//                                     ext_read_q == 1 || 
+                                     ext_write_q == 1
+                                    )
+                                    ? mem_data_tmp
+                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                    ;
+            
 
 
 
@@ -211,6 +253,10 @@ always @(negedge clk) begin
     cpu_q_r = 0;
     
     cpu_msg_r = 8'hzz;
+    
+    
+    ext_read_q = 0;
+    ext_write_q = 0;
     
 //    halt_q = 0; //1'bz;
     
@@ -481,30 +527,42 @@ always @(negedge clk) begin
 
           if(mem_rd == 1) begin
             //addr_out_r = 32'h zzzzzzzz;
-            addr_out_r = mem_addr_tmp;
-            data_wire_r = mem[mem_addr_tmp];
-            read_dn_r = 1;
-            bus_busy_r = 1;
+            
+            if(ext_read_dn == 1) begin
+              addr_out_r = ext_mem_addr; //mem_addr_tmp;
+              data_wire_r = ext_mem_data; //mem[mem_addr_tmp];
+              read_dn_r = 1;
+              bus_busy_r = 1;
+            end else
+            begin
+              ext_read_q = 1;
+            end
 //            halt_q = 1;
 //            mem_rd = 0;
 
-            $display("-) read: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
+//            $display("-) read: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end 
 //          else begin
 //         //            data_wire_r = 32'h zzzzzzzz;
 //          end
 
           if(mem_wr == 1) begin
-            addr_out_r = mem_addr_tmp;
-            mem[mem_addr_tmp] = mem_data_tmp; // data_wire;
-            data_wire_r = mem_data_tmp;
-            //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
-            write_dn_r = 1;
-            bus_busy_r = 1;
+                      
+            if(ext_write_dn == 1) begin
+              addr_out_r = ext_mem_addr; //mem_addr_tmp;
+//              mem[mem_addr_tmp] = mem_data_tmp; // data_wire;
+              data_wire_r = ext_mem_data; //mem_data_tmp;
+              //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
+              write_dn_r = 1;
+              bus_busy_r = 1;
+            end else
+            begin
+              ext_write_q = 1;
+            end
 //            halt_q = 1;
 //            mem_wr = 0;
 
-            $display("+) WRITE: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
+//            $display("+) WRITE: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end
           
           if(dispatcher_q == 1) begin

@@ -59,7 +59,7 @@ l2:
 	
 	def intr(){
 	l1:
-		r1 = r2 + ip;
+		r1 = z + [ip];
 		ip = [ip++] + z;
 		l1;
 	}
