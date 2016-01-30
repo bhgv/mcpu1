@@ -136,11 +136,12 @@ parameter PROC_QUANTITY = 8;
   
   reg [`ADDR_SIZE0:0] addr_thread_to_op_r;
   reg [`DATA_SIZE0:0] addr_chan_to_op_r;
-  wire [`DATA_SIZE0:0] addr_chan_to_op =
+  tri [`DATA_SIZE0:0] addr_chan_to_op =
                                         //(cpu_msg === `CPU_R_FORK_DONE)
                                         ext_cpu_q === 1 ||
                                         (
                                          (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_FORK_DONE)
+                                         || (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_STOP_DONE)
 //                                         || (state_ctl == `CTL_CPU_LOOP)
                                         )
                                         ? `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
@@ -152,6 +153,7 @@ parameter PROC_QUANTITY = 8;
                                   ext_cpu_q === 1 ||
                                   (
                                    (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_FORK_DONE)
+                                   || (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_STOP_DONE)
 //                                   || (state_ctl == `CTL_CPU_LOOP)
                                   )
                                   ? addr_chan_to_op
@@ -498,6 +500,13 @@ always @(negedge clk) begin
               
               thrd_cmd_r = `THREAD_CMD_NULL;
             end
+            else
+            if(thrd_cmd_r == `THREAD_CMD_STOP) begin
+              cpu_msg_r = `CPU_R_STOP_DONE;
+              
+              thrd_cmd_r = `THREAD_CMD_NULL;
+            end
+            
         end
         
       end
@@ -515,15 +524,16 @@ always @(negedge clk) begin
               mem_rd = 0;
               mem_wr = 0;
 //              halt_q = 0;
-              if(dispatcher_q == 1) begin
-                state_ctl = `CTL_CPU_LOOP;
-              end
+  //            if(dispatcher_q == 1) begin
+  //              state_ctl = `CTL_CPU_LOOP;
+  //            end
             end
-          end else begin
-              if(dispatcher_q == 1) begin
-                state_ctl = `CTL_CPU_LOOP;
-              end
-          end
+          end 
+  //        else begin
+  //            if(dispatcher_q == 1) begin
+  //              state_ctl = `CTL_CPU_LOOP;
+  //            end
+  //        end
 
           if(mem_rd == 1) begin
             //addr_out_r = 32'h zzzzzzzz;
@@ -533,6 +543,11 @@ always @(negedge clk) begin
               data_wire_r = ext_mem_data; //mem[mem_addr_tmp];
               read_dn_r = 1;
               bus_busy_r = 1;
+              
+              if(dispatcher_q == 1) begin
+                state_ctl = `CTL_CPU_LOOP;
+              end
+
             end else
             begin
               ext_read_q = 1;
@@ -542,6 +557,7 @@ always @(negedge clk) begin
 
 //            $display("-) read: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end 
+          else
 //          else begin
 //         //            data_wire_r = 32'h zzzzzzzz;
 //          end
@@ -555,6 +571,11 @@ always @(negedge clk) begin
               //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
               write_dn_r = 1;
               bus_busy_r = 1;
+              
+              if(dispatcher_q == 1) begin
+                state_ctl = `CTL_CPU_LOOP;
+              end
+
             end else
             begin
               ext_write_q = 1;
@@ -564,10 +585,16 @@ always @(negedge clk) begin
 
 //            $display("+) WRITE: addr = %x (%d), data = %x (%d)", addr_out_r, addr_out_r, data_wire_r, data_wire_r);
           end
-          
-          if(dispatcher_q == 1) begin
-        //    state_ctl = `CTL_CPU_LOOP;
+          else
+          begin
+            if(dispatcher_q == 1) begin
+              state_ctl = `CTL_CPU_LOOP;
+            end
           end
+          
+   //       if(dispatcher_q == 1) begin
+        //    state_ctl = `CTL_CPU_LOOP;
+   //       end
       
       end
     

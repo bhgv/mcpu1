@@ -73,6 +73,7 @@ module ThreadCtlr(
                               state == `ALU_BEGIN 
                               && (
                                 cpu_msg_r === `CPU_R_FORK_THRD
+                                || cpu_msg_r === `CPU_R_STOP_THRD
                                 )
                              )
                              ? data_r 
@@ -85,6 +86,7 @@ module ThreadCtlr(
                               state == `ALU_BEGIN 
                               && (
                                 cpu_msg_r === `CPU_R_FORK_THRD
+                                || cpu_msg_r === `CPU_R_STOP_THRD
                                 )
                              )
                              ? addr_r 
@@ -162,9 +164,42 @@ module ThreadCtlr(
               end
             end
             
+            
             `CMD_STOP: begin
-              cpu_msg_r = `CPU_R_STOP_THRD;
+//              cpu_msg_r = `CPU_R_STOP_THRD;
+              if(disp_online == 1) begin
+                if(
+//                  cpu_msg_r !== `CPU_R_FORK_THRD && 
+                  signal_sent == 0
+                ) begin
+                  addr_r = src0 + base_addr - `THREAD_HEADER_SPACE;
+                  data_r = src1 == 0 ? 0 : src1 + base_addr_data - `THREAD_HEADER_SPACE;
+                
+                  cpu_msg_r = `CPU_R_STOP_THRD;
+                  
+                  signal_sent = 1;
+                end
+                else begin
+//                  if(signal_sent == 0) begin
+//                    signal_sent = 1;
+//                  end
+//                  else begin
+                    cpu_msg_r = 8'h 00;
+                    cpu_msg_in = 1;
+                  
+                    if(cpu_msg === `CPU_R_STOP_DONE) begin
+                    
+                      signal_sent = 0;
+                      next_state = 1;
+                    end
+//                  end
+                end
+              end
+              else begin
+                cpu_msg_r = 8'h00;
+              end
             end
+            
             
             /**
             `CMD_EXT_CMD: begin

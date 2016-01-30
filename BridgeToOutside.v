@@ -176,7 +176,7 @@ module BridgeToOutside (
   output reg ext_dispatcher_q;
   
   
-  inout [7:0] int_cpu_msg;
+  inout tri [7:0] int_cpu_msg;
   
   reg [7:0] cpu_msg_tmp;
   
@@ -185,19 +185,24 @@ module BridgeToOutside (
   tri [7:0] ext_cpu_msg = 
                           (
                             state === `ALU_BEGIN 
-                            && 
-                            int_cpu_msg === `CPU_R_FORK_THRD
+                            && (
+                              int_cpu_msg === `CPU_R_FORK_THRD
+                              || int_cpu_msg === `CPU_R_STOP_THRD
+                            )
                           ) 
                           ? int_cpu_msg 
                           : 
                           cpu_msg_r
                           ;
   
-  tri [7:0] int_cpu_msg = 
+//  tri [7:0] int_cpu_msg = 
+  assign int_cpu_msg = 
                           (
                             state === `ALU_BEGIN 
-                            && 
-                            ext_cpu_msg === `CPU_R_FORK_DONE
+                            && (
+                              ext_cpu_msg === `CPU_R_FORK_DONE
+                              || ext_cpu_msg === `CPU_R_STOP_DONE
+                            )
                           ) 
                           ? ext_cpu_msg 
                           : 
@@ -393,8 +398,8 @@ module BridgeToOutside (
         
         
           if(
-            read_q == 1 ||
-            write_q == 1
+            read_q == 1 || write_q == 1
+//            read_dn === 1 || write_dn === 1 || rw_halt === 1
           ) begin
             ext_next_cpu_e_r = 1;
 //            disp_online = 0;
@@ -421,8 +426,8 @@ module BridgeToOutside (
               cpu_msg_r = `CPU_R_START;
 //              cpu_index_r = `CPU_ACTIVE;
               cpu_index_itf = cpu_index_r;
-              base_addr_r = addr + 2;
-              base_addr_data_r = data !== 0 ? data + 2 : addr + 2;
+              base_addr_r = addr + `THREAD_HEADER_SPACE;
+              base_addr_data_r = data !== 0 ? data + `THREAD_HEADER_SPACE : addr + `THREAD_HEADER_SPACE;
               ext_dispatcher_q = 1'b z;
 //              disp_online = 1;
               
@@ -512,6 +517,17 @@ module BridgeToOutside (
             `ALU_BEGIN: begin
               if(
                 ext_cpu_msg === `CPU_R_FORK_DONE
+//                && ext_next_cpu_e_r !== 1
+              ) begin
+//                cpu_msg_r = int_cpu_msg;
+//                cpu_index_itf = cpu_index_r;
+                
+//                next_state = 1;
+                ext_next_cpu_e_r = 1;
+              end
+              else
+              if(
+                ext_cpu_msg === `CPU_R_STOP_DONE
 //                && ext_next_cpu_e_r !== 1
               ) begin
 //                cpu_msg_r = int_cpu_msg;

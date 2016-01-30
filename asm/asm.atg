@@ -338,6 +338,9 @@ PRODUCTIONS
 						  | "fork" 			(. op = 14 .)
 						    Src<out src0> 
 						    "(" Src<out src1> ")"
+						  | "stop" 			(. op = 15 .)
+						    Src<out src0> 
+						    "(" Src<out src1> ")"
 						)
 				   [ "?" Cond<out cond>  
 				   ] 

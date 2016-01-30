@@ -58,6 +58,7 @@ l2:
 	r3 <- r2 <- r1;
 	
 	def intr(){
+		r0 = stop z (z);
 	l1:
 		r1 = z + [ip];
 		ip = [ip++] + z;

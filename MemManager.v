@@ -123,7 +123,7 @@ module MemManager (
 //  reg halt_q_r;
 //  tri halt_q = halt_q_r;
   
-  inout tri rw_halt;
+  inout tri0 rw_halt;
 //  reg rw_halt_r;
 //  tri rw_halt = rw_halt_r;
   
@@ -175,10 +175,10 @@ module MemManager (
   inout tri want_write;
   
   
-  inout [`DATA_SIZE0:0] cond;
-  inout [`DATA_SIZE0:0] src1;
-  inout [`DATA_SIZE0:0] src0;
-  inout [`DATA_SIZE0:0] dst;
+  inout  [`DATA_SIZE0:0] cond;
+  inout  [`DATA_SIZE0:0] src1;
+  inout  [`DATA_SIZE0:0] src0;
+  inout  [`DATA_SIZE0:0] dst;
 
 
 

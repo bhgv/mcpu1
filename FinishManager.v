@@ -36,11 +36,11 @@ module FinishManager (
 
   inout [`ADDR_SIZE0:0] addr;
 //  reg [`ADDR_SIZE0:0] addr_r;
-  wire [`ADDR_SIZE0:0] addr; // = addr_r;
+  tri [`ADDR_SIZE0:0] addr; // = addr_r;
   
   inout is_bus_busy;
   reg is_bus_busy_r;
-  wire is_bus_busy = is_bus_busy_r;
+  tri is_bus_busy = is_bus_busy_r;
   
   inout [`DATA_SIZE0:0] data;
 //  reg [`DATA_SIZE0:0] data_r;

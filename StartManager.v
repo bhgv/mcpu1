@@ -43,7 +43,7 @@ module StartManager (
             
   input wire clk;
   input wire [`STATE_SIZE0:0] state;
-  input [31:0] command;
+  input wire [31:0] command;
 //  reg [31:0] command_r;
 //  wire [31:0] command = command_r;
   
@@ -80,7 +80,7 @@ module StartManager (
   
   input [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
-  wire [`ADDR_SIZE0:0] addr /*= (
+  tri [`ADDR_SIZE0:0] addr /*= (
                         state == `START_READ_CMD   ||
                         state == `START_READ_CMD_P   ||
                         state == `WRITE_REG_IP

@@ -12,3 +12,7 @@
 
 
 `define REG_IP  15
+
+
+`define THREAD_HEADER_SPACE  2
+
