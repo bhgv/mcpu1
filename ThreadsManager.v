@@ -44,7 +44,7 @@ parameter PROC_QUANTITY = 8;
   
   input wire [7:0] ctl_state;
   
-  input tri [7:0] cpu_msg;
+  inout tri [7:0] cpu_msg;
 
   output reg [`DATA_SIZE0:0] next_proc;
   

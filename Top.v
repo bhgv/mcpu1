@@ -59,8 +59,8 @@
 module Top(
 	CLK,
 	
-	addr_out,
-	data_wire,
+	ext_mem_addr,
+	ext_mem_data,
 	
 	read_q,
    write_q,
@@ -80,7 +80,8 @@ module Top(
 
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
-  inout tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
+//  inout 
+  tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
   output tri0 read_q;
   output tri0 write_q;
@@ -95,8 +96,9 @@ module Top(
 //  wire write_e;
   
   
-//  reg [`DATA_SIZE0:0] data_wire_r;
-  inout tri [`DATA_SIZE0:0] data_wire; // = data_wire_r;
+ // inout [`DATA_SIZE0:0] data_wire; // = data_wire_r;
+  reg [`DATA_SIZE0:0] data_wire_r;
+  tri [`DATA_SIZE0:0] data_wire = data_wire_r;
   
    
 /*
@@ -146,8 +148,8 @@ module Top(
 */
 
   //reg
-  wire ext_rst_b; // = RESET;
-  wire ext_rst_e; // = ext_rst_e_r;
+//  wire ext_rst_b; // = RESET;
+//  wire ext_rst_e; // = ext_rst_e_r;
   
 //  reg [`DATA_SIZE0:0] ext_cpu_index_r;
   tri [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
@@ -163,19 +165,18 @@ module Top(
   trior dispatcher_q;
   
   tri [7:0] cpu_msg;
-  
-  
  
   
   
-  wire ext_read_q;
-  wire ext_write_q;
+  tri ext_read_q;
+  tri ext_write_q;
   reg ext_read_dn;
   reg ext_write_dn;
   
   reg ext_rw_busy;
 
 
+  inout [`ADDR_SIZE0:0] ext_mem_addr; 
   reg [`ADDR_SIZE0:0] ext_mem_addr_r;
   tri [`ADDR_SIZE0:0] ext_mem_addr = 
                                      (
@@ -186,6 +187,7 @@ module Top(
                                      : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                                      ;
   
+  inout [`DATA_SIZE0:0] ext_mem_data; 
   reg [`DATA_SIZE0:0] ext_mem_data_r;
   tri [`DATA_SIZE0:0] ext_mem_data = 
                                      (
@@ -209,17 +211,22 @@ module Top(
   
 //  reg [7:0] stage;
 
-//parameter STEP = 20;
+parameter STEP = 20;
+
+
+  wire ext_rst_b; // = RESET;
+  wire ext_rst_e; // = ext_rst_e_r;
 
 
 
 parameter CPU_QUANTITY = 2;
 
+
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;
 
-assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
-assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
+//assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
+//assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
 
 
 trior rw_halt;
@@ -228,7 +235,7 @@ tri0 halt_q;
 tri want_write;
 
 
-/**/
+/**
 Cpu cpu1 [CPU_QUANTITY-1:0] (
             .clk(CLK),
             
@@ -262,7 +269,74 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
 /**/
 
 
+/**/
 wire rst_w1;
+
+Cpu cpu0 (
+            .clk(CLK),
+            
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
+            
+            .want_write(want_write),
+            
+            .addr(addr_out),
+            .data(data_wire),
+            
+            .read_q(read_q),
+            .write_q(write_q),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            
+            .bus_busy(bus_busy),
+            
+            .ext_rst_b(ext_rst_b),
+            .ext_rst_e(rst_w1),    //ext_rst_e),
+            
+            .ext_cpu_index(ext_cpu_index),
+            
+            .ext_cpu_q(ext_cpu_q),
+            .ext_cpu_e(ext_cpu_e),
+            
+            .cpu_msg(cpu_msg),
+            
+            .dispatcher_q(dispatcher_q)
+          );
+
+/*
+Cpu cpu1 (
+            .clk(CLK),
+            
+            .halt_q(halt_q),
+            .rw_halt(rw_halt),
+            
+            .want_write(want_write),
+            
+            .addr(addr_out),
+            .data(data_wire),
+            
+            .read_q(read_q),
+            .write_q(write_q),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+            
+            .bus_busy(bus_busy),
+            
+            .ext_rst_b(rst_w1),
+            .ext_rst_e(ext_rst_e),    //ext_rst_e),
+            
+            .ext_cpu_index(ext_cpu_index),
+            
+            .ext_cpu_q(ext_cpu_q),
+            .ext_cpu_e(ext_cpu_e),
+            
+            .cpu_msg(cpu_msg),
+            
+            .dispatcher_q(dispatcher_q)
+          );
+/**/
+
+
 
 
 /**/
@@ -318,6 +392,8 @@ always @(posedge CLK) begin
   ext_read_dn = 0;
   
   if(RESET == 1) begin
+    data_wire_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 
     mem_wrk_state = `MEM_CTLR_WAIT;
     
     ext_rw_busy = 0;

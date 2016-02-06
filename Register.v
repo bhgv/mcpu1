@@ -287,6 +287,8 @@ module RegisterManager (
     isTopP = 0;
     
     want_write_r = 1'b z;
+	 
+	 rw_halt_r = 1'b z;
   end
 //  else if(state == `ALU_RESULTS) begin
 //    register_r = register;

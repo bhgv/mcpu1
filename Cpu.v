@@ -102,7 +102,7 @@ module Cpu(
   output tri ext_cpu_e;
   
   tri [7:0] int_cpu_msg;
-  inout tri [7:0] cpu_msg;
+  output tri [7:0] cpu_msg;
   
 //  reg cpu_running;
   

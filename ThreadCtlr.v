@@ -35,7 +35,7 @@ module ThreadCtlr(
   input wire clk;
   inout is_bus_busy;
   reg is_bus_busy_r;
-  wire is_bus_busy = is_bus_busy_r;
+  tri is_bus_busy = is_bus_busy_r;
   
   input wire [31:0] command;
   
@@ -55,22 +55,26 @@ module ThreadCtlr(
   reg [`DATA_SIZE0:0] src0_r;
   reg [`DATA_SIZE0:0] dst_r;
   
-  wire [`DATA_SIZE0:0] src1 = src1_r;
-  wire [`DATA_SIZE0:0] src0 = src0_r;
-  wire [`DATA_SIZE0:0] dst  = dst_r;
+  tri [`DATA_SIZE0:0] src1 = src1_r;
+  tri [`DATA_SIZE0:0] src0 = src0_r;
+  tri [`DATA_SIZE0:0] dst  = dst_r;
+  
+  
+  input wire disp_online;
   
   
   reg cpu_msg_in;
   inout [7:0] cpu_msg;
   reg [7:0] cpu_msg_r;
-  tri [7:0] cpu_msg = cpu_msg_in == 0 ? cpu_msg_r : 8'h zzzz;
+  tri [7:0] cpu_msg = cpu_msg_in == 0 ? cpu_msg_r : 8'h zzzz_zzzz;
 
 
   inout [`DATA_SIZE0:0] data;
   reg [`DATA_SIZE0:0] data_r;
   tri [`DATA_SIZE0:0] data = 
                            (
-                              state == `ALU_BEGIN 
+                              disp_online == 1 
+                              && state == `ALU_BEGIN 
                               && (
                                 cpu_msg_r === `CPU_R_FORK_THRD
                                 || cpu_msg_r === `CPU_R_STOP_THRD
@@ -83,7 +87,8 @@ module ThreadCtlr(
   inout [`ADDR_SIZE0:0] addr;
   reg [`ADDR_SIZE0:0] addr_r;
   tri [`ADDR_SIZE0:0] addr = (
-                              state == `ALU_BEGIN 
+                              disp_online == 1
+                              && state == `ALU_BEGIN 
                               && (
                                 cpu_msg_r === `CPU_R_FORK_THRD
                                 || cpu_msg_r === `CPU_R_STOP_THRD
@@ -94,8 +99,6 @@ module ThreadCtlr(
                              ;
   
 
-  input wire disp_online;
-  
   output reg next_state;
   
   input wire rst;
@@ -110,6 +113,10 @@ module ThreadCtlr(
     next_state = 1'b z;
     
     is_bus_busy_r = 1'b z;
+    
+    cpu_msg_r = 8'h zzzz;
+    
+    cpu_msg_in = 0;
 
     if(rst == 1) begin
       src1_r = `DATA_SIZE'h zzzzzzzz;

@@ -81,7 +81,7 @@ parameter PROC_QUANTITY = 8;
   
   inout [`DATA_SIZE0:0] data_wire;
   reg [`DATA_SIZE0:0] data_wire_r;
-//  tri [`DATA_SIZE0:0] data_wire = data_wire_r;
+  //tri [`DATA_SIZE0:0] data_wire = data_wire_r;
   
   inout bus_busy;
   reg bus_busy_r;
@@ -102,9 +102,9 @@ parameter PROC_QUANTITY = 8;
 
   input tri ext_cpu_e;
   
-  inout [7:0] cpu_msg;
+  input [7:0] cpu_msg;
   reg [7:0] cpu_msg_r;
-  tri [7:0] cpu_msg = cpu_msg_r;
+  tri [7:0] cpu_msg; // = cpu_msg_r;
   
   input tri dispatcher_q;
   
@@ -147,8 +147,10 @@ parameter PROC_QUANTITY = 8;
                                         ? `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                                         : addr_chan_to_op_r
                                         ;
-  
+
+/*  !!! */
   tri [`DATA_SIZE0:0] data_wire = 
+//  assign data_wire = 
                                   //(cpu_msg === `CPU_R_FORK_DONE)
                                   ext_cpu_q === 1 ||
                                   (
@@ -156,16 +158,18 @@ parameter PROC_QUANTITY = 8;
                                    || (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg === `CPU_R_STOP_DONE)
 //                                   || (state_ctl == `CTL_CPU_LOOP)
                                   )
-                                  ? addr_chan_to_op
-                                  : data_wire_r
+                                  ? `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz //addr_chan_to_op
+                                  : 
+                                  data_wire_r
                                   ;
+/**/
 
 
   tri [`ADDR_SIZE0:0] addr_out = 
-//                                (ext_cpu_q === 1)
-//                                ? 
+                                (ext_cpu_q === 1 || read_dn_r === 1 || write_dn_r === 1)
+                                ? 
                                   addr_out_r
-//                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                 ;
 
 
@@ -273,7 +277,7 @@ always @(negedge clk) begin
     cpu_num_a = 0;
     cpu_num_na = CPU_QUANTITY;
     
-    data_wire_r = 32'h zzzzzzzz; //cpu_num; //Q;
+    data_wire_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz; //cpu_num; //Q;
     bus_busy_r  = 1'bz;
     
     state_ctl = `CTL_RESET_WAIT;
@@ -283,6 +287,7 @@ always @(negedge clk) begin
     
     ext_rst_b = 1;
     
+	 mem_data_tmp = 0;
     mem_addr_tmp = 0;
     mem_rd = 0;
     mem_wr = 0;
@@ -293,6 +298,9 @@ always @(negedge clk) begin
     
     thrd_cmd_r = `THREAD_CMD_NULL;
 //    thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+
+    addr_chan_to_op_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 
     
 //    cpu_tbl[0] = 0;
 //    cpu_tbl_i = 0;
@@ -343,7 +351,7 @@ always @(negedge clk) begin
         if(ext_rst_e == 1) begin
           //ext_rst_b = 0;
           ext_cpu_index_r = 32'h zzzzzzzz;
-          data_wire_r = 32'h zzzzzzzz;
+          data_wire_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
           state_ctl = `CTL_CPU_LOOP;
         end
       end
