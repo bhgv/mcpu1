@@ -5,6 +5,8 @@
 
 module StateManager(
             clk,
+				clk_oe,
+				
             state,
             
             command,
@@ -25,6 +27,8 @@ module StateManager(
             
             rst
             );
+  input wire clk_oe;
+  
   input wire clk;
   output reg [`STATE_SIZE0:0] state;
   

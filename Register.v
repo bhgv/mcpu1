@@ -8,6 +8,7 @@
 
 module RegisterManager (
             clk, 
+				clk_oe,
             state,        // processor cicle state (in)
             
             base_addr,    // base addres of process (in)
@@ -19,8 +20,10 @@ module RegisterManager (
             want_write,
             
             is_bus_busy,
-            addr,
-            data,
+            addr_in,
+            addr_out,
+            data_in,
+            data_out,
             
             register,
             reg_ptr,
@@ -120,9 +123,11 @@ module RegisterManager (
 
 
 
-  inout [`ADDR_SIZE0:0] addr;
+  input [`ADDR_SIZE0:0] addr_in;
+  output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
-  tri [`ADDR_SIZE0:0] addr  = (
+  tri [`ADDR_SIZE0:0] addr_in;
+  tri [`ADDR_SIZE0:0] addr_out  = (
                         reg_op == `REG_OP_READ ||
                         reg_op == `REG_OP_READ_P ||
                         reg_op == `REG_OP_WRITE ||
@@ -131,7 +136,7 @@ module RegisterManager (
                         disp_online == 1 
 //                        && (!ext_next_cpu_e == 1)
                         ? addr_r
-                        : `ADDR_SIZE'h zzzzzzzz
+                        : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                         ;
   
   wire [`ADDR_SIZE0:0] addr_to_save = ((/*isRegPtr &&*/ reg_op == `REG_OP_WRITE_P) ? register_r_ptr : regNum) + base_addr;
@@ -153,8 +158,8 @@ module RegisterManager (
                && cpu_ind_rel === 2'b01
                && (registerw_waiting == 1'b 1
                  && (
-                   (/*reg_op == `REG_OP_READ*/ /*isRegPtr == 1 &&*/ addr === register_r_adr)
-                   || (isRegPtr == 1 && isNeedSave == 1 && addr === register_r_ptr)
+                   (/*reg_op == `REG_OP_READ*/ /*isRegPtr == 1 &&*/ addr_in === register_r_adr)
+                   || (isRegPtr == 1 && isNeedSave == 1 && addr_in === register_r_ptr)
                  )
                )
               )
@@ -181,9 +186,11 @@ module RegisterManager (
   reg is_bus_busy_r;
   tri is_bus_busy = is_bus_busy_r;
   
-  inout [`DATA_SIZE0:0] data;
+  input [`DATA_SIZE0:0] data_in;
+  output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data =  (
+  tri [`DATA_SIZE0:0] data_in;
+  tri [`DATA_SIZE0:0] data_out =  (
                                 reg_op == `REG_OP_WRITE 
                                 || reg_op == `REG_OP_WRITE_P
                                 //&& write_q === 1'b 1 
@@ -220,11 +227,16 @@ module RegisterManager (
   
   reg isTopR;
   reg isTopP;
-  
+ 
+  input wire clk_oe; 
 
   always @(posedge clk) begin
-    addr_r = 32'h zzzzzzzz;
-    data_r = 32'h zzzzzzzz;
+  
+//    clk_oe = ~clk_oe;
+	 if(clk_oe == 0) begin
+	 
+//    addr_r = 32'h zzzzzzzz;
+//    data_r = 32'h zzzzzzzz;
     
     is_bus_busy_r = 1'b z;
     
@@ -236,6 +248,13 @@ module RegisterManager (
     
     
     rw_halt_r = rw_halt_stim;
+	 
+    read_q_r = 1'b z;
+    write_q_r = 1'b z;
+    
+        addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    
+	 
 //    if(rw_halt_stim === 1)
 //    $display("%f) %m, regw_wt = %b, rw_hlt = %b", ($realtime/1000), registerw_waiting, rw_halt_stim);
 
@@ -263,6 +282,8 @@ module RegisterManager (
 
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
+  end else begin
+
   if(rst == 1) begin
     read_q_r = 1'b z;
     write_q_r = 1'b z;
@@ -274,7 +295,9 @@ module RegisterManager (
     register_r = 0; //32'h zzzzzzzz;
           register_r_ptr = 0;
 
-   
+    data_r = 0;
+
+			 
     register_waiting = 0;
     registerptr_waiting = 0;
     registerw_waiting = 0;
@@ -299,14 +322,14 @@ module RegisterManager (
      
 //    next_state = 1'b z;
 
-    read_q_r = 1'b z;
-    write_q_r = 1'b z;
-    
+//    read_q_r = 1'b z;
+//    write_q_r = 1'b z;
+//    
+//        addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
     
     if(disp_online == 0) single = 1;
     
           
-        addr_r = `ADDR_SIZE'h zzzzzzzz;
 
       if(reg_op != `REG_OP_CATCH_DATA) catched = 0;
            
@@ -349,9 +372,9 @@ module RegisterManager (
                   (read_dn == 1 && register_waiting == 1) 
                   || (write_dn && register_waiting == 0 && isTopR == 1) 
               ) begin
-                  if(addr === register_r_adr) begin
-                    register_r = data;
-                    register_r_ptr = data;
+                  if(addr_in === register_r_adr) begin
+                    register_r = data_in;
+                    register_r_ptr = data_in;
                     /*if(! isDinamic )*/ register_waiting = 0;
                     next_state = 1;
                     
@@ -365,7 +388,7 @@ module RegisterManager (
                 register_waiting = 0;
                 single = 1;
 
-                addr_r = `ADDR_SIZE'h zzzzzzzz;
+                addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
                 read_q_r = 1'bz;
                 
                 want_write_r = 1'b z;
@@ -384,7 +407,7 @@ module RegisterManager (
 //                $display(cpu_ind_rel, ", ", isTopR);
               end else
               if(read_q_r === 1) begin
-                addr_r = `ADDR_SIZE'h zzzzzzzz;
+                addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
                 read_q_r = 1'bz;
               end else 
               if(disp_online == 1 && single == 1) begin
@@ -409,9 +432,9 @@ module RegisterManager (
                 (read_dn == 1 && registerptr_waiting == 1)
                 || (write_dn && registerptr_waiting == 0 && isTopP == 1) 
             ) begin
-                if(addr === register_r_ptr + base_addr) begin
+                if(addr_in === register_r_ptr + base_addr) begin
 //                  register_r_ptr = register_r;
-                  register_r = data;
+                  register_r = data_in;
                   /*if(! isDinamic )*/ registerptr_waiting = 0;
                   next_state = 1;
                   
@@ -424,7 +447,7 @@ module RegisterManager (
               registerptr_waiting = 0;
               single = 1;
 
-              addr_r = `ADDR_SIZE'h zzzzzzzz;
+              addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
               read_q_r = 1'bz;
               
               want_write_r = 1'b z;
@@ -441,7 +464,7 @@ module RegisterManager (
                 // AA
             end else
             if(read_q_r === 1) begin
-              addr_r = `ADDR_SIZE'h zzzzzzzz;
+              addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
               read_q_r = 1'bz;
             end else
             if(disp_online == 1 && single == 1) begin
@@ -501,7 +524,7 @@ module RegisterManager (
           if(is_bus_busy == 1) begin
             if(
                 write_dn == 1 && 
-                addr === addr_to_save
+                addr_in === addr_to_save
             ) begin
               registerw_waiting = 0;
               next_state = 1;
@@ -531,6 +554,9 @@ module RegisterManager (
 //    end
     
   end
+  
+  end //clk_oe
+  
   
   end
 

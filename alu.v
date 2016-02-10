@@ -5,6 +5,8 @@
 
 module Alu(
         clk,
+		  clk_oe,
+		  
         is_bus_busy,
         
         command,
@@ -22,6 +24,8 @@ module Alu(
         );
         
   input wire clk;
+  input wire clk_oe;
+  
   inout is_bus_busy;
   reg is_bus_busy_r;
   wire is_bus_busy = is_bus_busy_r;
@@ -61,12 +65,18 @@ module Alu(
   reg [3:0] mlt_state;
   
   
-  
+  //reg clk_oe;
         
   always @(posedge clk) begin
-    next_state = 1'b z;
+  
+    //clk_oe = ~clk_oe;
+	 if(clk_oe == 0) begin
+	 
+      next_state = 1'b z;
     
       is_bus_busy_r = 1'b z;
+		
+	 end else begin
 
     if(rst == 1) begin
       src1_r = 0; //`DATA_SIZE'h zzzzzzzz;
@@ -212,6 +222,8 @@ module Alu(
     
     
     end
+	 
+	 end
   
   end
         

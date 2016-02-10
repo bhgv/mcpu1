@@ -8,6 +8,8 @@
 
 module InternalBus(
         clk,
+		  clk_oe,
+		  
         //    state,
         bus_busy,
         
@@ -24,8 +26,10 @@ module InternalBus(
         
         want_write,
         
-            addr,
-            data,
+            addr_in,
+				addr_out,
+            data_in,
+            data_out,
             
             read_q,
             write_q,
@@ -47,6 +51,8 @@ module InternalBus(
         
         rst
         );
+		  
+  input wire clk_oe;
         
   input wire clk;
   inout bus_busy;
@@ -65,7 +71,8 @@ module InternalBus(
   
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
-  inout tri [`ADDR_SIZE0:0] addr; //= addr_out_r;
+  input tri [`ADDR_SIZE0:0] addr_in; //= addr_out_r;
+  output tri [`ADDR_SIZE0:0] addr_out;
   
   output tri read_q;
   output tri write_q;
@@ -76,7 +83,8 @@ module InternalBus(
   
   
 //  reg [`DATA_SIZE0:0] data_r;
-  inout tri [`DATA_SIZE0:0] data; // = data_r;
+  input tri [`DATA_SIZE0:0] data_in; // = data_r;
+  output tri [`DATA_SIZE0:0] data_out; // = data_r;
   
 
   //inout 
@@ -93,7 +101,7 @@ module InternalBus(
   
   output wire [`STATE_SIZE0:0] state;
   inout next_state;
-  tri0 next_state;
+  tri next_state;
  
                     
   input wire [`ADDR_SIZE0:0] base_addr;
@@ -112,11 +120,22 @@ module InternalBus(
 
 //parameter STEP = 20;
 
+/*
+  tri [`DATA_SIZE0:0] data_inout = 
+						 disp_online == 1 && (read_q === 1 || write_q === 1) 
+						 ? data_out
+						 : (bus_busy === 1)
+						 ? data_in
+						 : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+						;
+*/
 
 /**/
   StartManager start_mng(
             .clk(clk), 
-            .state(state),
+ 				.clk_oe(clk_oe),
+
+				.state(state),
             
             .base_addr(base_addr),
             .command(command),
@@ -126,10 +145,12 @@ module InternalBus(
             .rw_halt(rw_halt),
             
             .is_bus_busy(bus_busy),
-            .addr(addr),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
             .read_q(read_q),
             .write_q(write_q),
-            .data(data),
+            .data_in(data_in),
+            .data_out(data_out),
             .read_dn(read_dn),
             .write_dn(write_dn),
 //            .read_e(read_e),
@@ -144,6 +165,8 @@ module InternalBus(
             .rst(rst)
             );
 /**/
+
+/**
 
   FinishManager finish_mng(
             .clk(clk), 
@@ -160,10 +183,12 @@ module InternalBus(
             
             .rst(rst)
             );
-
+/**/
 
   StateManager states_mng(
             .clk(clk),
+				.clk_oe(clk_oe),
+
             .state(state),
 
             .command(command),
@@ -189,6 +214,8 @@ module InternalBus(
 /**/
   MemManager mem_mng (
             .clk(clk), 
+				.clk_oe(clk_oe),
+
             .state(state),
             .base_addr(base_addr),
             .base_addr_data(base_addr_data),
@@ -202,10 +229,12 @@ module InternalBus(
             .want_write(want_write),
             
             .is_bus_busy(bus_busy),
-            .addr(addr),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
             .read_q(read_q),
             .write_q(write_q),
-            .data(data),
+            .data_in(data_in),
+            .data_out(data_out),
             .read_dn(read_dn),
             .write_dn(write_dn),
 //            .read_e(read_e),
@@ -240,7 +269,9 @@ module InternalBus(
 /**/
   Alu alu_1 (
         .clk(clk),
-        .is_bus_busy(bus_busy),
+			.clk_oe(clk_oe),
+
+			.is_bus_busy(bus_busy),
         
         .command(command),
         
@@ -260,7 +291,9 @@ module InternalBus(
 /**/
   ThreadCtlr thrd_1 (
         .clk(clk),
-        .is_bus_busy(bus_busy),
+ 				.clk_oe(clk_oe),
+
+			.is_bus_busy(bus_busy),
         
         .base_addr(base_addr),
         .base_addr_data(base_addr_data),
@@ -274,8 +307,10 @@ module InternalBus(
         .dst(dst),
         .dst_h(dst_h),
         
-        .data(data),
-        .addr(addr),
+        .data_in(data_in),
+        .data_out(data_out),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
         
         .disp_online(disp_online),
         

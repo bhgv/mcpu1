@@ -57,40 +57,45 @@
 
 
 module Top(
-	CLK,
+	clk,
 	
 	ext_mem_addr,
 	ext_mem_data,
 	
-	read_q,
-   write_q,
+	ext_read_q,
+   ext_write_q,
 	
-	read_dn,
-	write_dn,
+	ext_read_dn,
+	ext_write_dn,
 
-	RESET
+	rst
 );
 
-//  reg  CLK;
+//  reg  clk;
 //  reg RESET_r;
-//  wire RESET = RESET_r;
+//  wire rst = RESET_r;
 
-	input wire CLK;
-	input wire RESET;
+	input wire clk;
+	input wire rst;
 
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
 //  inout 
+  tri [`ADDR_SIZE0:0] addr_in; // = addr_out_r;
   tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
-  output tri0 read_q;
-  output tri0 write_q;
+  //output 
+  tri0 read_q;
+  //output 
+  tri0 write_q;
   
 //  reg read_dn_r;
-  output wire read_dn; // = read_dn_r;
+  //output 
+  wire read_dn; // = read_dn_r;
   
 //  reg write_dn_r;
-  output wire write_dn; // = write_dn_r;
+  //output 
+  wire write_dn; // = write_dn_r;
   
 //  wire read_e;
 //  wire write_e;
@@ -98,7 +103,8 @@ module Top(
   
  // inout [`DATA_SIZE0:0] data_wire; // = data_wire_r;
   reg [`DATA_SIZE0:0] data_wire_r;
-  tri [`DATA_SIZE0:0] data_wire = data_wire_r;
+  tri [`DATA_SIZE0:0] data_in; // = data_wire_r;
+  tri [`DATA_SIZE0:0] data_out; // = data_wire_r;
   
    
 /*
@@ -113,7 +119,7 @@ module Top(
 */
 
 //  reg bus_busy_r;
-  tri0 bus_busy; // = bus_busy_r;
+  tri bus_busy; // = bus_busy_r;
   
   
  
@@ -148,7 +154,7 @@ module Top(
 */
 
   //reg
-//  wire ext_rst_b; // = RESET;
+//  wire ext_rst_b; // = rst;
 //  wire ext_rst_e; // = ext_rst_e_r;
   
 //  reg [`DATA_SIZE0:0] ext_cpu_index_r;
@@ -162,40 +168,100 @@ module Top(
   
 //  wire ext_bus_busy;
   
-  trior dispatcher_q;
+  tri dispatcher_q;
   
-  tri [7:0] cpu_msg;
+//  tri [7:0] cpu_msg;
  
+ 
+
+  reg bus_director;
   
+
+  output tri ext_read_q;
+  output tri ext_write_q;
   
-  tri ext_read_q;
-  tri ext_write_q;
-  reg ext_read_dn;
-  reg ext_write_dn;
+  inout ext_read_dn;
+  inout ext_write_dn;
+  
+  reg ext_read_dn_r;
+  reg ext_write_dn_r;
+
+  tri ext_read_dn = ext_read_dn_r == 1 ? 1 : 1'b z;
+  tri ext_write_dn = ext_write_dn_r == 1 ? 1 : 1'b z;
   
   reg ext_rw_busy;
 
 
+  // tri [`ADDR_SIZE0:0] int_mem_addr;
+ // tri [`DATA_SIZE0:0] int_mem_data;
+
+  
   inout [`ADDR_SIZE0:0] ext_mem_addr; 
   reg [`ADDR_SIZE0:0] ext_mem_addr_r;
-  tri [`ADDR_SIZE0:0] ext_mem_addr = 
+//  tri [`ADDR_SIZE0:0] ext_mem_addr; 
+  
+  tri [`ADDR_SIZE0:0] ext_mem_addr = //ext_mem_addr_r
+/**/
                                      (
-                                      ext_read_dn == 1
-                                      || ext_write_dn == 1
+                                      ext_read_dn_r == 1
+                                      || ext_write_dn_r == 1
                                      ) 
-                                     ? ext_mem_addr_r 
-                                     : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+												 //&& 0
+//                                     && (
+//												     bus_director == 1
+//												   )
+												 ? ext_mem_addr_r 
+                                     : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+/**/
                                      ;
+	
+/**	
+  assign ext_mem_addr = 
+/** /
+                                     ! (
+                                      ext_read_dn === 1
+                                      || ext_write_dn === 1
+                                     ) 
+                                     ? int_mem_addr 
+                                     : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+/** /
+                                     ;
+/**/
   
   inout [`DATA_SIZE0:0] ext_mem_data; 
   reg [`DATA_SIZE0:0] ext_mem_data_r;
-  tri [`DATA_SIZE0:0] ext_mem_data = 
+//  tri [`DATA_SIZE0:0] ext_mem_data; 
+  
+  tri [`DATA_SIZE0:0] ext_mem_data = //ext_mem_data_r
+/**/
                                      (
-                                      ext_read_dn == 1
+                                      ext_read_dn_r == 1
+                                      || ext_write_dn_r == 1
                                      ) 
-                                     ? ext_mem_data_r 
+												 && 0
+//                                     && (
+//												   bus_director == 1
+//												 )
+												 ? ext_mem_data_r 
                                      : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+/**/
                                      ;
+												 
+/**
+  assign ext_mem_data = 
+/** /
+                                     ! (
+                                      ext_read_dn === 1
+                                      || ext_write_dn === 1
+                                     ) 
+                                     ? int_mem_data 
+                                     : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+/** /
+                                     ;
+/**/
+  
+  
+  
   
   
   reg [`ADDR_SIZE0:0] tmp_addr;
@@ -206,15 +272,15 @@ module Top(
   
  
   
-	reg [31:0] mem [0:400]; 
-//   initial $readmemh("mem.txt", mem);
+	reg [`DATA_SIZE:0] mem [0:50]; 
+   initial $readmemh("mem.txt", mem);
   
 //  reg [7:0] stage;
 
-parameter STEP = 20;
+//parameter STEP = 20;
 
 
-  wire ext_rst_b; // = RESET;
+  wire ext_rst_b; // = rst;
   wire ext_rst_e; // = ext_rst_e_r;
 
 
@@ -225,8 +291,21 @@ parameter CPU_QUANTITY = 2;
 wire [CPU_QUANTITY-1:0] rst_w_b;
 wire [CPU_QUANTITY-1:0] rst_w_e;
 
-//assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
-//assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
+assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
+assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
+
+
+  wire [0:CPU_QUANTITY-1] disp_online;
+  tri [(8*CPU_QUANTITY)-1:0] cpu_msg_in_a ;
+  tri0 [7:0] cpu_msg_in // = cpu_msg_in_a[7:0]
+//						disp_online[0] == 1
+//						? cpu_msg_in_a[7:0]
+//						: cpu_msg_in_a[15:8]
+						;
+						
+
+tri [`ADDR_SIZE*CPU_QUANTITY-1:0] addr_in_a;
+tri [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
 
 
 trior rw_halt;
@@ -234,18 +313,22 @@ tri0 halt_q;
 
 tri want_write;
 
+wire clk_oe;
 
-/**
+/**/
 Cpu cpu1 [CPU_QUANTITY-1:0] (
-            .clk(CLK),
+            .clk(clk),
+				.clk_oe(clk_oe),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
             .want_write(want_write),
             
-            .addr(addr_out),
-            .data(data_wire),
+            .addr_in(addr_out),
+            .addr_out(addr_in),
+            .data_in(data_out),
+            .data_out(data_in),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -262,26 +345,29 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .ext_cpu_q(ext_cpu_q),
             .ext_cpu_e(ext_cpu_e),
             
-            .cpu_msg(cpu_msg),
+            .cpu_msg(cpu_msg_in), //_a),
+				.disp_online(disp_online),
             
             .dispatcher_q(dispatcher_q)
           );
 /**/
 
 
-/**/
+/**
 wire rst_w1;
 
 Cpu cpu0 (
-            .clk(CLK),
+            .clk(clk),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
             .want_write(want_write),
             
-            .addr(addr_out),
-            .data(data_wire),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_out),
+            .data_out(data_in),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -298,22 +384,27 @@ Cpu cpu0 (
             .ext_cpu_q(ext_cpu_q),
             .ext_cpu_e(ext_cpu_e),
             
-            .cpu_msg(cpu_msg),
+            .cpu_msg(cpu_msg_a[0]),
+				.disp_online(disp_online[0]),
             
             .dispatcher_q(dispatcher_q)
           );
+			 
+//assign ext_rst_e = rst_w1;
 
-/*
+/**
 Cpu cpu1 (
-            .clk(CLK),
+            .clk(clk),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
             .want_write(want_write),
             
-            .addr(addr_out),
-            .data(data_wire),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_out),
+            .data_out(data_in),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -330,7 +421,8 @@ Cpu cpu1 (
             .ext_cpu_q(ext_cpu_q),
             .ext_cpu_e(ext_cpu_e),
             
-            .cpu_msg(cpu_msg),
+            .cpu_msg(cpu_msg_a[1]),
+				.disp_online(disp_online[1]),
             
             .dispatcher_q(dispatcher_q)
           );
@@ -341,14 +433,17 @@ Cpu cpu1 (
 
 /**/
 DispatcherOfCpus disp_1(
-            .clk(CLK),
-            .rst(RESET),
+            .clk(clk),
+				.clk_oe(clk_oe),
+            .rst(rst),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
+            .addr_in(addr_in),
             .addr_out(addr_out),
-            .data_wire(data_wire),
+            .data_in(data_in),
+            .data_out(data_out),
             
             .read_q(read_q),
             .write_q(write_q),
@@ -376,7 +471,7 @@ DispatcherOfCpus disp_1(
             
             .ext_rw_busy(ext_rw_busy),
 
-            .cpu_msg(cpu_msg),
+            .cpu_msg_in(cpu_msg_in),
             
             .dispatcher_q(dispatcher_q)
           );
@@ -387,60 +482,113 @@ defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;
 
 
 
-always @(posedge CLK) begin
-  ext_write_dn = 0;
-  ext_read_dn = 0;
+always @(posedge clk) begin
+//  ext_write_dn = 0;
+//  ext_read_dn = 0;
+
+  if(clk_oe == 0) begin
   
-  if(RESET == 1) begin
+    ext_read_dn_r  = 0;
+    ext_write_dn_r = 0;
+
+    ext_mem_data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    ext_mem_addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+
+  end else begin
+  
+  if(rst == 1) begin
     data_wire_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
     mem_wrk_state = `MEM_CTLR_WAIT;
     
     ext_rw_busy = 0;
+	 
+	 bus_director = 0;
+	 
+	 ext_read_dn_r = 0;
+	 ext_write_dn_r = 0;
+	 
+	 ext_mem_data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 ext_mem_addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
   end else
   begin
-  
+
+/**/
     case(mem_wrk_state)
     
       `MEM_CTLR_WAIT: begin
-        if(ext_read_q == 1) begin
+		  
+//		  assign ext_mem_addr = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//		  assign ext_mem_data = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+		
+        if(ext_read_q === 1) begin
+          if(ext_mem_addr < 50) begin
+			 
           tmp_addr = ext_mem_addr;
           mem_wrk_state = `MEM_CTLR_READ;
 //          ext_mem_data_r = mem[ext_mem_addr];
 //          ext_read_dn = 1;
+
+          bus_director = 1;
+			 
+			 end
         end
-          
-        if(ext_write_q == 1) begin
+        else
+        if(ext_write_q === 1) begin
+          if(ext_mem_addr < 50) begin
+			 
           tmp_addr = ext_mem_addr;
           tmp_data = ext_mem_data;
           mem_wrk_state = `MEM_CTLR_WRITE;
 //          mem[ext_mem_addr] = ext_mem_data;
 //          ext_write_dn = 1;
+
+          bus_director = 1;
+			 
+			 end
         end
       end
 
       `MEM_CTLR_READ: begin
+        if(bus_director == 1) begin
           ext_mem_data_r = mem[tmp_addr];
           ext_mem_addr_r = tmp_addr;
-          ext_read_dn = 1;
+          ext_read_dn_r = 1;
           
           //ext_rw_busy = 
           
           mem_wrk_state = `MEM_CTLR_WAIT;
+			 
+			 bus_director = 0;
+			 
+//			 assign ext_mem_addr = ext_mem_addr_r;
+//			 assign ext_mem_data = ext_mem_data_r;
         end
+      end
           
       `MEM_CTLR_WRITE: begin
+        if(bus_director == 1) begin
+		  
           mem[tmp_addr] = tmp_data;
           ext_mem_data_r = tmp_data;
           ext_mem_addr_r = tmp_addr;
-          ext_write_dn = 1;
+          ext_write_dn_r = 1;
           
           //ext_rw_busy = 
           
           mem_wrk_state = `MEM_CTLR_WAIT;
+			 
+			 bus_director = 0;
+
+//			 assign ext_mem_addr = ext_mem_addr_r;
+//			 assign ext_mem_data = ext_mem_data_r;
         end
+      end
           
     endcase
+/**/
+
+  end
   
   end
           
@@ -451,14 +599,14 @@ end
 
 
 
-//always @(posedge CLK) begin
+//always @(posedge clk) begin
 //          Q = Q+1;
           
 //       end
 
 
 /*
-always @(negedge CLK) begin
+always @(negedge clk) begin
 
 //    addr_out_r = 32'h zzzzzzzz;
 //    data_wire_r = 32'h zzzzzzzz;
@@ -473,7 +621,7 @@ always @(negedge CLK) begin
     cpu_q_r = 0;
 //    ext_cpu_index_r = 32'h zzzzzzzz;
     
-  if(RESET == 1) begin 
+  if(rst == 1) begin 
     cpu_num = 0;
     data_wire_r = cpu_num; //Q;
     bus_busy_r  = 1'bz;
@@ -642,7 +790,7 @@ end
 */
 
 
-//always @(negedge RESET) begin
+//always @(negedge rst) begin
 //  data_wire_r = 32'h zzzzzzzz;
 //  addr_out_r = 32'h zzzzzzzz;
 //  bus_busy_r = 1'b z;

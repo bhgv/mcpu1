@@ -25,7 +25,8 @@ module ThreadsManager(
                     thrd_cmd,
                     thrd_rslt,
                     
-                    data,
+                    data_in,
+                    data_out,
                     addr,
                     
                     cpu_q,
@@ -58,9 +59,12 @@ parameter PROC_QUANTITY = 8;
   input tri cpu_q;
   
   
-  inout [`DATA_SIZE0:0] data;
+  input tri [`DATA_SIZE0:0] data_in;
+  output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data = (
+  tri [`DATA_SIZE0:0] data_out =
+/**/
+                             (
                                (ctl_state == `CTL_CPU_CMD && cpu_msg === `CPU_R_FORK_DONE)
                                || (ctl_state == `CTL_CPU_CMD && cpu_msg === `CPU_R_STOP_DONE)
 //                               || (ctl_state == `CTL_CPU_LOOP)
@@ -68,6 +72,7 @@ parameter PROC_QUANTITY = 8;
                              || cpu_q === 1
                              ? data_r
                              : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+/**/
                              ;
   
   input [`ADDR_SIZE0:0] addr;
@@ -205,7 +210,7 @@ parameter PROC_QUANTITY = 8;
           case(thrd_cmd)
             `THREAD_CMD_RUN: begin
               if(pproc_e < PROC_QUANTITY) begin
-                pproc_tbl[pproc_e] = {data, addr};
+                pproc_tbl[pproc_e] = {data_in, addr};
                 pproc_e = pproc_e + 1;
                 
                 data_r = -1;

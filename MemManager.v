@@ -9,6 +9,7 @@
 
 module MemManager (
             clk, 
+				clk_oe,
             state,
             
             base_addr,
@@ -22,8 +23,10 @@ module MemManager (
             want_write,
             
             is_bus_busy,
-            addr,
-            data,
+            addr_in,
+            addr_out,
+            data_in,
+            data_out,
             read_q,
             write_q,
             read_dn,
@@ -55,6 +58,8 @@ module MemManager (
             
             rst
             );
+				
+	input wire clk_oe;
             
   input wire disp_online;
   
@@ -123,13 +128,15 @@ module MemManager (
 //  reg halt_q_r;
 //  tri halt_q = halt_q_r;
   
-  inout tri0 rw_halt;
+  inout tri rw_halt;
 //  reg rw_halt_r;
 //  tri rw_halt = rw_halt_r;
   
-  inout [`ADDR_SIZE0:0] addr;
+  input [`ADDR_SIZE0:0] addr_in;
+  output [`ADDR_SIZE0:0] addr_out;
 //  reg [`ADDR_SIZE0:0] addr_r;
-  tri [`ADDR_SIZE0:0] addr;
+  tri [`ADDR_SIZE0:0] addr_in;
+  tri [`ADDR_SIZE0:0] addr_out;
 /*
     = (
                         state == `READ_COND ||
@@ -157,12 +164,14 @@ module MemManager (
   reg is_bus_busy_r;
   tri is_bus_busy = is_bus_busy_r;
   
-  inout [`DATA_SIZE0:0] data;
+  input [`DATA_SIZE0:0] data_in;
+  output [`DATA_SIZE0:0] data_out;
   
 //  tri [`DATA_SIZE0:0] data_int;
   
 //  reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data; // = data_r;
+  tri [`DATA_SIZE0:0] data_in; // = data_r;
+  tri [`DATA_SIZE0:0] data_out; // = data_r;
 //  assign data = write_q === 1 ? data_int : 32'h zzzzzzzz;
   
   input  wire read_dn;
@@ -210,6 +219,7 @@ module MemManager (
   
   RegisterManager cmd_dev (
             .clk(clk), 
+				.clk_oe(clk_oe),
             .state(state),
             
             .base_addr((state == `START_READ_CMD_P) ? base_addr : base_addr_data),
@@ -222,8 +232,10 @@ module MemManager (
             .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
-            .addr(addr),
-            .data(data),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_in),
+            .data_out(data_out),
             
             .register(command_word),
             .reg_ptr(ip_ptr),
@@ -303,6 +315,7 @@ module MemManager (
   
   RegisterManager src1_dev (
             .clk(clk), 
+				.clk_oe(clk_oe),
             .state(state),
             
             .base_addr((regNumS1 == `REG_IP && state == `READ_SRC1_P) ? base_addr : base_addr_data),
@@ -315,8 +328,10 @@ module MemManager (
             .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
-            .addr(addr),
-            .data(data),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_in),
+            .data_out(data_out),
             
             .register(src1),
             .reg_ptr(src1_ptr),
@@ -396,6 +411,7 @@ module MemManager (
   
   RegisterManager src0_dev (
             .clk(clk), 
+				.clk_oe(clk_oe),
             .state(state),
             
             .base_addr((regNumS0 == `REG_IP && state == `READ_SRC0_P) ? base_addr : base_addr_data),
@@ -408,8 +424,10 @@ module MemManager (
             .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
-            .addr(addr),
-            .data(data),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_in),
+            .data_out(data_out),
             
             .register(src0),
             .reg_ptr(src0_ptr),
@@ -488,6 +506,7 @@ module MemManager (
   
   RegisterManager dst_dev (
             .clk(clk), 
+				.clk_oe(clk_oe),
             .state(state),
             
             .base_addr(
@@ -505,8 +524,10 @@ module MemManager (
             .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
-            .addr(addr),
-            .data(data),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_in),
+            .data_out(data_out),
             
             .register(dst),
             .reg_ptr(dst_ptr),
@@ -575,6 +596,7 @@ module MemManager (
   
   RegisterManager cond_dev (
             .clk(clk), 
+				.clk_oe(clk_oe),
             .state(state),
             
             .base_addr((regNumCnd == `REG_IP && state == `READ_COND_P) ? base_addr : base_addr_data),
@@ -587,8 +609,10 @@ module MemManager (
             .want_write(want_write),
             
             .is_bus_busy(is_bus_busy),
-            .addr(addr),
-            .data(data),
+            .addr_in(addr_in),
+            .addr_out(addr_out),
+            .data_in(data_in),
+            .data_out(data_out),
             
             .register(cond),
             .reg_ptr(cond_ptr),
