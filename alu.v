@@ -53,7 +53,9 @@ module Alu(
                                         ? dst_r 
                                         : `DATA_SIZE'h zzzzzzzz;
 
-  output reg next_state;
+  output next_state;
+  reg next_state_r;
+  tri next_state = next_state_r;
   
   input wire rst;
   
@@ -72,7 +74,8 @@ module Alu(
     //clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
 	 
-      next_state = 1'b z;
+      next_state_r = 1'b 0;
+//      next_state_r = 1'b z;
     
       is_bus_busy_r = 1'b z;
 		
@@ -85,6 +88,9 @@ module Alu(
       dst_h =  0; //`DATA_SIZE'h zzzzzzzz;
       
 		mlt_state = 0;
+		
+		next_state_r = 1'b 0;
+//		next_state_r = 1'b z;
 		
 //      is_bus_busy_r = 1'b z;
     end else begin
@@ -102,19 +108,19 @@ module Alu(
               //src = src0;
               //src0_r = dst_h;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_ADD: begin
               {dst_h, dst_r} = src0 + src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_SUB: begin
               {dst_h, dst_r} = src0 - src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_MUL: begin
@@ -127,7 +133,7 @@ module Alu(
 				    mlt_state = 1;
 				  end else begin
 			       if(tmp32_r == 0) begin
-				      next_state = 1;
+				      next_state_r = 1;
 						mlt_state = 0;
 					 end else begin
 					   if(tmp32_r[0] == 1'b 1) begin
@@ -141,7 +147,7 @@ module Alu(
 */
               {dst_h, dst_r} = src0 * src1;
               
-              next_state = 1;       
+              next_state_r = 1;       
             end
             
             `CMD_DIV: begin
@@ -154,7 +160,7 @@ module Alu(
 				    mlt_state = 1;
 				  end else begin
 			       if(tmp32_r == 0) begin
-				      next_state = 1;
+				      next_state_r = 1;
 						mlt_state = 0;
 					 end else begin
 					   if(tmp32_r[0] == 1'b 1) begin
@@ -169,41 +175,41 @@ module Alu(
               dst_r = src0 / src1;
               dst_h = src0 % src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_SHR: begin
               dst_r = src0 >> src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_SHL: begin
               dst_r = src0 << src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_XOR: begin
               dst_r = src0 ^ src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_AND: begin
               dst_r = src0 & src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             `CMD_OR: begin
               dst_r = src0 | src1;
               
-              next_state = 1;
+              next_state_r = 1;
             end
             
             default: begin
-//              next_state = 1;       
+//              next_state_r = 1;       
             end
             
 //            `: begin
@@ -214,7 +220,7 @@ module Alu(
           
           endcase
           
-//          next_state = 1;
+//          next_state_r = 1;
         end
         
       endcase

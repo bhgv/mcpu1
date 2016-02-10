@@ -109,7 +109,9 @@ module ThreadCtlr(
                              ;
   
 
-  output reg next_state;
+  output next_state;
+  reg next_state_r;
+  tri next_state = next_state_r;
   
   input wire rst;
   
@@ -126,7 +128,8 @@ module ThreadCtlr(
     //clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
 	 
-    next_state = 1'b z;
+    next_state_r = 1'b 0;
+//    next_state_r = 1'b z;
     
     is_bus_busy_r = 1'b z;
     
@@ -148,6 +151,9 @@ module ThreadCtlr(
       
       cpu_msg_in = 0;
 //      is_bus_busy_r = 1'b z;
+
+		next_state_r = 1'b 0;
+//		next_state_r = 1'b z;
     end else begin
     
       case(state)
@@ -179,7 +185,7 @@ module ThreadCtlr(
                     if(cpu_msg === `CPU_R_FORK_DONE) begin
                     
                       signal_sent = 0;
-                      next_state = 1;
+                      next_state_r = 1;
                     end
 //                  end
                 end
@@ -215,7 +221,7 @@ module ThreadCtlr(
                     if(cpu_msg === `CPU_R_STOP_DONE) begin
                     
                       signal_sent = 0;
-                      next_state = 1;
+                      next_state_r = 1;
                     end
 //                  end
                 end
@@ -256,7 +262,7 @@ module ThreadCtlr(
           
           endcase
           
-//          next_state = 1;
+//          next_state_r = 1;
         end
         
         `FINISH_BEGIN: begin

@@ -85,9 +85,9 @@ module Top(
   tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
   //output 
-  tri0 read_q;
+  trior read_q;
   //output 
-  tri0 write_q;
+  trior write_q;
   
 //  reg read_dn_r;
   //output 
@@ -162,7 +162,7 @@ module Top(
   
 //  reg cpu_q_r;
   tri0 ext_cpu_q; // = cpu_q_r;
-  tri0 ext_cpu_e;
+  trior ext_cpu_e;
   
 //  reg cpu_running;
   
@@ -177,8 +177,8 @@ module Top(
   reg bus_director;
   
 
-  output tri ext_read_q;
-  output tri ext_write_q;
+  output trior ext_read_q;
+  output trior ext_write_q;
   
   inout ext_read_dn;
   inout ext_write_dn;
@@ -186,8 +186,8 @@ module Top(
   reg ext_read_dn_r;
   reg ext_write_dn_r;
 
-  tri ext_read_dn = ext_read_dn_r == 1 ? 1 : 1'b z;
-  tri ext_write_dn = ext_write_dn_r == 1 ? 1 : 1'b z;
+  tri0 ext_read_dn = ext_read_dn_r == 1 ? 1 : 1'b z;
+  tri0 ext_write_dn = ext_write_dn_r == 1 ? 1 : 1'b z;
   
   reg ext_rw_busy;
 

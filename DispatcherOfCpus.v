@@ -248,8 +248,14 @@ parameter PROC_QUANTITY = 8;
   
 
 
-  output reg ext_read_q;
-  output reg ext_write_q;
+  output ext_read_q;
+  reg ext_read_q_r;
+  tri ext_read_q = ext_read_q_r;
+  
+  output ext_write_q;
+  reg ext_write_q_r;
+  tri ext_write_q = ext_write_q_r;
+  
   input wire ext_read_dn;
   input wire ext_write_dn;
   
@@ -259,8 +265,8 @@ parameter PROC_QUANTITY = 8;
   inout [`ADDR_SIZE0:0] ext_mem_addr;
   tri [`ADDR_SIZE0:0] ext_mem_addr = 
                                     (
-                                     ext_read_q == 1
-                                     || ext_write_q == 1
+                                     ext_read_q_r == 1
+                                     || ext_write_q_r == 1
                                     )
                                     ? mem_addr_tmp
                                     : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
@@ -270,7 +276,7 @@ parameter PROC_QUANTITY = 8;
   tri [`DATA_SIZE0:0] ext_mem_data = 
                                     (
 //                                     ext_read_q == 1 || 
-                                     ext_write_q == 1
+                                     ext_write_q_r == 1
                                     )
                                     ? mem_data_tmp
                                     : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
@@ -296,8 +302,8 @@ always @(negedge clk) begin
     cpu_msg_r = 8'h zzzz;
     
     
-    ext_read_q = 0;
-    ext_write_q = 0;
+    ext_read_q_r = 0;
+    ext_write_q_r = 0;
     
 //    halt_q = 0; //1'bz;
 
@@ -443,7 +449,7 @@ always @(negedge clk) begin
         end
         
         if(
-          read_q == 1 &&
+          read_q === 1 &&
           mem_rd == 0 &&
           mem_wr == 0
         ) begin
@@ -452,7 +458,7 @@ always @(negedge clk) begin
           mem_wr = 0;
         end else 
         if(
-          write_q == 1 &&
+          write_q === 1 &&
           mem_rd == 0 &&
           mem_wr == 0
         ) begin
@@ -597,7 +603,7 @@ always @(negedge clk) begin
 
             end else
             begin
-              ext_read_q = 1;
+              ext_read_q_r = 1;
             end
 //            halt_q = 1;
 //            mem_rd = 0;
@@ -625,7 +631,7 @@ always @(negedge clk) begin
 
             end else
             begin
-              ext_write_q = 1;
+              ext_write_q_r = 1;
             end
 //            halt_q = 1;
 //            mem_wr = 0;

@@ -65,7 +65,14 @@ module MemManager (
   
   input wire [`DATA_SIZE0:0] cmd_ptr;
   
-  output tri0 next_state;
+  tri next_state_ip, next_state_s1, next_state_s0, next_state_d, next_state_c;
+  output tri next_state = 
+									  next_state_ip 
+									| next_state_s1
+									| next_state_s0
+									| next_state_d
+									| next_state_c
+									;
   
   input wire rst;
 
@@ -157,8 +164,23 @@ module MemManager (
                         : `ADDR_SIZE'h zzzzzzzz;
 */
 
-  output /*reg*/ tri read_q;
-  output /*reg*/ tri write_q;
+  tri read_q_ip, read_q_s1, read_q_s0, read_q_d, read_q_c;
+  tri write_q_ip, write_q_s1, write_q_s0, write_q_d, write_q_c;
+
+  output /*reg*/ tri read_q =
+										read_q_ip
+										| read_q_s1
+										| read_q_s0
+										| read_q_d
+										| read_q_c
+										;
+  output /*reg*/ tri write_q =
+										write_q_ip
+										| write_q_s1
+										| write_q_s0
+										| write_q_d
+										| write_q_c
+										;
 
   inout is_bus_busy;
   reg is_bus_busy_r;
@@ -249,8 +271,8 @@ module MemManager (
             .isSaveAllowed(isIpSaveAllowed),
             .isSavePtrAllowed(1'b 0),
             
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(read_q_ip),
+            .write_q(write_q_ip),
             .read_dn(read_dn),
             .write_dn(write_dn),
             
@@ -258,7 +280,7 @@ module MemManager (
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_ip),
             
             .rst(rst)
             );
@@ -345,8 +367,8 @@ module MemManager (
             .isSaveAllowed(isS1SaveAllowed),
             .isSavePtrAllowed(isS1SavePtrAllowed),
             
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(read_q_s1),
+            .write_q(write_q_s1),
             .read_dn(read_dn),
             .write_dn(write_dn),
             
@@ -354,7 +376,7 @@ module MemManager (
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_s1),
             
             .rst(rst)
             );
@@ -441,8 +463,8 @@ module MemManager (
             .isSaveAllowed(isS0SaveAllowed),
             .isSavePtrAllowed(isS0SavePtrAllowed),
             
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(read_q_s0),
+            .write_q(write_q_s0),
             .read_dn(read_dn),
             .write_dn(write_dn),
             
@@ -450,7 +472,7 @@ module MemManager (
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_s0),
             
             .rst(rst)
             );
@@ -541,8 +563,8 @@ module MemManager (
             .isSaveAllowed(isDSaveAllowed),
             .isSavePtrAllowed(isDSavePtrAllowed),
             
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(read_q_d),
+            .write_q(write_q_d),
             .read_dn(read_dn),
             .write_dn(write_dn),
             
@@ -550,7 +572,7 @@ module MemManager (
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_d),
             
             .rst(rst)
             );
@@ -626,8 +648,8 @@ module MemManager (
             .isSaveAllowed(isCndSaveAllowed),
             .isSavePtrAllowed(isCndSavePtrAllowed),
             
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(read_q_c),
+            .write_q(write_q_c),
             .read_dn(read_dn),
             .write_dn(write_dn),
             
@@ -635,7 +657,7 @@ module MemManager (
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_c),
             
             .rst(rst)
             );

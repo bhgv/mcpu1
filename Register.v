@@ -217,7 +217,9 @@ module RegisterManager (
   
 //  input wire disp_online;
   
-  output reg next_state;
+  output next_state;
+  reg next_state_r;
+  tri next_state = next_state_r;
   
   input wire rst;
   
@@ -241,7 +243,8 @@ module RegisterManager (
     is_bus_busy_r = 1'b z;
     
     
-    next_state = 1'b z;
+    next_state_r = 1'b 0;
+//    next_state_r = 1'b z;
     
     
     halt_q_r = 1'bz;
@@ -249,8 +252,8 @@ module RegisterManager (
     
     rw_halt_r = rw_halt_stim;
 	 
-    read_q_r = 1'b z;
-    write_q_r = 1'b z;
+    read_q_r = 1'b 0; //z;
+    write_q_r = 1'b 0; //z;
     
         addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
     
@@ -280,17 +283,18 @@ module RegisterManager (
   end
 */
 
-//     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
+//     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state_r,progress,isRegS0Ptr);
 
   end else begin
 
   if(rst == 1) begin
-    read_q_r = 1'b z;
-    write_q_r = 1'b z;
+    read_q_r = 1'b 0; //z;
+    write_q_r = 1'b 0; //z;
 
     //addr_r = 32'h zzzzzzzz;
 
-//    next_state = 1'b z;
+    next_state_r = 1'b 0;
+//    next_state_r = 1'b z;
     
     register_r = 0; //32'h zzzzzzzz;
           register_r_ptr = 0;
@@ -316,11 +320,11 @@ module RegisterManager (
 //  else if(state == `ALU_RESULTS) begin
 //    register_r = register;
 //    
-//    next_state = 1'b 1;
+//    next_state_r = 1'b 1;
 //  end
   else begin
      
-//    next_state = 1'b z;
+//    next_state_r = 1'b z;
 
 //    read_q_r = 1'b z;
 //    write_q_r = 1'b z;
@@ -345,7 +349,7 @@ module RegisterManager (
             catched = 1;
           end
             
-          next_state = 1;
+          next_state_r = 1;
         end
 
         `REG_OP_PREEXECUTE: begin
@@ -362,7 +366,7 @@ module RegisterManager (
           //end
 //          if(^regS0Flags == 1) src0w_waiting = 1;
           
-          next_state = 1;
+          next_state_r = 1;
         end
 
         `REG_OP_READ: begin
@@ -376,7 +380,7 @@ module RegisterManager (
                     register_r = data_in;
                     register_r_ptr = data_in;
                     /*if(! isDinamic )*/ register_waiting = 0;
-                    next_state = 1;
+                    next_state_r = 1;
                     
                     want_write_r = 1'b z;
                   end
@@ -389,7 +393,7 @@ module RegisterManager (
                 single = 1;
 
                 addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-                read_q_r = 1'bz;
+                read_q_r = 1'b 0; //z;
                 
                 want_write_r = 1'b z;
                 
@@ -408,7 +412,7 @@ module RegisterManager (
               end else
               if(read_q_r === 1) begin
                 addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-                read_q_r = 1'bz;
+                read_q_r = 1'b 0; //z;
               end else 
               if(disp_online == 1 && single == 1) begin
                 addr_r = register_r_adr;
@@ -436,7 +440,7 @@ module RegisterManager (
 //                  register_r_ptr = register_r;
                   register_r = data_in;
                   /*if(! isDinamic )*/ registerptr_waiting = 0;
-                  next_state = 1;
+                  next_state_r = 1;
                   
                   want_write_r = 1'b z;
                 end
@@ -448,7 +452,7 @@ module RegisterManager (
               single = 1;
 
               addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-              read_q_r = 1'bz;
+              read_q_r = 1'b 0; //z;
               
               want_write_r = 1'b z;
                 
@@ -465,7 +469,7 @@ module RegisterManager (
             end else
             if(read_q_r === 1) begin
               addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-              read_q_r = 1'bz;
+              read_q_r = 1'b 0; //z;
             end else
             if(disp_online == 1 && single == 1) begin
 //              register_r_ptr = register_r;
@@ -516,7 +520,7 @@ module RegisterManager (
             
             registerw_waiting = isSaveAllowed;
 
-            next_state = 1;
+            next_state_r = 1;
         end
 
         
@@ -527,11 +531,11 @@ module RegisterManager (
                 addr_in === addr_to_save
             ) begin
               registerw_waiting = 0;
-              next_state = 1;
+              next_state_r = 1;
             end
           end else begin
             if(write_q_r === 1) begin
-              write_q_r = 1'bz;
+              write_q_r = 1'b 0; //z;
             end else //if(write_dn == 0) 
             if(disp_online == 1 && single == 1) begin
               data_r = /*reg_op == `REG_OP_WRITE_P ?*/ data_post_inc_dec; // : register_r; //register_r;

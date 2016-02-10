@@ -107,7 +107,7 @@ module Cpu(
   wire [`STATE_SIZE0:0] state;
   wire nxt_state;
   
-  inout wire bus_busy;
+  inout tri bus_busy;
   
   wire [31:0] command;
   
@@ -129,7 +129,7 @@ module Cpu(
   inout tri [`DATA_SIZE0:0] ext_cpu_index;
   
   input wire ext_cpu_q;
-  output tri ext_cpu_e;
+  output wire ext_cpu_e;
   
   tri [7:0] int_cpu_msg;
   output tri [7:0] cpu_msg;

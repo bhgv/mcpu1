@@ -125,7 +125,9 @@ module StartManager (
   
 //  input wire disp_online;
   
-  output reg next_state;
+  output next_state;
+  reg next_state_r;
+  tri next_state = next_state_r;
   
   input wire rst;
   
@@ -148,7 +150,8 @@ module StartManager (
     addr_r = 32'h zzzzzzzz;
     data_r = 32'h zzzzzzzz;
     
-    next_state = 1'b z;
+    next_state_r = 1'b 0;
+//    next_state_r = 1'b z;
     
 
     rw_halt_r = 1'bz;
@@ -194,7 +197,8 @@ module StartManager (
     write_q = 1'b z;
 
 //    base_addr = 1;
-    next_state = 1'b z;
+    next_state_r = 1'b 0;
+//    next_state_r = 1'b z;
     
 //    cmd_waiting = 0; cmd_ptr_waiting = 0;
     
@@ -212,7 +216,7 @@ module StartManager (
   else begin
     
 //    data_r = `DATA_SIZE'h zzzzzzzz;
-//    next_state = 1'b z;
+//    next_state_r = 1'b z;
 //    read_e = 1'b z;
 //    write_e = 1'b z;
 
@@ -231,7 +235,7 @@ module StartManager (
             if(addr === ip_addr) begin
               ip_addr_to_read = 0;
               cmd_ptr = data;
-              next_state = 1;
+              next_state_r = 1;
             end
           end
         end
@@ -240,7 +244,7 @@ module StartManager (
           if(read_dn === 1) begin
             if(addr === cmd_ptr) begin
               command_r = data;
-              next_state = 1;
+              next_state_r = 1;
             end
           end
         end
@@ -251,7 +255,7 @@ module StartManager (
             
             write_wait = 0;
             
-            next_state = 1;
+            next_state_r = 1;
           end
         end
            
@@ -272,7 +276,7 @@ module StartManager (
             
             started = 1;
             
-//            next_state = 1;
+//            next_state_r = 1;
 //          end
         end
 
@@ -311,7 +315,7 @@ module StartManager (
         `PREEXECUTE: begin
             cmd_ptr = cmd_ptr + 1;
             
-            next_state = 1;
+            next_state_r = 1;
         end
 
         `WRITE_REG_IP: begin

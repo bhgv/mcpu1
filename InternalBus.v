@@ -100,8 +100,20 @@ module InternalBus(
   wire [`DATA_SIZE0:0] cmd_ptr;
   
   output wire [`STATE_SIZE0:0] state;
-  inout next_state;
+  
+  
+  input next_state;
   tri next_state;
+  
+  tri next_state_m, next_state_a, next_state_s, next_state_t;
+  
+  tri next_state_rslt = 
+								next_state
+								| next_state_m
+								| next_state_a
+								| next_state_s
+								| next_state_t
+								;
  
                     
   input wire [`ADDR_SIZE0:0] base_addr;
@@ -160,7 +172,7 @@ module InternalBus(
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_s),
             
             .rst(rst)
             );
@@ -195,7 +207,7 @@ module InternalBus(
             
             .cond(cond),
             
-            .next_state(next_state),
+            .next_state(next_state_rslt),
             
             .isIpSaveAllowed(isIpSaveAllowed),
             .isDSaveAllowed(isDSaveAllowed),
@@ -250,7 +262,7 @@ module InternalBus(
             
             .disp_online(disp_online),
             
-            .next_state(next_state),
+            .next_state(next_state_m),
             
             .isIpSaveAllowed(isIpSaveAllowed),
             .isDSaveAllowed(isDSaveAllowed),
@@ -282,7 +294,7 @@ module InternalBus(
         .dst(dst),
         .dst_h(dst_h),
         
-        .next_state(next_state),
+        .next_state(next_state_a),
         
         .rst(rst)
         );
@@ -316,7 +328,7 @@ module InternalBus(
         
         .cpu_msg(cpu_msg),
         
-        .next_state(next_state),
+        .next_state(next_state_t),
         
         .rst(rst)
         );
