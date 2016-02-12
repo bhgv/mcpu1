@@ -818,12 +818,14 @@ module BridgeToOutside (
 
 
 	
+	 if(clk_oe == 0) begin
 /**/
 //    if(ext_next_cpu_e === 1) begin 
       if(
 		   ext_cpu_index === cpu_index_r
 //			cpu_ind_rel == 2'b11
       ) begin
+		
         if(
             cpu_index_r == 0 
             && state === `START_BEGIN 
@@ -841,7 +843,7 @@ module BridgeToOutside (
 ////        cpu_ind_rel != 2'b11
 //        ext_cpu_index !== cpu_index_r
 //      )
-      begin
+      begin // ext_cpu_index !== cpu_index_r
 
 //        if( (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE ) begin
 //          if( (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE ) begin
@@ -852,13 +854,14 @@ module BridgeToOutside (
               //case(ext_cpu_msg_in) //data)
 /**/
               if(
-                 (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE
+                 (ext_cpu_index & `CPU_ACTIVE) !== 0 //=== `CPU_ACTIVE
 //					  is_ext_cpu_index_active
 //                   |(ext_cpu_index & `CPU_ACTIVE) == 1'b 1
               ) begin
+				  
 				    if(
                   ext_cpu_msg_in === `CPU_R_END //: begin
-						&& (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE
+						&& (cpu_index_r & `CPU_ACTIVE) != 0 //=== `CPU_ACTIVE
 //						&& is_cpu_index_active
 
 //						&& (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE
@@ -888,22 +891,26 @@ module BridgeToOutside (
 //////              cpu_index_r = cpu_index_r + 1;
 ////            end
             
-          end else begin
-            if(
-                ext_cpu_msg_in === `CPU_R_START //: begin
-//					 && (ext_cpu_index & `CPU_ACTIVE) === `CPU_NONACTIVE
-            ) begin
-//              cpu_index_r[30:0] = cpu_index_r[30:0] + (cpu_index_r[31] ? 1 : -1);
-              if( 
-                 (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE 
-//					  is_cpu_index_active
-              ) begin
-                cpu_index_r[30:0] = cpu_index_r[30:0] + 1;
-              end else begin
-                cpu_index_r[30:0] = cpu_index_r[30:0] - 1;
-              end
-            end
-          end
+				 end else begin // (ext_cpu_index & `CPU_ACTIVE) !== `CPU_ACTIVE
+				 
+					if(
+						 ext_cpu_msg_in === `CPU_R_START //: begin
+	//					 && (ext_cpu_index & `CPU_ACTIVE) === `CPU_NONACTIVE
+					) begin
+					
+	//              cpu_index_r[30:0] = cpu_index_r[30:0] + (cpu_index_r[31] ? 1 : -1);
+					  if( 
+						  (cpu_index_r & `CPU_ACTIVE) != 0 //=== `CPU_ACTIVE 
+//						  cpu_index_r[31]
+	//					  is_cpu_index_active
+					  ) begin
+						 cpu_index_r[30:0] = cpu_index_r[30:0] + 1;
+					  end else begin
+						 cpu_index_r[30:0] = cpu_index_r[30:0] - 1;
+					  end
+					  
+					end
+				 end // (ext_cpu_index & `CPU_ACTIVE) ==/!= `CPU_ACTIVE
 /**/
 
 //          endcase
@@ -911,9 +918,9 @@ module BridgeToOutside (
 
 //        end //if(ext_next_cpu_e_r === 1)
 
-      end
+			end // ext_cpu_index ==/!= cpu_index_r
 
-//    end //clk_oe
+    end //clk_oe
 
   end //always
 /**/
