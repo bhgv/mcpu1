@@ -289,6 +289,11 @@ module BridgeToOutside (
 
   input wire clk_oe;
   
+  
+  wire is_ext_cpu_index_active = (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE;
+  wire is_cpu_index_active = (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE;
+  wire is_ext_cpu_index_lt = ext_cpu_index[30:0] < cpu_index_r[30:0];
+  
 
   always @(posedge clk) begin
   
@@ -809,6 +814,7 @@ module BridgeToOutside (
  
 //  end
    
+    end //clk_oe
 
 
 	
@@ -819,8 +825,8 @@ module BridgeToOutside (
 //			cpu_ind_rel == 2'b11
       ) begin
         if(
-            cpu_index_r == 0 && 
-            state == `START_BEGIN 
+            cpu_index_r == 0 
+            && state === `START_BEGIN 
 //            &&
             //data
 //            ext_cpu_msg_in === `CPU_R_START
@@ -845,13 +851,22 @@ module BridgeToOutside (
 //            ) begin
               //case(ext_cpu_msg_in) //data)
 /**/
-              if((ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE) begin
+              if(
+                 (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE
+//					  is_ext_cpu_index_active
+//                   |(ext_cpu_index & `CPU_ACTIVE) == 1'b 1
+              ) begin
 				    if(
                   ext_cpu_msg_in === `CPU_R_END //: begin
 						&& (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE
+//						&& is_cpu_index_active
+
 //						&& (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE
 //						&& (ext_cpu_index & ~`CPU_ACTIVE) < (cpu_index_r & ~`CPU_ACTIVE)
+
 						&& ext_cpu_index[30:0] < cpu_index_r[30:0]
+//						&& cpu_ind_rel == 2'b01
+//						&& is_ext_cpu_index_lt
                 ) begin
                   cpu_index_r[30:0] = cpu_index_r[30:0] - 1;
                 end
@@ -879,7 +894,10 @@ module BridgeToOutside (
 //					 && (ext_cpu_index & `CPU_ACTIVE) === `CPU_NONACTIVE
             ) begin
 //              cpu_index_r[30:0] = cpu_index_r[30:0] + (cpu_index_r[31] ? 1 : -1);
-              if( (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE ) begin
+              if( 
+                 (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE 
+//					  is_cpu_index_active
+              ) begin
                 cpu_index_r[30:0] = cpu_index_r[30:0] + 1;
               end else begin
                 cpu_index_r[30:0] = cpu_index_r[30:0] - 1;
@@ -893,12 +911,13 @@ module BridgeToOutside (
 
 //        end //if(ext_next_cpu_e_r === 1)
 
-    end
+      end
 
-  end //clk_oe
+//    end //clk_oe
 
   end //always
 /**/
+
   
 endmodule
 
