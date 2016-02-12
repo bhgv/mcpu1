@@ -22,8 +22,8 @@ module StartManager (
             is_bus_busy,
             addr_in,
 				addr_out,
-            read_q,
-            write_q,
+//            read_q,
+//            write_q,
             data_in,
 				data_out,
             read_dn,
@@ -98,8 +98,8 @@ module StartManager (
                         */
 								;
   
-  output reg read_q;
-  output reg write_q;
+//  output wire read_q;
+//  output wire write_q;
 
   inout is_bus_busy;
   reg is_bus_busy_r;
@@ -193,8 +193,8 @@ module StartManager (
   if(rst == 1) begin
 //    command_r = 32'h zzzzzzzz;
 
-    read_q = 1'b z;
-    write_q = 1'b z;
+//    read_q = 1'b z;
+//    write_q = 1'b z;
 
 //    base_addr = 1;
     next_state_r = 1'b 0;

@@ -74,8 +74,8 @@ module InternalBus(
   input tri [`ADDR_SIZE0:0] addr_in; //= addr_out_r;
   output tri [`ADDR_SIZE0:0] addr_out;
   
-  output tri read_q;
-  output tri write_q;
+  output wire read_q;
+  output wire write_q;
   input tri read_dn;
   input tri write_dn;
 //  output wire read_e;
@@ -123,7 +123,7 @@ module InternalBus(
   input wire disp_online;
   
   
-  inout tri [7:0] cpu_msg;
+  inout tri [`CPU_MSG_SIZE0:0] cpu_msg;
   
   
 //	reg [31:0] mem [0:100]; 
@@ -159,8 +159,8 @@ module InternalBus(
             .is_bus_busy(bus_busy),
             .addr_in(addr_in),
             .addr_out(addr_out),
-            .read_q(read_q),
-            .write_q(write_q),
+//            .read_q(read_q),
+//            .write_q(write_q),
             .data_in(data_in),
             .data_out(data_out),
             .read_dn(read_dn),

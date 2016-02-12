@@ -70,9 +70,9 @@ module ThreadCtlr(
   
   
   reg cpu_msg_in;
-  inout [7:0] cpu_msg;
-  reg [7:0] cpu_msg_r;
-  tri [7:0] cpu_msg = cpu_msg_in == 0 ? cpu_msg_r : 8'h zzzz_zzzz;
+  inout [`CPU_MSG_SIZE0:0] cpu_msg;
+  reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
+  tri [`CPU_MSG_SIZE0:0] cpu_msg = cpu_msg_in == 0 ? cpu_msg_r : `CPU_MSG_SIZE'h zzzz_zzzz;
 
 
   input [`DATA_SIZE0:0] data_in;
@@ -133,7 +133,7 @@ module ThreadCtlr(
     
     is_bus_busy_r = 1'b z;
     
-    cpu_msg_r = 8'h zzzz;
+    cpu_msg_r = `CPU_MSG_SIZE'h zzzz;
     
     cpu_msg_in = 0;
 	 
@@ -145,7 +145,7 @@ module ThreadCtlr(
       dst_r =  `DATA_SIZE'h zzzzzzzz;
       dst_h =  `DATA_SIZE'h zzzzzzzz;
       
-      cpu_msg_r = 8'h 00;
+      cpu_msg_r = 0; //8'h 00;
       
       signal_sent = 0;
       
@@ -179,7 +179,7 @@ module ThreadCtlr(
 //                    signal_sent = 1;
 //                  end
 //                  else begin
-                    cpu_msg_r = 8'h 00;
+                    cpu_msg_r = 0; //8'h 00;
                     cpu_msg_in = 1;
                   
                     if(cpu_msg === `CPU_R_FORK_DONE) begin
@@ -191,7 +191,7 @@ module ThreadCtlr(
                 end
               end
               else begin
-                cpu_msg_r = 8'h00;
+                cpu_msg_r = 0; //8'h00;
               end
             end
             
@@ -215,7 +215,7 @@ module ThreadCtlr(
 //                    signal_sent = 1;
 //                  end
 //                  else begin
-                    cpu_msg_r = 8'h 00;
+                    cpu_msg_r = 0; //8'h 00;
                     cpu_msg_in = 1;
                   
                     if(cpu_msg === `CPU_R_STOP_DONE) begin
@@ -227,7 +227,7 @@ module ThreadCtlr(
                 end
               end
               else begin
-                cpu_msg_r = 8'h00;
+                cpu_msg_r = 0; //8'h00;
               end
             end
             

@@ -167,14 +167,14 @@ module MemManager (
   tri read_q_ip, read_q_s1, read_q_s0, read_q_d, read_q_c;
   tri write_q_ip, write_q_s1, write_q_s0, write_q_d, write_q_c;
 
-  output /*reg*/ tri read_q =
+  output /*reg*/ wire read_q =
 										read_q_ip
 										| read_q_s1
 										| read_q_s0
 										| read_q_d
 										| read_q_c
 										;
-  output /*reg*/ tri write_q =
+  output /*reg*/ wire write_q =
 										write_q_ip
 										| write_q_s1
 										| write_q_s0

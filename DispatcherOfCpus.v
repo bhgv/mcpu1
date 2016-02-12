@@ -108,11 +108,11 @@ parameter PROC_QUANTITY = 8;
 
   input tri ext_cpu_e;
   
-  input [7:0] cpu_msg_in;
-  reg [7:0] cpu_msg_r;
-  tri [7:0] cpu_msg_in; // = cpu_msg_r;
+  input [`CPU_MSG_SIZE0:0] cpu_msg_in;
+  reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_in; // = cpu_msg_r;
   
-  input tri dispatcher_q;
+  input wire dispatcher_q;
   
   
   
@@ -297,9 +297,9 @@ always @(negedge clk) begin
     write_dn_r = 1'b z;
 //    bus_busy_r = 1'b z;
     
-    cpu_q_r = 0;
+//    cpu_q_r = 0;
     
-    cpu_msg_r = 8'h zzzz;
+    cpu_msg_r = `CPU_MSG_SIZE'h zzzz_zzzz;
     
     
     ext_read_q_r = 0;
@@ -337,7 +337,7 @@ always @(negedge clk) begin
     
     new_cpu_restarted = 0;
     
-    cpu_msg_r = 8'h zzzz;
+    cpu_msg_r = `CPU_MSG_SIZE'h zzzz_zzzz;
     
     thrd_cmd_r = `THREAD_CMD_NULL;
 //    thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
@@ -380,12 +380,12 @@ always @(negedge clk) begin
       `CTL_RESET_WAIT: begin
 		  bus_busy_r = 1'b 0;
 
-        if(cpu_msg_in == `CPU_R_RESET) begin //read_dn == 1) begin
+        if(cpu_msg_in === `CPU_R_RESET) begin //read_dn == 1) begin
           //data_wire_r = data_wire_r + 1;
 //          proc_tbl[ext_cpu_index_r] = 0; //32'h ffffffff;
           ext_cpu_index_r = ext_cpu_index_r + 1;
           //data_wire_r = 32'h zzzzzzzz;
-          addr_out_r  = 32'h zzzzzzzz;
+          addr_out_r  = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
         end
           
 //        if(bus_busy === 1) begin
@@ -395,7 +395,7 @@ always @(negedge clk) begin
         ext_rst_b = 0;
         if(ext_rst_e === 1) begin
           //ext_rst_b = 0;
-          ext_cpu_index_r = 32'h zzzzzzzz;
+          ext_cpu_index_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
           data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
           state_ctl = `CTL_CPU_LOOP;
         end
@@ -443,6 +443,8 @@ always @(negedge clk) begin
       end
       
       `CTL_CPU_CMD: begin
+		  cpu_q_r = 0;
+		  
           addr_out_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
         if(cpu_q_r === 1) begin
           cpu_q_r = 0;
@@ -500,7 +502,7 @@ always @(negedge clk) begin
               `CPU_R_FORK_DONE: begin
                 thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
                 
-                cpu_msg_r = 8'h zzzz;
+                cpu_msg_r = `CPU_MSG_SIZE'h zzzz_zzzz;
               end
             
             endcase

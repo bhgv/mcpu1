@@ -179,8 +179,8 @@ module RegisterManager (
   reg read_q_r;
   reg write_q_r;
 
-  tri read_q = read_q_r;
-  tri write_q = write_q_r;
+  wire read_q = read_q_r;
+  wire write_q = write_q_r;
 
   inout is_bus_busy;
   reg is_bus_busy_r;

@@ -84,11 +84,6 @@ module Top(
   tri [`ADDR_SIZE0:0] addr_in; // = addr_out_r;
   tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
-  //output 
-  trior read_q;
-  //output 
-  trior write_q;
-  
 //  reg read_dn_r;
   //output 
   wire read_dn; // = read_dn_r;
@@ -168,9 +163,9 @@ module Top(
   
 //  wire ext_bus_busy;
   
-  tri dispatcher_q;
+  trior dispatcher_q;
   
-//  tri [7:0] cpu_msg;
+//  tri [`CPU_MSG_SIZE0:0] cpu_msg;
  
  
 
@@ -295,17 +290,28 @@ assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
 assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
 
 
-  wire [0:CPU_QUANTITY-1] disp_online;
-  tri [(8*CPU_QUANTITY)-1:0] cpu_msg_in_a ;
-  tri0 [7:0] cpu_msg_in // = cpu_msg_in_a[7:0]
+  wire [CPU_QUANTITY-1:0] disp_online;
+//  tri [(`CPU_MSG_SIZE*CPU_QUANTITY)-1:0] cpu_msg_in_a ;
+  trior [`CPU_MSG_SIZE0:0] cpu_msg_in // = cpu_msg_in_a[7:0]
 //						disp_online[0] == 1
 //						? cpu_msg_in_a[7:0]
 //						: cpu_msg_in_a[15:8]
 						;
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_in;
 						
 
 tri [`ADDR_SIZE*CPU_QUANTITY-1:0] addr_in_a;
 tri [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
+
+
+  //output 
+  wire [CPU_QUANTITY-1:0] read_q_a;
+  wire read_q = |read_q_a;
+  //output 
+  wire [CPU_QUANTITY-1:0] write_q_a;
+  wire write_q = |write_q_a;
+  
+
 
 
 trior rw_halt;
@@ -330,8 +336,8 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .data_in(data_out),
             .data_out(data_in),
             
-            .read_q(read_q),
-            .write_q(write_q),
+            .read_q(read_q_a),
+            .write_q(write_q_a),
             .read_dn(read_dn),
             .write_dn(write_dn),
             
@@ -346,6 +352,8 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .ext_cpu_e(ext_cpu_e),
             
             .cpu_msg(cpu_msg_in), //_a),
+				.cpu_msg_in(cpu_msg_out),
+				
 				.disp_online(disp_online),
             
             .dispatcher_q(dispatcher_q)
