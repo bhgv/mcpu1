@@ -77,7 +77,7 @@ module StateManager(
 
   input tri [`DATA_SIZE0:0] cond;
   
-  input tri next_state;
+  input wire next_state;
   
   input wire rst;
   

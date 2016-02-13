@@ -90,17 +90,17 @@ module RegisterManager (
                                               : register_r
                                               ;  // tri or wire ??
 
-  tri is_data_not_ptr_to_data = (isRegPtr == 0 && reg_op == `REG_OP_WRITE)
+  wire is_data_not_ptr_to_data = (isRegPtr == 0 && reg_op == `REG_OP_WRITE)
                                  || (isRegPtr == 1 && reg_op == `REG_OP_WRITE_P)
                                  ;
                                               
-  tri [`DATA_SIZE0:0] data_to_save = ( is_data_not_ptr_to_data ) 
+  wire [`DATA_SIZE0:0] data_to_save = ( is_data_not_ptr_to_data ) 
                                               ? register_r
                                               : register_r_ptr
                                               ;
 // dst(reg:0, op:4, res:3(+)), src0(p:1, op:4, r:11h(+)), src0(p:1, op:4, r:11h(+))?, ip(p:1, op:6, r:12h(+))
 
-  tri [`DATA_SIZE0:0] data_post_inc_dec = (reg_op == `REG_OP_WRITE_P)
+  wire [`DATA_SIZE0:0] data_post_inc_dec = (reg_op == `REG_OP_WRITE_P)
                                            ? data_to_save
                                             : 
                                             (regFlags == 2'b 01) // && reg_op === `REG_OP_WRITE)

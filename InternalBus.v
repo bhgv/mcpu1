@@ -103,11 +103,11 @@ module InternalBus(
   
   
   input next_state;
-  tri next_state;
+  wire next_state;
   
-  tri next_state_m, next_state_a, next_state_s, next_state_t;
+  wire next_state_m, next_state_a, next_state_s, next_state_t;
   
-  tri next_state_rslt = 
+  wire next_state_rslt = 
 								next_state
 								| next_state_m
 								| next_state_a

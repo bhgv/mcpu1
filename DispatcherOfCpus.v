@@ -446,9 +446,9 @@ always @(negedge clk) begin
 		  cpu_q_r = 0;
 		  
           addr_out_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-        if(cpu_q_r === 1) begin
-          cpu_q_r = 0;
-        end
+//        if(cpu_q_r === 1) begin
+//          cpu_q_r = 0;
+//        end
         
         if(
           read_q === 1 &&

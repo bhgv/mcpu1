@@ -166,21 +166,22 @@ module BridgeToOutside (
   input wire ext_rst_b;
   output reg ext_rst_e;
   
-  inout [`DATA_SIZE0:0] ext_cpu_index;
+  input [`DATA_SIZE0:0] ext_cpu_index;
   reg [`DATA_SIZE0:0] cpu_index_itf;
-  tri [`DATA_SIZE0:0] ext_cpu_index = 
+  tri [`DATA_SIZE0:0] ext_cpu_index //!!! = 
 //                              (
 //                                read_q == 1 ||
 //                                write_q == 1
 //                              ) ?
 //                              cpu_index_r :
-                              cpu_index_itf;
+                              //!!! cpu_index_itf
+										;
   reg [`DATA_SIZE0:0] cpu_index_r;
   
   input tri ext_next_cpu_q;
   output ext_next_cpu_e;
   reg ext_next_cpu_e_r;
-  tri ext_next_cpu_e = ext_next_cpu_e_r;
+  wire ext_next_cpu_e = ext_next_cpu_e_r;
   
   inout ext_bus_busy;
   reg ext_bus_busy_r;
@@ -457,6 +458,8 @@ module BridgeToOutside (
     end else begin      // end of RESET
     
       cpu_msg_r = 0; //8'h zzzz_zzzz;
+		
+//		ext_dispatcher_q_r = 1;
 
 /**
       //if(ext_next_cpu_q === 1 && ext_cpu_index === cpu_index_r) begin
@@ -553,7 +556,8 @@ module BridgeToOutside (
             ext_next_cpu_e_r = 1'b 0; //z;
             disp_online_r = 0;
           end
-        end
+        end // if(disp_online_r == 1)
+		  
 //        else if(ext_next_cpu_e_r === 1'b 1) begin
 //          ext_next_cpu_e_r = 1'b 0; //z;
 //			 disp_online_r = 0; //!!!
@@ -571,34 +575,38 @@ module BridgeToOutside (
           case(state)
             `WAIT_FOR_START: begin
               //data_r
-              if( ext_next_cpu_q === 1 ) begin
+ //             if( ext_next_cpu_q === 1 ) begin
                 cpu_msg_r = `CPU_R_START;
 					 
 //					 if(cpu_index_r == 0) begin
 //                  cpu_index_r = `CPU_ACTIVE;
 //                  cpu_index_itf = `CPU_ACTIVE;
 //					 end else begin
+
                   cpu_index_itf = cpu_index_r;
+
 //           end
                 
                 base_addr_r = addr_in + `THREAD_HEADER_SPACE;
                 
-                base_addr_data_r = 
-												data_in !== 0 
-                                  ? 
-                                  data_in + `THREAD_HEADER_SPACE 
-                                  : addr_in + `THREAD_HEADER_SPACE
-                                  ;
-
+/**/
+//                if(data_in === 0 ) begin
+//                   base_addr_data_r = addr_in + `THREAD_HEADER_SPACE;
+//                end else begin
+                   base_addr_data_r = data_in; // + `THREAD_HEADER_SPACE;
+//                end
+/**/
+     
                 //ext_dispatcher_q_r = 1'b 0; //z;
                 
-					 if(cpu_index_r == 0) begin
+//					 if(cpu_index_r == 0) begin
 //					 cpu_index_r = 32'h 8000_0000; //`CPU_ACTIVE;
-					 end
+//					 end
 					 
                 ext_next_cpu_e_r = 1;
                 next_state_r = 1'b 1;
-              end
+//              end  // if( ext_next_cpu_q === 1 )
+
 //              disp_online_r = 1;
               
 //              cpu_index_r = cpu_index_r | `CPU_ACTIVE;
