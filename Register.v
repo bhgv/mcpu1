@@ -219,7 +219,7 @@ module RegisterManager (
   
   output next_state;
   reg next_state_r;
-  tri next_state = next_state_r;
+  wire next_state = next_state_r;
   
   input wire rst;
   
@@ -231,6 +231,8 @@ module RegisterManager (
   reg isTopP;
  
   input wire clk_oe; 
+  
+  
 
   always @(posedge clk) begin
   
@@ -252,8 +254,8 @@ module RegisterManager (
     
     rw_halt_r = rw_halt_stim;
 	 
-    read_q_r = 1'b 0; //z;
-    write_q_r = 1'b 0; //z;
+//    read_q_r = 1'b 0; //z;
+//    write_q_r = 1'b 0; //z;
     
         addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
     
@@ -323,7 +325,12 @@ module RegisterManager (
 //    next_state_r = 1'b 1;
 //  end
   else begin
-     
+
+
+//    read_q_r = 1'b 0; //z;
+//    write_q_r = 1'b 0; //z;
+
+  
 //    next_state_r = 1'b z;
 
 //    read_q_r = 1'b z;
@@ -370,6 +377,22 @@ module RegisterManager (
         end
 
         `REG_OP_READ: begin
+		  
+		  
+ //               addr_r = register_r_adr;
+//                read_q_r = 1;
+//                halt_q_r = 1;
+
+/**
+                if(^regFlags == 1) registerptr_waiting = 1;
+                register_waiting = 1;
+                
+                want_write_r = isSaveAllowed;
+    
+                single = 0;
+/**/
+		  
+		  
             if(is_bus_busy == 1) begin
             
               if(

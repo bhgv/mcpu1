@@ -250,11 +250,11 @@ parameter PROC_QUANTITY = 8;
 
   output ext_read_q;
   reg ext_read_q_r;
-  tri ext_read_q = ext_read_q_r;
+  wire ext_read_q = ext_read_q_r;
   
   output ext_write_q;
   reg ext_write_q_r;
-  tri ext_write_q = ext_write_q_r;
+  wire ext_write_q = ext_write_q_r;
   
   input wire ext_read_dn;
   input wire ext_write_dn;

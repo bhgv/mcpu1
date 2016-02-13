@@ -108,8 +108,8 @@ module BridgeToOutside (
   tri [`ADDR_SIZE0:0] addr_in; // = addr_r;
   tri [`ADDR_SIZE0:0] addr_out; // = addr_r;
   
-  input tri read_q;
-  input tri  write_q;
+  input wire read_q;
+  input wire  write_q;
 
   inout bus_busy;
   reg bus_busy_r;
@@ -260,8 +260,8 @@ module BridgeToOutside (
 //                        ;
 /**/
   
-  inout ext_read_q;
-  tri ext_read_q    = (state == `READ_COND ||
+  output ext_read_q;
+  wire ext_read_q    = (state == `READ_COND ||
                         state == `READ_COND_P ||
                         state == `READ_SRC1 ||
                         state == `READ_SRC1_P ||
@@ -274,9 +274,9 @@ module BridgeToOutside (
                         disp_online_r == 1 
 //                        && (!ext_next_cpu_e === 1)
                         ? read_q 
-                        : 1'bz;
-  inout ext_write_q;
-  tri ext_write_q   = (state == `WRITE_REG_IP ||
+                        : 1'b 0; //z;
+  output ext_write_q;
+  wire ext_write_q   = (state == `WRITE_REG_IP ||
                         state == `WRITE_DST    ||
                         state == `WRITE_DST_P  ||
                         state == `WRITE_SRC1   ||
@@ -286,7 +286,7 @@ module BridgeToOutside (
                         disp_online_r == 1 
 //                        && (!ext_next_cpu_e === 1)
                         ? write_q 
-                        : 1'bz;
+                        : 1'b 0; //z;
 
   input wire clk_oe;
   
@@ -590,11 +590,11 @@ module BridgeToOutside (
                 base_addr_r = addr_in + `THREAD_HEADER_SPACE;
                 
 /**/
-//                if(data_in === 0 ) begin
-//                   base_addr_data_r = addr_in + `THREAD_HEADER_SPACE;
-//                end else begin
-                   base_addr_data_r = data_in; // + `THREAD_HEADER_SPACE;
-//                end
+                if(data_in === 0 ) begin
+                   base_addr_data_r = addr_in + `THREAD_HEADER_SPACE;
+                end else begin
+                   base_addr_data_r = data_in + `THREAD_HEADER_SPACE;
+                end
 /**/
      
                 //ext_dispatcher_q_r = 1'b 0; //z;

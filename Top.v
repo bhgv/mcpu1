@@ -172,8 +172,8 @@ module Top(
   reg bus_director;
   
 
-  output trior ext_read_q;
-  output trior ext_write_q;
+  output wire ext_read_q;
+  output wire ext_write_q;
   
   inout ext_read_dn;
   inout ext_write_dn;
