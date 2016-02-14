@@ -20,11 +20,15 @@ module DispatcherOfCpus(
             
 				addr_in,
             addr_out,
+				
             data_in,
             data_out,
             
-            ext_mem_addr,
-            ext_mem_data,
+            ext_mem_addr_in,
+            ext_mem_addr_out,
+
+            ext_mem_data_in,
+            ext_mem_data_out,
             
             ext_read_q,
             ext_write_q,
@@ -63,7 +67,7 @@ parameter PROC_QUANTITY = 8;
   input tri halt_q;
   inout tri rw_halt;
   
-  input [`ADDR_SIZE0:0] addr_in;
+  input wire [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_out_r;
 //  tri [`ADDR_SIZE0:0] addr_out = 
@@ -72,8 +76,8 @@ parameter PROC_QUANTITY = 8;
 //                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
 //                                ;
   
-  input tri read_q;
-  input tri write_q;
+  input wire read_q;
+  input wire write_q;
   
   output read_dn;
   reg read_dn_r;
@@ -160,7 +164,7 @@ parameter PROC_QUANTITY = 8;
                                         
 
 /*  !!! */
-  tri [`DATA_SIZE0:0] data_in; // = 
+  wire [`DATA_SIZE0:0] data_in; // = 
 /*
   //  assign data_wire = 
                                   //(cpu_msg === `CPU_R_FORK_DONE)
@@ -178,7 +182,7 @@ parameter PROC_QUANTITY = 8;
 
 
 /*  !!! */
-  tri [`DATA_SIZE0:0] data_out = 
+  wire [`DATA_SIZE0:0] data_out = 
 //  assign data_wire = 
                                   //(cpu_msg === `CPU_R_FORK_DONE)
                                   ext_cpu_q === 1 ||
@@ -190,16 +194,16 @@ parameter PROC_QUANTITY = 8;
                                   ? addr_chan_to_op_out
                                   : bus_busy_r == 1
 											 ? data_r
-											 : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+											 : 0  //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                                   ;
 /**/
 
 
-  tri [`ADDR_SIZE0:0] addr_out = 
-                                (ext_cpu_q === 1 || read_dn_r === 1 || write_dn_r === 1)
-                                ? 
+  wire [`ADDR_SIZE0:0] addr_out = 
+//                                (ext_cpu_q === 1 || read_dn_r === 1 || write_dn_r === 1)
+//                                ? 
                                   addr_out_r
-                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+//                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                 ;
 
 
@@ -220,7 +224,7 @@ parameter PROC_QUANTITY = 8;
                     .thrd_cmd(thrd_cmd_r),
                     .thrd_rslt(thrd_rslt),
                     
-                    .addr(addr_thread_to_op_r),
+                    .addr_in(addr_thread_to_op_r),
                     .data_out(addr_chan_to_op_out),
                     .data_in(addr_chan_to_op),
                     
@@ -262,24 +266,28 @@ parameter PROC_QUANTITY = 8;
   input wire ext_rw_busy;
 
   
-  inout [`ADDR_SIZE0:0] ext_mem_addr;
-  tri [`ADDR_SIZE0:0] ext_mem_addr = 
-                                    (
-                                     ext_read_q_r == 1
-                                     || ext_write_q_r == 1
-                                    )
-                                    ? mem_addr_tmp
-                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+  input wire [`ADDR_SIZE0:0] ext_mem_addr_in;
+  output [`ADDR_SIZE0:0] ext_mem_addr_out;
+  wire [`ADDR_SIZE0:0] ext_mem_addr_out = 
+//                                    (
+//                                     ext_read_q_r == 1
+//                                     || ext_write_q_r == 1
+//                                    )
+//                                    ? 
+												mem_addr_tmp
+//                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                     ;
 
-  inout [`DATA_SIZE0:0] ext_mem_data;
-  tri [`DATA_SIZE0:0] ext_mem_data = 
-                                    (
-//                                     ext_read_q == 1 || 
-                                     ext_write_q_r == 1
-                                    )
-                                    ? mem_data_tmp
-                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+  input wire [`DATA_SIZE0:0] ext_mem_data_in;
+  output [`DATA_SIZE0:0] ext_mem_data_out;
+  wire [`DATA_SIZE0:0] ext_mem_data_out = 
+//                                    (
+////                                     ext_read_q == 1 || 
+//                                     ext_write_q_r == 1
+//                                    )
+//                                    ? 
+												mem_data_tmp
+//                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                     ;
             
   output reg clk_oe;
@@ -302,8 +310,8 @@ always @(negedge clk) begin
     cpu_msg_r = `CPU_MSG_SIZE'h zzzz_zzzz;
     
     
-    ext_read_q_r = 0;
-    ext_write_q_r = 0;
+//    ext_read_q_r = 0;
+//    ext_write_q_r = 0;
     
 //    halt_q = 0; //1'bz;
 
@@ -320,7 +328,7 @@ always @(negedge clk) begin
     cpu_num_a = 0;
     cpu_num_na = CPU_QUANTITY;
     
-    data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz; //cpu_num; //Q;
+    data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz; //cpu_num; //Q;
 //    bus_busy_r  = 1'bz;
     
     state_ctl = `CTL_RESET_WAIT;
@@ -352,6 +360,8 @@ always @(negedge clk) begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
 
+    ext_read_q_r = 0;
+    ext_write_q_r = 0;
 
           if(mem_rd == 1 || mem_wr == 1) begin
             if(rw_halt == 1) begin
@@ -385,7 +395,7 @@ always @(negedge clk) begin
 //          proc_tbl[ext_cpu_index_r] = 0; //32'h ffffffff;
           ext_cpu_index_r = ext_cpu_index_r + 1;
           //data_wire_r = 32'h zzzzzzzz;
-          addr_out_r  = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+          addr_out_r  = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
         end
           
 //        if(bus_busy === 1) begin
@@ -396,7 +406,7 @@ always @(negedge clk) begin
         if(ext_rst_e === 1) begin
           //ext_rst_b = 0;
           ext_cpu_index_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-          data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+          data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
           state_ctl = `CTL_CPU_LOOP;
         end
       end
@@ -408,9 +418,10 @@ always @(negedge clk) begin
             ext_cpu_index_r = `CPU_NONACTIVE;
             new_cpu_restarted = 1;
           end else begin
-            cpu_num = cpu_num + 1;
-            if(cpu_num >= cpu_num_a) begin
+            if(cpu_num >= cpu_num_a-1) begin
               cpu_num = 0;
+				end else begin
+              cpu_num = cpu_num + 1;
             end
             ext_cpu_index_r = cpu_num | `CPU_ACTIVE;
             new_cpu_restarted = 0;
@@ -445,7 +456,7 @@ always @(negedge clk) begin
       `CTL_CPU_CMD: begin
 		  cpu_q_r = 0;
 		  
-          addr_out_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+          addr_out_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 //        if(cpu_q_r === 1) begin
 //          cpu_q_r = 0;
 //        end
@@ -568,14 +579,14 @@ always @(negedge clk) begin
       
       `CTL_MEM_WORK: begin
 
-        data_r = 32'h zzzz_zzzz_zzzz_zzzz;
-        addr_out_r  = 32'h zzzz_zzzz_zzzz_zzzz;
+        data_r = 0; //32'h zzzz_zzzz_zzzz_zzzz;
+        addr_out_r  = 0; //32'h zzzz_zzzz_zzzz_zzzz;
         
 //        data_wire_r = 32'h zzzzzzzz;
 
           if(mem_rd == 1 || mem_wr == 1) begin
             if(bus_busy_r === 1) begin
-              bus_busy_r = 1'b z;
+              bus_busy_r = 1'b 0; //z;
               mem_rd = 0;
               mem_wr = 0;
 //              halt_q = 0;
@@ -594,8 +605,8 @@ always @(negedge clk) begin
             //addr_out_r = 32'h zzzzzzzz;
             
             if(ext_read_dn == 1) begin
-              addr_out_r = ext_mem_addr; //mem_addr_tmp;
-              data_r = ext_mem_data; //mem[mem_addr_tmp];
+              addr_out_r = ext_mem_addr_in; //mem_addr_tmp;
+              data_r = ext_mem_data_in; //mem[mem_addr_tmp];
               read_dn_r = 1;
               bus_busy_r = 1;
               
@@ -620,9 +631,9 @@ always @(negedge clk) begin
           if(mem_wr == 1) begin
                       
             if(ext_write_dn == 1) begin
-              addr_out_r = ext_mem_addr; //mem_addr_tmp;
+              addr_out_r = ext_mem_addr_in; //mem_addr_tmp;
 //              mem[mem_addr_tmp] = mem_data_tmp; // data_wire;
-              data_r = ext_mem_data; //mem_data_tmp;
+              data_r = ext_mem_data_in; //mem_data_tmp;
               //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
               write_dn_r = 1;
               bus_busy_r = 1;

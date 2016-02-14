@@ -111,9 +111,9 @@ module BridgeToOutside (
   input wire read_q;
   input wire  write_q;
 
-  inout bus_busy;
+  output bus_busy;
   reg bus_busy_r;
-  tri bus_busy = bus_busy_r;
+  wire bus_busy; // = bus_busy_r;
   
   output tri [`DATA_SIZE0:0] data_out;
   input [`DATA_SIZE0:0] data_in;
@@ -183,9 +183,12 @@ module BridgeToOutside (
   reg ext_next_cpu_e_r;
   wire ext_next_cpu_e = ext_next_cpu_e_r;
   
-  inout ext_bus_busy;
-  reg ext_bus_busy_r;
-  tri ext_bus_busy = ext_bus_busy_r;
+  input ext_bus_busy;
+//  reg ext_bus_busy_r;
+  wire ext_bus_busy; // = ext_bus_busy_r;
+  
+  assign bus_busy = ext_bus_busy;
+  
   
   output ext_dispatcher_q;
   reg ext_dispatcher_q_r;
@@ -311,7 +314,7 @@ module BridgeToOutside (
   
     //read_dn_r = 1'b z;
     
-    bus_busy_r = 1'b z;
+    bus_busy_r = 1'b 0; //z;
     
     cpu_index_itf = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
     
@@ -539,7 +542,7 @@ module BridgeToOutside (
 
 
       
-      if(bus_busy !== 1) begin
+      if(/* bus_busy_r != 1 */ ext_bus_busy !== 1 ) begin
 //      end else begin
 
         if(disp_online_r == 1) begin

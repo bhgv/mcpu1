@@ -21,14 +21,15 @@ module Cpu(
             halt_q,
             rw_halt,
             
-            want_write,
+//            want_write_in,
+//				want_write_out,
             
             read_q,
             write_q,
             read_dn,
             write_dn,
             
-            bus_busy,
+            ext_bus_busy,
 				
 				disp_online,
             
@@ -50,8 +51,8 @@ module Cpu(
   
   input wire clk_oe;
   
-  input tri [`ADDR_SIZE0:0] addr_in;
-  output tri [`ADDR_SIZE0:0] addr_out;
+  input wire [`ADDR_SIZE0:0] addr_in;
+  output wire [`ADDR_SIZE0:0] addr_out;
   
   wire int_read_q;
   wire int_write_q;
@@ -69,7 +70,7 @@ module Cpu(
   input [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
   
-  tri [`DATA_SIZE0:0] data_in;
+  wire [`DATA_SIZE0:0] data_in;
 
 /*
   tri [`DATA_SIZE0:0] data = 
@@ -82,7 +83,7 @@ module Cpu(
 									;
 */
 
-  tri [`DATA_SIZE0:0] data_out; /* = 
+  wire [`DATA_SIZE0:0] data_out; /* = 
 											 read_q === 1'b 1
 											 || write_q === 1'b 1
 											? data
@@ -95,7 +96,8 @@ module Cpu(
   
   inout tri halt_q;
   
-  inout tri want_write;
+//  input wire want_write_in;
+//  output wire want_write_out;
   
   wire [1:0] cpu_ind_rel;
    
@@ -108,7 +110,7 @@ module Cpu(
   wire [`STATE_SIZE0:0] state;
   wire nxt_state;
   
-  inout tri bus_busy;
+  wire bus_busy;
   
   wire [31:0] command;
   
@@ -139,7 +141,7 @@ module Cpu(
   
 //  reg cpu_running;
   
-  wire ext_bus_busy;
+  input wire ext_bus_busy;
   
   output wire dispatcher_q;
 
@@ -222,7 +224,8 @@ BridgeToOutside outside_bridge (
             .rw_halt(rw_halt), //(int_rw_halt),
             .cpu_ind_rel(cpu_ind_rel),
             
-            .want_write(want_write),
+//            .want_write_in(want_write_in),
+//            .want_write_out(want_write_out),
             
             .bus_busy(bus_busy),
             .addr_in(addr_in),

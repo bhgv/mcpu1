@@ -27,7 +27,8 @@ module ThreadsManager(
                     
                     data_in,
                     data_out,
-                    addr,
+						  
+                    addr_in,
                     
                     cpu_q,
                     
@@ -75,7 +76,7 @@ parameter PROC_QUANTITY = 8;
 /**/
                              ;
   
-  input [`ADDR_SIZE0:0] addr;
+  input wire [`ADDR_SIZE0:0] addr_in;
   
 
   input wire rst;
@@ -210,7 +211,7 @@ parameter PROC_QUANTITY = 8;
           case(thrd_cmd)
             `THREAD_CMD_RUN: begin
               if(pproc_e < PROC_QUANTITY) begin
-                pproc_tbl[pproc_e] = {data_in, addr};
+                pproc_tbl[pproc_e] = {data_in, addr_in};
                 pproc_e = pproc_e + 1;
                 
                 data_r = -1;
@@ -228,7 +229,7 @@ parameter PROC_QUANTITY = 8;
               
 //              for(i = aproc_b; i != aproc_e; i = (i < (PROC_QUANTITY - 1)) ? i+1 : 0 ) begin
               for(i = 0; i < PROC_QUANTITY; i = i+1 ) begin
-                if( aproc_tbl[i][`ADDR_SIZE0:0] === addr ) begin
+                if( aproc_tbl[i][`ADDR_SIZE0:0] == addr_in ) begin
                   aproc_tbl[i][(`DATA_SIZE0 + `ADDR_SIZE + 1)] = 1'b 1;
 
                   data_r = -1;

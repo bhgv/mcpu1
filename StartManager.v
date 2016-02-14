@@ -21,7 +21,7 @@ module StartManager (
             
             is_bus_busy,
             addr_in,
-				addr_out,
+//				addr_out,
 //            read_q,
 //            write_q,
             data_in,
@@ -83,10 +83,12 @@ module StartManager (
   */
   
   input [`ADDR_SIZE0:0] addr_in;
-  output [`ADDR_SIZE0:0] addr_out;
+//  output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
   tri [`ADDR_SIZE0:0] addr_in;
-  tri [`ADDR_SIZE0:0] addr_out /*= (
+  
+  //tri [`ADDR_SIZE0:0] addr_out 
+  /*= (
                         state == `START_READ_CMD   ||
                         state == `START_READ_CMD_P   ||
                         state == `WRITE_REG_IP
@@ -96,14 +98,14 @@ module StartManager (
                         ? addr_r
                         : `ADDR_SIZE'h zzzzzzzz
                         */
-								;
+	//							;
   
 //  output wire read_q;
 //  output wire write_q;
 
-  inout is_bus_busy;
-  reg is_bus_busy_r;
-  tri is_bus_busy = is_bus_busy_r;
+  input is_bus_busy;
+//  reg is_bus_busy_r;
+  wire is_bus_busy; // = is_bus_busy_r;
   
   input [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
@@ -184,7 +186,7 @@ module StartManager (
     
 /*
 */
-    is_bus_busy_r = 1'b z;
+//    is_bus_busy_r = 1'b z;
 
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 

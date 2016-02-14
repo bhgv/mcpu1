@@ -20,7 +20,8 @@ module MemManager (
             cpu_ind_rel,
             halt_q,
             rw_halt,
-            want_write,
+//            want_write_in,
+//            want_write_out,
             
             is_bus_busy,
             addr_in,
@@ -142,8 +143,25 @@ module MemManager (
   input [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
 //  reg [`ADDR_SIZE0:0] addr_r;
-  tri [`ADDR_SIZE0:0] addr_in;
-  tri [`ADDR_SIZE0:0] addr_out;
+  wire [`ADDR_SIZE0:0] addr_in;
+//  wire [`ADDR_SIZE0:0] addr_out;
+  
+  wire [`ADDR_SIZE0:0] addr_out_ip;
+  wire [`ADDR_SIZE0:0] addr_out_s1;
+  wire [`ADDR_SIZE0:0] addr_out_s0;
+  wire [`ADDR_SIZE0:0] addr_out_d;
+  wire [`ADDR_SIZE0:0] addr_out_c;
+//			[`ADDR_SIZE0:0] addr_out_ip,
+//			[`ADDR_SIZE0:0] addr_out_ip,
+			
+  wire [`ADDR_SIZE0:0] addr_out =
+                 addr_out_ip[`ADDR_SIZE0:0]
+					  | addr_out_s1[`ADDR_SIZE0:0]
+					  | addr_out_s0[`ADDR_SIZE0:0]
+					  | addr_out_d[`ADDR_SIZE0:0]
+					  | addr_out_c[`ADDR_SIZE0:0]
+					  ;
+					  
 /*
     = (
                         state == `READ_COND ||
@@ -182,9 +200,9 @@ module MemManager (
 										| write_q_c
 										;
 
-  inout is_bus_busy;
-  reg is_bus_busy_r;
-  tri is_bus_busy = is_bus_busy_r;
+  input is_bus_busy;
+//  reg is_bus_busy_r;
+  wire is_bus_busy; // = is_bus_busy_r;
   
   input [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
@@ -193,7 +211,7 @@ module MemManager (
   
 //  reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_in; // = data_r;
-  wire [`DATA_SIZE0:0] data_out; // = data_r;
+  trior [`DATA_SIZE0:0] data_out; // = data_r;
 //  assign data = write_q === 1 ? data_int : 32'h zzzzzzzz;
   
   input  wire read_dn;
@@ -203,7 +221,10 @@ module MemManager (
 
 
 
-  inout tri want_write;
+//  input 
+  wire want_write_in;
+//  output 
+  trior want_write_out;
   
   
   inout  [`DATA_SIZE0:0] cond;
@@ -216,6 +237,8 @@ module MemManager (
   tri [`DATA_SIZE0:0] cond_ptr;
 
 
+  reg [`SIZE_REG_OP-1:0] cmd_op;
+  /**
   wire [`SIZE_REG_OP-1:0] cmd_op = (state == `START_READ_CMD)
                                     ? `REG_OP_READ
                                     : (state == `START_READ_CMD_P)
@@ -234,6 +257,7 @@ module MemManager (
                                     ? `REG_OP_PREEXECUTE
                                     : `REG_OP_NULL
                                   ;
+  /**/
                                   
   tri [`DATA_SIZE0:0] ip_ptr;
   
@@ -251,11 +275,12 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+            //.want_write_in(want_write_in),
+            //.want_write_out(want_write_out),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_ip),
             .data_in(data_in),
             .data_out(data_out),
             
@@ -347,11 +372,12 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+            //.want_write_in(want_write_in),
+            //.want_write_out(want_write_out),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_s1),
             .data_in(data_in),
             .data_out(data_out),
             
@@ -443,11 +469,12 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+            //.want_write_in(want_write_in),
+            //.want_write_out(want_write_out),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_s0),
             .data_in(data_in),
             .data_out(data_out),
             
@@ -543,11 +570,12 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+            //.want_write_in(want_write_in),
+            //.want_write_out(want_write_out),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_d),
             .data_in(data_in),
             .data_out(data_out),
             
@@ -628,11 +656,12 @@ module MemManager (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+            //.want_write_in(want_write_in),
+            //.want_write_out(want_write_out),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_c),
             .data_in(data_in),
             .data_out(data_out),
             
@@ -726,7 +755,7 @@ module MemManager (
 //.    addr_r = 32'h zzzzzzzz;
 //    data_r = 32'h zzzzzzzz;
     
-    is_bus_busy_r = 1'b z;
+//    is_bus_busy_r = 1'b z;
     
     /*src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL;* / cmd_op = `REG_OP_NULL; */
     
@@ -750,26 +779,28 @@ module MemManager (
 //    single = 0;
   end
   else begin
+  
+    cmd_op = `REG_OP_NULL;
           
       case(state)
-//        `ALU_BEGIN: begin
-//          cmd_op = `REG_OP_NULL;
-//        end
+        `ALU_BEGIN: begin
+          cmd_op = `REG_OP_NULL;
+        end
       
         `START_BEGIN: begin
-//          cmd_op = `REG_OP_PREEXECUTE;
+          cmd_op = `REG_OP_PREEXECUTE;
         end
 
         `START_READ_CMD: begin
-//          cmd_op = `REG_OP_READ;
+          cmd_op = `REG_OP_READ;
         end
         
         `START_READ_CMD_P: begin
-//          cmd_op = `REG_OP_READ_P;
+          cmd_op = `REG_OP_READ_P;
         end
         
         `WRITE_REG_IP: begin
-//          cmd_op = `REG_OP_WRITE_P;
+          cmd_op = `REG_OP_WRITE;
         end
         
         `ALU_RESULTS: begin
@@ -787,6 +818,8 @@ module MemManager (
 //        end
         
         `PREEXECUTE: begin
+          cmd_op = `REG_OP_PREEXECUTE;
+
 //          dst_waiting = 1;
 //          cond_r_adr = /*base_addr +*/ regNumCnd /* `DATA_SIZE*/;
 //          src1_r_adr = /*base_addr +*/ regNumS1 /* `DATA_SIZE*/;

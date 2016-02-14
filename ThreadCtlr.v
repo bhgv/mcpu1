@@ -4,6 +4,7 @@
 `include "cmd_codes.v"
 `include "inter_cpu_msgs.v"
 
+
 module ThreadCtlr(
         clk,
 		  clk_oe,
@@ -39,9 +40,9 @@ module ThreadCtlr(
   input wire clk;
   input wire clk_oe;
   
-  inout is_bus_busy;
-  reg is_bus_busy_r;
-  tri is_bus_busy = is_bus_busy_r;
+  input is_bus_busy;
+//  reg is_bus_busy_r;
+  wire is_bus_busy; // = is_bus_busy_r;
   
   input wire [31:0] command;
   
@@ -78,8 +79,8 @@ module ThreadCtlr(
   input [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data_in;
-  tri [`DATA_SIZE0:0] data_out = 
+  wire [`DATA_SIZE0:0] data_in;
+  wire [`DATA_SIZE0:0] data_out = 
                            (
                               disp_online == 1 
                               && state == `ALU_BEGIN 
@@ -89,14 +90,14 @@ module ThreadCtlr(
                                 )
                              )
                              ? data_r 
-                             : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                              ;
   
   input [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
-  tri [`ADDR_SIZE0:0] addr_in;
-  tri [`ADDR_SIZE0:0] addr_out = (
+  wire [`ADDR_SIZE0:0] addr_in;
+  wire [`ADDR_SIZE0:0] addr_out = (
                               disp_online == 1
                               && state == `ALU_BEGIN 
                               && (
@@ -105,7 +106,7 @@ module ThreadCtlr(
                                 )
                              )
                              ? addr_r 
-                             : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                              ;
   
 
@@ -131,7 +132,7 @@ module ThreadCtlr(
     next_state_r = 1'b 0;
 //    next_state_r = 1'b z;
     
-    is_bus_busy_r = 1'b z;
+//    is_bus_busy_r = 1'b z;
     
     cpu_msg_r = `CPU_MSG_SIZE'h zzzz;
     

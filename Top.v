@@ -81,8 +81,8 @@ module Top(
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
 //  inout 
-  tri [`ADDR_SIZE0:0] addr_in; // = addr_out_r;
-  tri [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
+//  wire [`ADDR_SIZE0:0] addr_in; // = addr_out_r;
+//  wire [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
   
 //  reg read_dn_r;
   //output 
@@ -98,8 +98,8 @@ module Top(
   
  // inout [`DATA_SIZE0:0] data_wire; // = data_wire_r;
   reg [`DATA_SIZE0:0] data_wire_r;
-  tri [`DATA_SIZE0:0] data_in; // = data_wire_r;
-  tri [`DATA_SIZE0:0] data_out; // = data_wire_r;
+  trior [`DATA_SIZE0:0] data_in; // = data_wire_r;
+  wire [`DATA_SIZE0:0] data_out; // = data_wire_r;
   
    
 /*
@@ -114,7 +114,7 @@ module Top(
 */
 
 //  reg bus_busy_r;
-  tri bus_busy; // = bus_busy_r;
+  wire bus_busy; // = bus_busy_r;
   
   
  
@@ -191,12 +191,15 @@ module Top(
  // tri [`DATA_SIZE0:0] int_mem_data;
 
   
+  wire [`ADDR_SIZE0:0] ext_mem_addr_in; 
+  wire [`ADDR_SIZE0:0] ext_mem_addr_out; 
+
   inout [`ADDR_SIZE0:0] ext_mem_addr; 
   reg [`ADDR_SIZE0:0] ext_mem_addr_r;
-//  tri [`ADDR_SIZE0:0] ext_mem_addr; 
+  tri [`ADDR_SIZE0:0] ext_mem_addr; 
   
-  tri [`ADDR_SIZE0:0] ext_mem_addr = //ext_mem_addr_r
-/**/
+  assign ext_mem_addr_in = ext_mem_addr_r
+/**
                                      (
                                       ext_read_dn_r == 1
                                       || ext_write_dn_r == 1
@@ -223,12 +226,15 @@ module Top(
                                      ;
 /**/
   
+  wire [`DATA_SIZE0:0] ext_mem_data_in; 
+  wire [`DATA_SIZE0:0] ext_mem_data_out; 
+
   inout [`DATA_SIZE0:0] ext_mem_data; 
   reg [`DATA_SIZE0:0] ext_mem_data_r;
-//  tri [`DATA_SIZE0:0] ext_mem_data; 
+  tri [`DATA_SIZE0:0] ext_mem_data; 
   
-  tri [`DATA_SIZE0:0] ext_mem_data = //ext_mem_data_r
-/**/
+  assign ext_mem_data_in = ext_mem_data_r
+/**
                                      (
                                       ext_read_dn_r == 1
                                       || ext_write_dn_r == 1
@@ -267,7 +273,7 @@ module Top(
   
  
   
-	reg [`DATA_SIZE:0] mem [0:50]; 
+	reg [`DATA_SIZE:0] mem [0:150]; 
    initial $readmemh("mem.txt", mem);
   
 //  reg [7:0] stage;
@@ -300,8 +306,16 @@ assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
   wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_in;
 						
 
-tri [`ADDR_SIZE*CPU_QUANTITY-1:0] addr_in_a;
-tri [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
+wire [`ADDR_SIZE*CPU_QUANTITY-1:0] addr_in_a;
+wire [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
+
+  wire [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
+  trior [`ADDR_SIZE0:0] addr_in 
+									/** = 
+									addr_in_a[`DATA_SIZE0:0]
+									| addr_in_a[`DATA_SIZE0 + `DATA_SIZE:`DATA_SIZE]
+									/**/
+									;
 
 
   //output 
@@ -317,7 +331,8 @@ tri [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
 trior rw_halt;
 tri0 halt_q;
 
-tri want_write;
+//wire want_write_in;
+//trior want_write_out;
 
 wire clk_oe;
 
@@ -329,7 +344,8 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+//            .want_write_in(want_write_in),
+//            .want_write_out(want_write_out),
             
             .addr_in(addr_out),
             .addr_out(addr_in),
@@ -341,7 +357,7 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .read_dn(read_dn),
             .write_dn(write_dn),
             
-            .bus_busy(bus_busy),
+            .ext_bus_busy(bus_busy),
             
             .ext_rst_b(rst_w_b),
             .ext_rst_e(rst_w_e),    //ext_rst_e),
@@ -438,7 +454,6 @@ Cpu cpu1 (
 
 
 
-
 /**/
 DispatcherOfCpus disp_1(
             .clk(clk),
@@ -469,8 +484,11 @@ DispatcherOfCpus disp_1(
             .ext_cpu_e(ext_cpu_e),
             
 
-            .ext_mem_addr(ext_mem_addr),
-            .ext_mem_data(ext_mem_data),
+            .ext_mem_addr_in(ext_mem_addr_in),
+            .ext_mem_addr_out(ext_mem_addr_out),
+				
+            .ext_mem_data_in(ext_mem_data_in),
+            .ext_mem_data_out(ext_mem_data_out),
             
             .ext_read_q(ext_read_q),
             .ext_write_q(ext_write_q),
@@ -499,13 +517,13 @@ always @(posedge clk) begin
     ext_read_dn_r  = 0;
     ext_write_dn_r = 0;
 
-    ext_mem_data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-    ext_mem_addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 
   end else begin
   
   if(rst == 1) begin
-    data_wire_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    data_wire_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
     mem_wrk_state = `MEM_CTLR_WAIT;
     
@@ -516,8 +534,8 @@ always @(posedge clk) begin
 	 ext_read_dn_r = 0;
 	 ext_write_dn_r = 0;
 	 
-	 ext_mem_data_r = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-	 ext_mem_addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
   end else
   begin
 
@@ -529,10 +547,10 @@ always @(posedge clk) begin
 //		  assign ext_mem_addr = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 //		  assign ext_mem_data = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
-        if(ext_read_q === 1) begin
-          if(ext_mem_addr < 50) begin
+        if(/*ext_*/ read_q == 1) begin
+          if(ext_mem_addr_out < 150) begin
 			 
-          tmp_addr = ext_mem_addr;
+          tmp_addr = ext_mem_addr_out;
           mem_wrk_state = `MEM_CTLR_READ;
 //          ext_mem_data_r = mem[ext_mem_addr];
 //          ext_read_dn = 1;
@@ -542,11 +560,11 @@ always @(posedge clk) begin
 			 end
         end
         else
-        if(ext_write_q === 1) begin
-          if(ext_mem_addr < 50) begin
+        if(/*ext_*/ write_q == 1) begin
+          if(ext_mem_addr < 150) begin
 			 
-          tmp_addr = ext_mem_addr;
-          tmp_data = ext_mem_data;
+          tmp_addr = ext_mem_addr_out;
+          tmp_data = ext_mem_data_out;
           mem_wrk_state = `MEM_CTLR_WRITE;
 //          mem[ext_mem_addr] = ext_mem_data;
 //          ext_write_dn = 1;

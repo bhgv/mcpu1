@@ -24,7 +24,8 @@ module InternalBus(
         rw_halt,
         cpu_ind_rel,
         
-        want_write,
+//        want_write_in,
+//		  want_write_out,
         
             addr_in,
 				addr_out,
@@ -55,9 +56,10 @@ module InternalBus(
   input wire clk_oe;
         
   input wire clk;
-  inout bus_busy;
-  reg bus_busy_r;
-  tri bus_busy = bus_busy_r;
+  
+  input bus_busy;
+//  reg bus_busy_r;
+  wire bus_busy; // = bus_busy_r;
   
   output wire [31:0] command;
     
@@ -67,13 +69,24 @@ module InternalBus(
   inout tri rw_halt;
   input tri [1:0] cpu_ind_rel;
   
-  inout tri want_write;
+//  input wire want_write_in;
+//  output wire want_write_out;
   
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
-  input tri [`ADDR_SIZE0:0] addr_in; //= addr_out_r;
-  output tri [`ADDR_SIZE0:0] addr_out;
+  input wire [`ADDR_SIZE0:0] addr_in; //= addr_out_r;
   
+  output [`ADDR_SIZE0:0] addr_out;
+  
+  wire [`ADDR_SIZE0:0] addr_out_m;
+  wire [`ADDR_SIZE0:0] addr_out_t;
+  
+  wire [`ADDR_SIZE0:0] addr_out = 
+                                 addr_out_m[`ADDR_SIZE0:0]
+                                 | addr_out_t[`ADDR_SIZE0:0]
+                                 ;
+
+		
   output wire read_q;
   output wire write_q;
   input tri read_dn;
@@ -83,8 +96,16 @@ module InternalBus(
   
   
 //  reg [`DATA_SIZE0:0] data_r;
-  input tri [`DATA_SIZE0:0] data_in; // = data_r;
-  output tri [`DATA_SIZE0:0] data_out; // = data_r;
+  input wire [`DATA_SIZE0:0] data_in; // = data_r;
+  output [`DATA_SIZE0:0] data_out; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_s; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_m; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_t; // = data_r;
+  wire [`DATA_SIZE0:0] data_out = 
+                                 data_out_m
+                                 | data_out_t
+                                 | data_out_s
+                                 ;
   
 
   //inout 
@@ -158,11 +179,12 @@ module InternalBus(
             
             .is_bus_busy(bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+//            .addr_out(addr_out),
+
 //            .read_q(read_q),
 //            .write_q(write_q),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_s),
             .read_dn(read_dn),
             .write_dn(write_dn),
 //            .read_e(read_e),
@@ -238,15 +260,16 @@ module InternalBus(
             .halt_q(halt_q),
             .rw_halt(rw_halt),
             
-            .want_write(want_write),
+//            .want_write_in(want_write_in),
+//            .want_write_out(want_write_out),
             
             .is_bus_busy(bus_busy),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_m),
             .read_q(read_q),
             .write_q(write_q),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_m),
             .read_dn(read_dn),
             .write_dn(write_dn),
 //            .read_e(read_e),
@@ -320,9 +343,9 @@ module InternalBus(
         .dst_h(dst_h),
         
         .data_in(data_in),
-        .data_out(data_out),
+        .data_out(data_out_t),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_t),
         
         .disp_online(disp_online),
         
@@ -338,7 +361,7 @@ module InternalBus(
 
   always @(posedge clk) begin
     
-      bus_busy_r = 1'b z;
+//      bus_busy_r = 1'b z;
 
     if(rst == 1) begin
 //      bus_busy_r = 1'b z;

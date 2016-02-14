@@ -26,9 +26,9 @@ module Alu(
   input wire clk;
   input wire clk_oe;
   
-  inout is_bus_busy;
-  reg is_bus_busy_r;
-  wire is_bus_busy = is_bus_busy_r;
+  input is_bus_busy;
+//  reg is_bus_busy_r;
+  wire is_bus_busy; // = is_bus_busy_r;
   
   input wire [31:0] command;
   
@@ -77,7 +77,7 @@ module Alu(
       next_state_r = 1'b 0;
 //      next_state_r = 1'b z;
     
-      is_bus_busy_r = 1'b z;
+//      is_bus_busy_r = 1'b z;
 		
 	 end else begin
 
