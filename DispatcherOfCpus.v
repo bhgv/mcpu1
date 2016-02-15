@@ -35,6 +35,8 @@ module DispatcherOfCpus(
             ext_read_dn,
             ext_write_dn,
             
+				ext_rw_halt,
+				
             ext_rw_busy,
             
             read_q,
@@ -272,6 +274,11 @@ parameter PROC_QUANTITY = 8;
   input wire ext_write_dn;
   
   input wire ext_rw_busy;
+  
+  
+  output ext_rw_halt;
+  reg ext_rw_halt_r;
+  wire ext_rw_halt = ext_rw_halt_r;
 
   
   input wire [`ADDR_SIZE0:0] ext_mem_addr_in;
@@ -309,8 +316,8 @@ always @(negedge clk) begin
     
  //   ext_rst_b = 0;
     
-    read_dn_r = 1'b 0; //z;
-    write_dn_r = 1'b 0; //z;
+//    read_dn_r = 1'b 0; //z;
+//    write_dn_r = 1'b 0; //z;
 //    bus_busy_r = 1'b z;
     
 //    cpu_q_r = 0;
@@ -363,6 +370,7 @@ always @(negedge clk) begin
 
     addr_chan_to_op_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
+	 ext_rw_halt_r = 0;
     
 //    cpu_tbl[0] = 0;
 //    cpu_tbl_i = 0;
@@ -371,15 +379,17 @@ always @(negedge clk) begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
 
-    ext_read_q_r = 0;
-    ext_write_q_r = 0;
+          ext_read_q_r = 0;
+          ext_write_q_r = 0;
 
           if(mem_rd == 1 || mem_wr == 1) begin
             if(rw_halt == 1) begin
               mem_rd = 0;
               mem_wr = 0;
+				  ext_rw_halt_r = 1;
               state_ctl = `CTL_CPU_LOOP;
             end else begin
+              ext_rw_halt_r = 0;
               state_ctl = `CTL_MEM_WORK;
             end
           end 
@@ -425,6 +435,10 @@ always @(negedge clk) begin
       end
       
       `CTL_CPU_LOOP: begin
+		
+        read_dn_r = 1'b 0; //z;
+        write_dn_r = 1'b 0; //z;
+
 //        bus_busy_r  = 1;
         if(bus_busy_r != 1) begin
           if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
@@ -463,7 +477,9 @@ always @(negedge clk) begin
 //          $display("cpu_ind= %x, proc = %x", ext_cpu_index_r, addr_out_r);
         
           state_ctl = `CTL_CPU_CMD;
-        end
+        end else begin
+		    bus_busy_r = 1'b 0;
+		  end
       end
       
       `CTL_CPU_CMD: begin
@@ -477,7 +493,8 @@ always @(negedge clk) begin
         if(
           read_q === 1 &&
           mem_rd == 0 &&
-          mem_wr == 0
+          mem_wr == 0 &&
+			 rw_halt == 0
         ) begin
           mem_addr_tmp = addr_in;
           mem_rd = 1;
@@ -486,7 +503,8 @@ always @(negedge clk) begin
         if(
           write_q === 1 &&
           mem_rd == 0 &&
-          mem_wr == 0
+          mem_wr == 0 &&
+			 rw_halt == 0
         ) begin
           mem_addr_tmp = addr_in;
           mem_data_tmp = data_in;
@@ -496,7 +514,7 @@ always @(negedge clk) begin
         if(ext_cpu_e === 1) begin
             //cpu_running = 1;
             //addr_out_r = `ADDR_SIZE'h zzzzzzzz;
-          ext_cpu_index_r = `DATA_SIZE'h ffff_ffff_ffff_ffff;
+          ext_cpu_index_r = 0; //`DATA_SIZE'h ffff_ffff_ffff_ffff;
           
 //          data_wire_r = mem_addr_tmp;
           
@@ -592,8 +610,18 @@ always @(negedge clk) begin
       
       `CTL_MEM_WORK: begin
 
-        data_r = 0; //32'h zzzz_zzzz_zzzz_zzzz;
-        addr_out_r  = 0; //32'h zzzz_zzzz_zzzz_zzzz;
+//        data_r = 0; //32'h zzzz_zzzz_zzzz_zzzz;
+//        addr_out_r  = 0; //32'h zzzz_zzzz_zzzz_zzzz;
+		  
+		  if(rw_halt == 1) begin
+          mem_rd = 0;
+          mem_wr = 0;
+          ext_rw_halt_r = 1;
+          state_ctl = `CTL_CPU_LOOP;
+        end else begin
+          ext_rw_halt_r = 0;
+        end
+
         
 //        data_wire_r = 32'h zzzzzzzz;
 
@@ -623,6 +651,8 @@ always @(negedge clk) begin
               read_dn_r = 1;
               bus_busy_r = 1;
               
+				  mem_rd = 0;
+				  
               if(dispatcher_q == 1) begin
                 state_ctl = `CTL_CPU_LOOP;
               end
@@ -650,6 +680,8 @@ always @(negedge clk) begin
               //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
               write_dn_r = 1;
               bus_busy_r = 1;
+				  
+				  mem_wr = 0;
               
               if(dispatcher_q == 1) begin
                 state_ctl = `CTL_CPU_LOOP;

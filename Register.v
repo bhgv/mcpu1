@@ -186,8 +186,8 @@ module RegisterManager (
   reg read_q_r;
   reg write_q_r;
 
-  wire read_q = read_q_r;
-  wire write_q = write_q_r;
+  wire read_q = disp_online == 1 ? read_q_r : 0;
+  wire write_q = disp_online == 1 ? write_q_r : 0;
 
   input is_bus_busy;
 //  reg is_bus_busy_r;
@@ -196,8 +196,8 @@ module RegisterManager (
   input [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data_in;
-  tri [`DATA_SIZE0:0] data_out =  (
+  wire [`DATA_SIZE0:0] data_in;
+  wire [`DATA_SIZE0:0] data_out =  (
                                 reg_op == `REG_OP_WRITE 
                                 || reg_op == `REG_OP_WRITE_P
                                 //&& write_q === 1'b 1 
@@ -209,7 +209,7 @@ module RegisterManager (
 //                                            && disp_online == 1
 //                                          )
 //                                            ? register_r
-                                            : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                            : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                               ;
 //  assign data = write_q==1 ? dst_r : 32'h z;
   
@@ -294,13 +294,10 @@ module RegisterManager (
 //     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state_r,progress,isRegS0Ptr);
 
 
+      if(disp_online == 0) begin single <= 1; end 
 
-    
-      if(disp_online == 0) single <= 1;    
-
-      if(reg_op != `REG_OP_CATCH_DATA) catched <= 0;
-           
-
+      if(reg_op != `REG_OP_CATCH_DATA) begin catched <= 0; end
+		
 
   end else begin
 
@@ -432,7 +429,7 @@ module RegisterManager (
                 // AA
                 
 //                $display(cpu_ind_rel, ", ", isTopR);
-              end else
+              end else 
 /**/
 				  begin
                 if(read_q_r == 1) begin
@@ -486,7 +483,6 @@ module RegisterManager (
               
               want_write_r <= 1'b 0; //z;
 
-/**/
               // VV thinking if it possible to make read in time of write
               if(cpu_ind_rel == 2'b10 && (want_write_in == 1 /* || want_write_r == 1 */) ) begin
                 isTopP <= 0;
@@ -497,7 +493,6 @@ module RegisterManager (
 //                register_waiting <= 1;
               end
                 // AA
-/**/
 
             end else
             if(read_q_r == 1) begin

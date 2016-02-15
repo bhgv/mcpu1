@@ -410,6 +410,7 @@ module BridgeToOutside (
 /**/
       if(ext_next_cpu_q === 1 && ext_cpu_index === cpu_index_r) begin
         ext_next_cpu_e_r = 1'b 1;
+		  disp_online_r = 0;  //!!!
 	   end else begin
 		  ext_next_cpu_e_r = 1'b 0; //z;
       end 
@@ -525,7 +526,7 @@ module BridgeToOutside (
 //        ) begin
       
 
-        if(ext_next_cpu_q === 1) begin
+        if(ext_next_cpu_q == 1) begin
         
           if(ext_cpu_index[30:0] < cpu_index_r[30:0]) begin
             cpu_ind_rel = 2'b01;
@@ -555,9 +556,10 @@ module BridgeToOutside (
 //      end
 */
           
-        end else if(ext_next_cpu_e === 1) begin
+        end else if(ext_next_cpu_e == 1) begin
           cpu_ind_rel = 0;
 			 
+			 //disp_online_r = 0; //!!!
 //			 ext_next_cpu_e_r = 1'b z;
         end
 
@@ -567,16 +569,14 @@ module BridgeToOutside (
 //      end else begin
 
         if(disp_online_r == 1) begin
-        
-        
           if(
-            read_q === 1 || write_q === 1
+            read_q == 1 || write_q == 1
 //            read_dn === 1 || write_dn === 1 || rw_halt === 1
           ) begin
             ext_next_cpu_e_r = 1;
 //            disp_online_r = 0;
           end 
-          else if(ext_next_cpu_e_r === 1) begin
+          else if(ext_next_cpu_e_r == 1) begin
             ext_next_cpu_e_r = 1'b 0; //z;
             disp_online_r = 0;
           end
@@ -588,7 +588,7 @@ module BridgeToOutside (
 //        end
 
 		  
-        if(ext_next_cpu_q === 1 && 
+        if(ext_next_cpu_q == 1 && 
 		    cpu_ind_rel == 2'b11
 //           ext_cpu_index === cpu_index_r
         ) begin
@@ -716,7 +716,7 @@ module BridgeToOutside (
             /**/
             `ALU_BEGIN: begin
               if(
-                ext_cpu_msg_in === `CPU_R_FORK_DONE
+                ext_cpu_msg_in == `CPU_R_FORK_DONE
 //                && ext_next_cpu_e_r !== 1
               ) begin
 //                cpu_msg_r = int_cpu_msg;
@@ -727,7 +727,7 @@ module BridgeToOutside (
               end
               else
               if(
-                ext_cpu_msg_in === `CPU_R_STOP_DONE
+                ext_cpu_msg_in == `CPU_R_STOP_DONE
 //                && ext_next_cpu_e_r !== 1
               ) begin
 //                cpu_msg_r = int_cpu_msg;

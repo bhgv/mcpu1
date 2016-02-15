@@ -235,7 +235,20 @@ module MemManager (
   
 //  reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_in; // = data_r;
-  trior [`DATA_SIZE0:0] data_out; // = data_r;
+  
+  wire [`DATA_SIZE0:0] data_out_ip; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_s1; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_s0; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_d; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_c; // = data_r;
+  
+  wire [`DATA_SIZE0:0] data_out =
+                 data_out_ip[`DATA_SIZE0:0]
+					  | data_out_s1[`DATA_SIZE0:0]
+					  | data_out_s0[`DATA_SIZE0:0]
+					  | data_out_d[`DATA_SIZE0:0]
+					  | data_out_c[`DATA_SIZE0:0]
+					  ;
 //  assign data = write_q === 1 ? data_int : 32'h zzzzzzzz;
   
   input  wire read_dn;
@@ -309,7 +322,7 @@ module MemManager (
             .addr_in(addr_in),
             .addr_out(addr_out_ip),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_ip),
             
             .register(command_word),
             .reg_ptr(ip_ptr),
@@ -412,7 +425,7 @@ module MemManager (
             .addr_in(addr_in),
             .addr_out(addr_out_s1),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_s1),
             
             .register(src1),
             .reg_ptr(src1_ptr),
@@ -515,7 +528,7 @@ module MemManager (
             .addr_in(addr_in),
             .addr_out(addr_out_s0),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_s0),
             
             .register(src0),
             .reg_ptr(src0_ptr),
@@ -622,7 +635,7 @@ module MemManager (
             .addr_in(addr_in),
             .addr_out(addr_out_d),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_d),
             
             .register(dst),
             .reg_ptr(dst_ptr),
@@ -714,7 +727,7 @@ module MemManager (
             .addr_in(addr_in),
             .addr_out(addr_out_c),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_c),
             
             .register(cond),
             .reg_ptr(cond_ptr),

@@ -65,8 +65,21 @@ module Top(
 	ext_read_q,
    ext_write_q,
 	
-	ext_read_dn,
-	ext_write_dn,
+//	ext_read_dn,
+//	ext_write_dn,
+	
+	prg_ba,
+	prg_bb,
+	prg_bc,
+	prg_bd,
+	
+	prg_ce0,
+	prg_ce1,
+	prg_ce2,
+	
+	prg_oe,
+	
+	prg_we,
 
 	rst
 );
@@ -77,6 +90,23 @@ module Top(
 
 	input wire clk;
 	input wire rst;
+
+	
+	
+	output wire prg_ba = 0;
+	output wire prg_bb = 0;
+	output wire prg_bc = 0;
+	output wire prg_bd = 0;
+	
+	output wire prg_ce0 = 0;
+	output wire prg_ce1 = 0;
+	output wire prg_ce2 = 0;
+	
+	reg prg_oe_r;
+	output wire prg_oe = prg_oe_r;
+	
+	reg prg_we_r;
+	output wire prg_we = prg_we_r;
 
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
@@ -172,17 +202,19 @@ module Top(
   reg bus_director;
   
 
-  output wire ext_read_q;
-  output wire ext_write_q;
+  output 
+  wire ext_read_q;
+  output 
+  wire ext_write_q;
   
-  inout ext_read_dn;
-  inout ext_write_dn;
+//  inout ext_read_dn;
+//  inout ext_write_dn;
   
   reg ext_read_dn_r;
   reg ext_write_dn_r;
 
-  tri0 ext_read_dn = ext_read_dn_r == 1 ? 1 : 1'b z;
-  tri0 ext_write_dn = ext_write_dn_r == 1 ? 1 : 1'b z;
+  wire ext_read_dn = ext_read_dn_r; // == 1 ? 1 : 1'b z;
+  wire ext_write_dn = ext_write_dn_r;// == 1 ? 1 : 1'b z;
   
   reg ext_rw_busy;
 
@@ -338,6 +370,7 @@ wire rw_halt = |rw_halt_a;
 wire [CPU_QUANTITY-1:0] halt_q_a;
 wire halt_q = |halt_q_a;
 
+wire ext_rw_halt;
 
 
 wire [CPU_QUANTITY-1:0] bus_busy_in_a;
@@ -507,11 +540,13 @@ DispatcherOfCpus disp_1(
 				
             .ext_mem_data_in(ext_mem_data_in),
             .ext_mem_data_out(ext_mem_data_out),
+				
+				.ext_rw_halt(ext_rw_halt),
             
             .ext_read_q(ext_read_q),
             .ext_write_q(ext_write_q),
-            .ext_read_dn(ext_read_dn),
-            .ext_write_dn(ext_write_dn),
+            .ext_read_dn(ext_read_dn_r),
+            .ext_write_dn(ext_write_dn_r),
             
             .ext_rw_busy(ext_rw_busy),
 
@@ -532,11 +567,23 @@ always @(posedge clk) begin
 
   if(clk_oe == 0) begin
   
-    ext_read_dn_r  = 0;
-    ext_write_dn_r = 0;
+//    ext_read_dn_r  = 0;
+//    ext_write_dn_r = 0;
 
-    ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-    ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//    ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//    ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+
+		  if(ext_rw_halt == 1) begin
+          mem_wrk_state = `MEM_CTLR_WAIT;			 
+          bus_director = 0;
+
+          ext_read_dn_r  = 0;
+          ext_write_dn_r = 0;
+
+          ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+          ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+        end
+
 
   end else begin
   
@@ -562,10 +609,13 @@ always @(posedge clk) begin
     
       `MEM_CTLR_WAIT: begin
 		  
-//		  assign ext_mem_addr = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-//		  assign ext_mem_data = `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+        ext_read_dn_r  = 0;
+        ext_write_dn_r = 0;
+
+//        ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//        ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
-        if(/*ext_*/ read_q == 1) begin
+        if(/*ext_*/ read_q == 1 && ext_rw_halt == 0) begin
           if(ext_mem_addr_out < 150) begin
 			 
           tmp_addr = ext_mem_addr_out;
@@ -578,7 +628,7 @@ always @(posedge clk) begin
 			 end
         end
         else
-        if(/*ext_*/ write_q == 1) begin
+        if(/*ext_*/ write_q == 1 && ext_rw_halt == 0) begin
           if(ext_mem_addr < 150) begin
 			 
           tmp_addr = ext_mem_addr_out;
@@ -594,23 +644,26 @@ always @(posedge clk) begin
       end
 
       `MEM_CTLR_READ: begin
-        if(bus_director == 1) begin
+		  if(ext_rw_halt == 1) begin
+           mem_wrk_state = `MEM_CTLR_WAIT;			 
+			 bus_director = 0;
+       end else
+       if(bus_director == 1) begin
           ext_mem_data_r = mem[tmp_addr];
           ext_mem_addr_r = tmp_addr;
           ext_read_dn_r = 1;
-          
-          //ext_rw_busy = 
-          
+                    
           mem_wrk_state = `MEM_CTLR_WAIT;
 			 
 			 bus_director = 0;
-			 
-//			 assign ext_mem_addr = ext_mem_addr_r;
-//			 assign ext_mem_data = ext_mem_data_r;
         end
       end
           
       `MEM_CTLR_WRITE: begin
+		  if(ext_rw_halt == 1) begin
+          mem_wrk_state = `MEM_CTLR_WAIT;			 
+          bus_director = 0;
+        end else
         if(bus_director == 1) begin
 		  
           mem[tmp_addr] = tmp_data;
@@ -618,14 +671,9 @@ always @(posedge clk) begin
           ext_mem_addr_r = tmp_addr;
           ext_write_dn_r = 1;
           
-          //ext_rw_busy = 
-          
           mem_wrk_state = `MEM_CTLR_WAIT;
 			 
 			 bus_director = 0;
-
-//			 assign ext_mem_addr = ext_mem_addr_r;
-//			 assign ext_mem_data = ext_mem_data_r;
         end
       end
           
