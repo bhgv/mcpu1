@@ -153,7 +153,7 @@ module Top(
 //  wire ext_rst_e; // = ext_rst_e_r;
   
 //  reg [`DATA_SIZE0:0] ext_cpu_index_r;
-  tri [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
+  wire [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
   
 //  reg cpu_q_r;
   tri0 ext_cpu_q; // = cpu_q_r;
@@ -283,17 +283,21 @@ module Top(
 
   wire ext_rst_b; // = rst;
   wire ext_rst_e; // = ext_rst_e_r;
+  
+  wire init;
 
 
 
 parameter CPU_QUANTITY = 2;
 
 
-wire [CPU_QUANTITY-1:0] rst_w_b;
-wire [CPU_QUANTITY-1:0] rst_w_e;
+wire [CPU_QUANTITY-1:0] rst_w_e_a;
+wire [CPU_QUANTITY-1:0] rst_w_b_a;
 
-assign rst_w_b = {rst_w_e[CPU_QUANTITY-2:0], ext_rst_b};
-assign ext_rst_e = rst_w_e[CPU_QUANTITY-1];
+//assign rst_w_b_a = {rst_w_e_a[CPU_QUANTITY-2:0], ext_rst_b};
+
+assign rst_w_b_a = {rst_w_e_a[CPU_QUANTITY-2:0], ext_rst_b};
+assign ext_rst_e = rst_w_e_a[CPU_QUANTITY-1];
 
 
   wire [CPU_QUANTITY-1:0] disp_online;
@@ -328,8 +332,17 @@ wire [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
 
 
 
-trior rw_halt;
-tri0 halt_q;
+wire [CPU_QUANTITY-1:0] rw_halt_a;
+wire rw_halt = |rw_halt_a;
+
+wire [CPU_QUANTITY-1:0] halt_q_a;
+wire halt_q = |halt_q_a;
+
+
+
+wire [CPU_QUANTITY-1:0] bus_busy_in_a;
+wire bus_busy_out = ( |bus_busy_in_a ) | bus_busy;
+
 
 //wire want_write_in;
 //trior want_write_out;
@@ -341,8 +354,10 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .clk(clk),
 				.clk_oe(clk_oe),
             
-            .halt_q(halt_q),
-            .rw_halt(rw_halt),
+            .halt_q_in(halt_q),
+            .halt_q_out(halt_q_a),
+            .rw_halt_in(rw_halt),
+            .rw_halt_out(rw_halt_a),
             
 //            .want_write_in(want_write_in),
 //            .want_write_out(want_write_out),
@@ -357,10 +372,12 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .read_dn(read_dn),
             .write_dn(write_dn),
             
-            .ext_bus_busy(bus_busy),
+            .bus_busy_in(bus_busy_out),
+				.bus_busy_out(bus_busy_in_a),
             
-            .ext_rst_b(rst_w_b),
-            .ext_rst_e(rst_w_e),    //ext_rst_e),
+				.init(init),
+            .ext_rst_b(rst_w_b_a),
+            .ext_rst_e(rst_w_e_a),    //ext_rst_e),
             
             .ext_cpu_index(ext_cpu_index),
             
@@ -475,6 +492,7 @@ DispatcherOfCpus disp_1(
             
             .bus_busy(bus_busy),
             
+				.init(init),
             .ext_rst_b(ext_rst_b),
             .ext_rst_e(ext_rst_e),
             

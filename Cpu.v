@@ -18,8 +18,10 @@ module Cpu(
             data_in,
             data_out,
             
-            halt_q,
-            rw_halt,
+            halt_q_in,
+            halt_q_out,
+            rw_halt_in,
+            rw_halt_out,
             
 //            want_write_in,
 //				want_write_out,
@@ -29,10 +31,12 @@ module Cpu(
             read_dn,
             write_dn,
             
-            ext_bus_busy,
+            bus_busy_in,
+				bus_busy_out,
 				
 				disp_online,
             
+				init,
             ext_rst_b,
             ext_rst_e,
             
@@ -91,10 +95,13 @@ module Cpu(
 											;
 */
   
-  inout tri rw_halt;
-  tri int_rw_halt;
+  input wire rw_halt_in;
+  output wire rw_halt_out;
   
-  inout tri halt_q;
+//  tri int_rw_halt;
+  
+  input wire halt_q_in;
+  output wire halt_q_out;
   
 //  input wire want_write_in;
 //  output wire want_write_out;
@@ -110,7 +117,8 @@ module Cpu(
   wire [`STATE_SIZE0:0] state;
   wire nxt_state;
   
-  wire bus_busy;
+  input wire bus_busy_in;
+  output wire bus_busy_out;
   
   wire [31:0] command;
   
@@ -126,6 +134,8 @@ module Cpu(
   
 //  reg ext_rst_e_r;
   
+  input wire init;
+  
   input wire ext_rst_b; // = RESET;
   output wire ext_rst_e; // = ext_rst_e_r;
   
@@ -134,15 +144,13 @@ module Cpu(
   input wire ext_cpu_q;
   output wire ext_cpu_e;
   
-  tri [`CPU_MSG_SIZE0:0] int_cpu_msg;
+  wire [`CPU_MSG_SIZE0:0] int_cpu_msg;
   output wire [`CPU_MSG_SIZE0:0] cpu_msg;
   
   input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
   
 //  reg cpu_running;
-  
-  input wire ext_bus_busy;
-  
+    
   output wire dispatcher_q;
 
           
@@ -158,11 +166,16 @@ BridgeToOutside outside_bridge (
 
             .command(command),
             
-            .halt_q(halt_q),
             .cpu_ind_rel(cpu_ind_rel),
-            .rw_halt(rw_halt), //(int_rw_halt),
+				
+//            .halt_q_in(halt_q),
+//            .halt_q(halt_q),
+//            .rw_halt(rw_halt), //(int_rw_halt),
+//            .rw_halt(rw_halt), //(int_rw_halt),
             
-            .bus_busy(bus_busy),
+            .bus_busy_in(bus_busy_in),
+            .bus_busy_out(bus_busy_out),
+				
             .addr_in(addr_in),
             .addr_out(addr_out),
             .data_in(data_in),
@@ -186,18 +199,18 @@ BridgeToOutside outside_bridge (
             
             .rst(rst),
             
+				.init(init),
+				
             .ext_rst_b(ext_rst_b),
             .ext_rst_e(ext_rst_e),
             
             .ext_cpu_index(ext_cpu_index),
             
-            .ext_rw_halt(rw_halt),
+//            .ext_rw_halt(rw_halt),
             
             .ext_next_cpu_q(ext_cpu_q),
             .ext_next_cpu_e(ext_cpu_e),
-            
-            .ext_bus_busy(ext_bus_busy),
-            
+                        
             .int_cpu_msg(int_cpu_msg),
             .ext_cpu_msg(cpu_msg),
 				
@@ -220,14 +233,17 @@ BridgeToOutside outside_bridge (
 
             .command(command),
             
-            .halt_q(halt_q),
-            .rw_halt(rw_halt), //(int_rw_halt),
+            .halt_q_in(halt_q_in),
+            .halt_q_out(halt_q_out),
+            .rw_halt_in(rw_halt_in), //(int_rw_halt),
+            .rw_halt_out(rw_halt_out), //(int_rw_halt),
+				
             .cpu_ind_rel(cpu_ind_rel),
             
 //            .want_write_in(want_write_in),
 //            .want_write_out(want_write_out),
             
-            .bus_busy(bus_busy),
+            .bus_busy(bus_busy_in),
             .addr_in(addr_in),
             .addr_out(addr_out),
             .read_q(int_read_q),

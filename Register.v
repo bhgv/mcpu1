@@ -15,8 +15,10 @@ module RegisterManager (
             reg_op,      // reg op  (in)
             
             cpu_ind_rel,
-            halt_q,
-            rw_halt,
+            halt_q_in,
+            halt_q_out,
+            rw_halt_in,
+            rw_halt_out,
             //want_write_in,
             //want_write_out,
             
@@ -145,17 +147,19 @@ module RegisterManager (
  // dst(p:0, op:4, r:8(+)), src0(p:1, op:4, r:fh(+)), src0(p:1, op:4, r:fh(+))?, ip(p:1, op:6, 12:fh(-))
 
   input wire [1:0] cpu_ind_rel;
-  inout halt_q;
+  input halt_q_in;
+  output halt_q_out;
   reg halt_q_r;
-  tri halt_q = disp_online == 1 ? halt_q_r : 1'b z;
+  wire halt_q_out = disp_online == 1 ? halt_q_r : 1'b 0; //z;
   
-  inout rw_halt;
+  input rw_halt_in;
+  output rw_halt_out;
   reg rw_halt_r;
-  tri rw_halt = rw_halt_r;
+  wire rw_halt_out = rw_halt_r;
   
-  tri rw_halt_stim =
+  wire rw_halt_stim =
               (
-               halt_q === 1
+               halt_q_in === 1
                && cpu_ind_rel === 2'b01
                && (registerw_waiting == 1'b 1
                  && (
@@ -165,7 +169,7 @@ module RegisterManager (
                )
               )
             ? 1'b 1
-            : 1'b z
+            : 1'b 0 //z
             ;
             
             
@@ -249,16 +253,15 @@ module RegisterManager (
     
     
     next_state_r <= 1'b 0;
-//    next_state_r = 1'b z;
+//    next_state_r <= 1'b z;
     
     
-    halt_q_r <= 1'bz;
-    
+    //halt_q_r <= 0; //1'bz;
     
     rw_halt_r <= rw_halt_stim;
 	 
-//    read_q_r = 1'b 0; //z;
-//    write_q_r = 1'b 0; //z;
+//    read_q_r <= 1'b 0; //z;
+//    write_q_r <= 1'b 0; //z;
     
 //!!!        addr_r <= 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
     
@@ -266,7 +269,7 @@ module RegisterManager (
 //    if(rw_halt_stim === 1)
 //    $display("%f) %m, regw_wt = %b, rw_hlt = %b", ($realtime/1000), registerw_waiting, rw_halt_stim);
 
-//    rw_halt_r = 1'bz;
+//    rw_halt_r <= 1'bz;
 
 
 /*
@@ -275,7 +278,7 @@ module RegisterManager (
     write_dn == 1 && 
     addr === addr_to_save
   ) begin
-      registerw_waiting = 0;
+      registerw_waiting <= 0;
   end
 */
   
@@ -284,7 +287,7 @@ module RegisterManager (
   (rw_halt === 1 && addr === 15)
 //  (halt_q === 1 && cpu_ind_rel == 2'b01) 
   begin
-            catched = catched & 1;
+            catched <= catched & 1;
   end
 */
 
@@ -305,10 +308,10 @@ module RegisterManager (
     read_q_r <= 1'b 0; //z;
     write_q_r <= 1'b 0; //z;
 
-    //addr_r = 32'h zzzzzzzz;
+    //addr_r <= 32'h zzzzzzzz;
 
     next_state_r <= 1'b 0;
-//    next_state_r = 1'b z;
+//    next_state_r <= 1'b z;
     
     register_r <= 0; //32'h zzzzzzzz;
           register_r_ptr <= 0;
@@ -329,26 +332,27 @@ module RegisterManager (
     
     want_write_r <= 1'b 0; //z;
 	 
-	 rw_halt_r <= 1'b z;
+	 rw_halt_r <= 1'b 0; //z;
   end
 //  else if(state == `ALU_RESULTS) begin
-//    register_r = register;
+//    register_r <= register;
 //    
-//    next_state_r = 1'b 1;
+//    next_state_r <= 1'b 1;
 //  end
   else begin
 
-
-//    read_q_r = 1'b 0; //z;
-//    write_q_r = 1'b 0; //z;
+  halt_q_r <= 0;
+  
+//    read_q_r <= 1'b 0; //z;
+//    write_q_r <= 1'b 0; //z;
 
   
-//    next_state_r = 1'b z;
+//    next_state_r <= 1'b z;
 
-//    read_q_r = 1'b z;
-//    write_q_r = 1'b z;
+//    read_q_r <= 1'b z;
+//    write_q_r <= 1'b z;
 //    
-//        addr_r = `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//        addr_r <= `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
     
       //!!! if(disp_online == 0) single <= 1;    
 
@@ -370,29 +374,29 @@ module RegisterManager (
         end
 
         `REG_OP_PREEXECUTE: begin
-//          dst_waiting = 1;
-          //register_r_adr = /*base_addr +*/ regNum /* `DATA_SIZE*/;
+//          dst_waiting <= 1;
+          //register_r_adr <= /*base_addr +*/ regNum /* `DATA_SIZE*/;
                     
-//          if(&regDFlags == 0) dstw_waiting = 1;
-//          if(^regCondFlags == 1) condw_waiting = 1;
+//          if(&regDFlags == 0) dstw_waiting <= 1;
+//          if(^regCondFlags == 1) condw_waiting <= 1;
           //if(
           //    ^regFlags == 1
           //    || isNeedSave == 1
           //) begin
             registerw_waiting <= isSaveAllowed;
           //end
-//          if(^regS0Flags == 1) src0w_waiting = 1;
+//          if(^regS0Flags == 1) src0w_waiting <= 1;
           
           next_state_r <= 1;
         end
 
         `REG_OP_READ: begin
 		  
-            if(is_bus_busy === 1) begin
+            if(is_bus_busy == 1) begin
             
               if(
-                  (read_dn === 1 && register_waiting == 1) 
-                  || (write_dn === 1 && register_waiting == 0 && isTopR === 1) 
+                  (read_dn == 1 && register_waiting == 1) 
+                  || (write_dn === 1 && register_waiting == 0 && isTopR == 1) 
               ) begin
                   if(addr_in == register_r_adr) begin
                     register_r <= data_in;
@@ -406,8 +410,8 @@ module RegisterManager (
               
             end else begin // if(is_bus_busy === 1)
             
-/**
-              if(rw_halt === 1) begin
+/**/
+              if(rw_halt_in == 1) begin
                 register_waiting <= 0;
                 single <= 1;
 
@@ -417,13 +421,13 @@ module RegisterManager (
                 want_write_r <= 1'b 0; //z;
                 
                 // VV thinking if it possible to make read in time of write
-                if(cpu_ind_rel == 2'b10 && (want_write_in == 1 /* || want_write_r == 1 * /) ) begin
+                if(cpu_ind_rel == 2'b10 && (want_write_in == 1 /* || want_write_r == 1 */) ) begin
                   isTopR <= 0;
                 end else 
 //                if(cpu_ind_rel === 2'b01) 
                 begin
                   isTopR <= 1;
-//                  register_waiting = 1;
+//                  register_waiting <= 1;
                 end
                 // AA
                 
@@ -436,7 +440,7 @@ module RegisterManager (
                   read_q_r <= 1'b 0; //z;
                 end else
 					 begin 
-                  if(disp_online === 1 && single == 1) begin
+                  if(disp_online == 1 && single == 1) begin
                     addr_r <= register_r_adr;
                     read_q_r <= 1;
                     halt_q_r <= 1;
@@ -462,7 +466,7 @@ module RegisterManager (
                 || (write_dn == 1 && registerptr_waiting == 0 && isTopP == 1) 
             ) begin
                 if(addr_in == (register_r_ptr + base_addr) ) begin
-//                  register_r_ptr = register_r;
+//                  register_r_ptr <= register_r;
                   register_r <= data_in;
                   /*if(! isDinamic )*/ registerptr_waiting <= 0;
                   next_state_r <= 1;
@@ -473,7 +477,7 @@ module RegisterManager (
 			 
           end else begin
           
-            if(rw_halt === 1) begin
+            if(rw_halt_in == 1) begin
               registerptr_waiting <= 0;
               single <= 1;
 
@@ -490,7 +494,7 @@ module RegisterManager (
 //              if(cpu_ind_rel === 2'b01) 
               begin
                 isTopP <= 1;
-//                register_waiting = 1;
+//                register_waiting <= 1;
               end
                 // AA
 /**/
@@ -501,7 +505,7 @@ module RegisterManager (
               read_q_r <= 1'b 0; //z;
             end else
             if(disp_online == 1 && single == 1) begin
-//              register_r_ptr = register_r;
+//              register_r_ptr <= register_r;
               addr_r <= register_r_ptr + base_addr; //register_r; //cond_r_aux;
 //              register_r_adr <= register_r;
               read_q_r <= 1;
@@ -517,12 +521,12 @@ module RegisterManager (
 
         
         `REG_OP_WRITE_PREP: begin
-//            dst_r = (regDFlags == 2'b 01 ? dst+1 : 
+//            dst_r <= (regDFlags == 2'b 01 ? dst+1 : 
 //                     regDFlags == 2'b 10 ? dst-1 : 
 //                                           dst );
             
-//            if(regNumCnd == regNumD) cond_r = dst_r;
-//            if(regNumS1  == regNumD) register_r = dst_r;
+//            if(regNumCnd == regNumD) cond_r <= dst_r;
+//            if(regNumS1  == regNumD) register_r <= dst_r;
 //            if(regNumS0  == regNumD) src0_r = dst_r;
 
 //            if(regCondFlags == 2'b 01) begin
@@ -579,7 +583,7 @@ module RegisterManager (
         end
                 
 //        `REG_OP_FINISH_BEGIN: begin
-//          registerw_waiting <= 0;
+//          registerw_waiting = 0;
 //        end
 
       endcase

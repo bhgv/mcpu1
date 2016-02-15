@@ -20,9 +20,12 @@ module InternalBus(
         
         state,
         
-        halt_q,
-        rw_halt,
-        cpu_ind_rel,
+         halt_q_in,
+         halt_q_out,
+         rw_halt_in,
+         rw_halt_out,
+
+			cpu_ind_rel,
         
 //        want_write_in,
 //		  want_write_out,
@@ -65,8 +68,11 @@ module InternalBus(
     
   input wire rst;
   
-  inout tri halt_q;
-  inout tri rw_halt;
+  input wire halt_q_in;
+  output wire halt_q_out;
+  input wire rw_halt_in;
+  output wire rw_halt_out;
+  
   input tri [1:0] cpu_ind_rel;
   
 //  input wire want_write_in;
@@ -163,7 +169,7 @@ module InternalBus(
 						;
 */
 
-/**/
+/**
   StartManager start_mng(
             .clk(clk), 
  				.clk_oe(clk_oe),
@@ -174,8 +180,8 @@ module InternalBus(
             .command(command),
             
             .cpu_ind_rel(cpu_ind_rel),
-            .halt_q(halt_q),
-            .rw_halt(rw_halt),
+//            .halt_q(halt_q),
+//            .rw_halt(rw_halt),
             
             .is_bus_busy(bus_busy),
             .addr_in(addr_in),
@@ -257,8 +263,11 @@ module InternalBus(
             .command_word(command),
             
             .cpu_ind_rel(cpu_ind_rel),
-            .halt_q(halt_q),
-            .rw_halt(rw_halt),
+				
+            .halt_q_in(halt_q_in),
+            .halt_q_out(halt_q_out),
+            .rw_halt_in(rw_halt_in),
+            .rw_halt_out(rw_halt_out),
             
 //            .want_write_in(want_write_in),
 //            .want_write_out(want_write_out),
@@ -358,7 +367,7 @@ module InternalBus(
 /**/
 
 
-
+/**
   always @(posedge clk) begin
     
 //      bus_busy_r = 1'b z;
@@ -375,10 +384,10 @@ module InternalBus(
         end
         
       endcase
-*/
+* /
 
   end
-  
+/**/
   
 endmodule
 

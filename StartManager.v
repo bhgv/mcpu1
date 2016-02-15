@@ -16,8 +16,8 @@ module StartManager (
             command,
             
             cpu_ind_rel,
-            halt_q,
-            rw_halt,
+//            halt_q,
+//            rw_halt,
             
             is_bus_busy,
             addr_in,
@@ -60,15 +60,15 @@ module StartManager (
   input wire [`ADDR_SIZE0:0] base_addr;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
   
-  input tri [1:0] cpu_ind_rel;
+  input wire [1:0] cpu_ind_rel;
   
-  inout halt_q;
-  reg halt_q_r;
-  tri halt_q; // = halt_q_r;
+//  inout halt_q;
+//  reg halt_q_r;
+//  tri halt_q; // = halt_q_r;
   
-  inout rw_halt;
-  reg rw_halt_r;
-  tri rw_halt = rw_halt_r;
+//  inout rw_halt;
+//  reg rw_halt_r;
+//  tri rw_halt = rw_halt_r;
   /*
    = (halt_q == 0) 
                   ? 1'bz
@@ -156,7 +156,7 @@ module StartManager (
 //    next_state_r = 1'b z;
     
 
-    rw_halt_r = 1'bz;
+//    rw_halt_r = 1'bz;
 /*
     if(halt_q === 1) begin
 //      case(state)
@@ -180,9 +180,9 @@ module StartManager (
     end
 */
     
-    if(rw_halt === 1) begin
-      ip_addr_to_read = 0;
-    end
+    //if(rw_halt === 1) begin
+    //  ip_addr_to_read = 0;
+    //end
     
 /*
 */
@@ -207,7 +207,7 @@ module StartManager (
     ip_addr_saved = 0;
     ip_addr_to_read = 0;
     
-    halt_q_r = 1'b z;
+//    halt_q_r = 1'b z;
     
     write_wait = 0;
     
