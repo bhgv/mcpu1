@@ -84,14 +84,15 @@ module Top(
 	rst
 );
 
-//  reg  clk;
-//  reg RESET_r;
-//  wire rst = RESET_r;
+parameter CPU_QUANTITY = 2;
+parameter PROC_QUANTITY = 7;
+
+parameter INTERNAL_MEM_VALUE = 200;
+
+
 
 	input wire clk;
 	input wire rst;
-
-	
 	
 	output wire prg_ba = 0;
 	output wire prg_bb = 0;
@@ -305,7 +306,7 @@ module Top(
   
  
   
-	reg [`DATA_SIZE:0] mem [0:150]; 
+	reg [`DATA_SIZE:0] mem [0:INTERNAL_MEM_VALUE]; 
    initial $readmemh("mem.txt", mem);
   
 //  reg [7:0] stage;
@@ -319,9 +320,7 @@ module Top(
   wire init;
 
 
-
-parameter CPU_QUANTITY = 2;
-
+  
 
 wire [CPU_QUANTITY-1:0] rst_w_e_a;
 wire [CPU_QUANTITY-1:0] rst_w_b_a;
@@ -556,6 +555,7 @@ DispatcherOfCpus disp_1(
           );
           
 defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;
+defparam disp_1.PROC_QUANTITY = PROC_QUANTITY;
 
 /**/
 
@@ -616,7 +616,7 @@ always @(posedge clk) begin
 //        ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
         if(/*ext_*/ read_q == 1 && ext_rw_halt == 0) begin
-          if(ext_mem_addr_out < 150) begin
+          if(ext_mem_addr_out <= INTERNAL_MEM_VALUE) begin
 			 
           tmp_addr = ext_mem_addr_out;
           mem_wrk_state = `MEM_CTLR_READ;
@@ -629,7 +629,7 @@ always @(posedge clk) begin
         end
         else
         if(/*ext_*/ write_q == 1 && ext_rw_halt == 0) begin
-          if(ext_mem_addr < 150) begin
+          if(ext_mem_addr_out <= INTERNAL_MEM_VALUE) begin
 			 
           tmp_addr = ext_mem_addr_out;
           tmp_data = ext_mem_data_out;
