@@ -749,7 +749,7 @@ module BridgeToOutside (
             end
             
             `FINISH_END: begin
-              rst_state = 0; // = 1;
+              rst_state = 1; //0; // = 1;
               cpu_index_r = `CPU_NONACTIVE;
             end
             

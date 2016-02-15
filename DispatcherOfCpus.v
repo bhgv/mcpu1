@@ -511,7 +511,7 @@ always @(negedge clk) begin
           mem_rd = 0;
           mem_wr = 1;
         end else 
-        if(ext_cpu_e === 1) begin
+        if(ext_cpu_e == 1) begin
             //cpu_running = 1;
             //addr_out_r = `ADDR_SIZE'h zzzzzzzz;
           ext_cpu_index_r = 0; //`DATA_SIZE'h ffff_ffff_ffff_ffff;
