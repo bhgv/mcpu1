@@ -88,6 +88,7 @@ parameter CPU_QUANTITY = 2;
 parameter PROC_QUANTITY = 7;
 
 parameter INTERNAL_MEM_VALUE = 200;
+parameter INTERNAL_MEM_FILE = "mem.txt";
 
 
 
@@ -507,6 +508,10 @@ InternalStartupRAM int_ram(
 	
 	.rst(rst)
 );
+
+defparam int_ram.INTERNAL_MEM_VALUE = INTERNAL_MEM_VALUE;
+defparam int_ram.INTERNAL_MEM_FILE = INTERNAL_MEM_FILE;
+
 /**/
 
 

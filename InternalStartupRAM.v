@@ -32,8 +32,8 @@ module InternalStartupRAM(
 	rst
 );
 
-parameter INTERNAL_MEM_VALUE = 200;
-parameter INTERNAL_MEM_FILE = "mem.txt";
+parameter INTERNAL_MEM_VALUE = 1;
+parameter INTERNAL_MEM_FILE = ""; // mem.txt";
 
 
 
@@ -83,8 +83,8 @@ parameter INTERNAL_MEM_FILE = "mem.txt";
   
   
 	reg [`DATA_SIZE:0] mem [0:INTERNAL_MEM_VALUE]; 
-//   initial $readmemh(INTERNAL_MEM_FILE, mem); //("mem.txt", mem);
-   initial $readmemh("mem.txt", mem);
+   initial $readmemh(INTERNAL_MEM_FILE, mem); //("mem.txt", mem);
+//   initial $readmemh("mem.txt", mem);
 
 
    input wire rw_halt;
@@ -146,7 +146,7 @@ always @(posedge clk) begin
 //        addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
         if(/*ext_*/ read_q == 1 && rw_halt == 0) begin
-          if(addr_in <= INTERNAL_MEM_VALUE) begin
+          if(addr_in < INTERNAL_MEM_VALUE) begin
 			 
           tmp_addr = addr_in;
           mem_wrk_state = `MEM_CTLR_READ;
@@ -159,7 +159,7 @@ always @(posedge clk) begin
         end
         else
         if(/*ext_*/ write_q == 1 && rw_halt == 0) begin
-          if(addr_in <= INTERNAL_MEM_VALUE) begin
+          if(addr_in < INTERNAL_MEM_VALUE) begin
 			 
           tmp_addr = addr_in;
           tmp_data = data_in;

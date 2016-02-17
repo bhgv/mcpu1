@@ -908,11 +908,11 @@ module MemManager (
 //          if(^regCondFlags == 1) condw_waiting = 1;
 //          if(^regS1Flags == 1) src1w_waiting = 1;
 //          if(^regS0Flags == 1) src0w_waiting = 1;
-//            src0_op = `REG_OP_PREEXECUTE;
+            src0_op = `REG_OP_PREEXECUTE;
             src1_op = `REG_OP_PREEXECUTE;
             dst_op = `REG_OP_PREEXECUTE;
             cond_op = `REG_OP_PREEXECUTE;
-            cmd_op = `REG_OP_PREEXECUTE;
+//            cmd_op = `REG_OP_PREEXECUTE;
 
 //            cmd_op = `REG_OP_WRITE_PREP;
           
