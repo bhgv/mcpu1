@@ -200,7 +200,7 @@ parameter INTERNAL_MEM_VALUE = 200;
  
  
 
-  reg bus_director;
+//  reg bus_director;
   
 
   output 
@@ -214,8 +214,8 @@ parameter INTERNAL_MEM_VALUE = 200;
   reg ext_read_dn_r;
   reg ext_write_dn_r;
 
-  wire ext_read_dn = ext_read_dn_r; // == 1 ? 1 : 1'b z;
-  wire ext_write_dn = ext_write_dn_r;// == 1 ? 1 : 1'b z;
+  wire ext_read_dn;// = ext_read_dn_r; // == 1 ? 1 : 1'b z;
+  wire ext_write_dn;// = ext_write_dn_r;// == 1 ? 1 : 1'b z;
   
   reg ext_rw_busy;
 
@@ -231,7 +231,7 @@ parameter INTERNAL_MEM_VALUE = 200;
   reg [`ADDR_SIZE0:0] ext_mem_addr_r;
   tri [`ADDR_SIZE0:0] ext_mem_addr; 
   
-  assign ext_mem_addr_in = ext_mem_addr_r
+//  assign ext_mem_addr_in = ext_mem_addr_r
 /**
                                      (
                                       ext_read_dn_r == 1
@@ -244,7 +244,7 @@ parameter INTERNAL_MEM_VALUE = 200;
 												 ? ext_mem_addr_r 
                                      : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
 /**/
-                                     ;
+//                                     ;
 	
 /**	
   assign ext_mem_addr = 
@@ -266,7 +266,7 @@ parameter INTERNAL_MEM_VALUE = 200;
   reg [`DATA_SIZE0:0] ext_mem_data_r;
   tri [`DATA_SIZE0:0] ext_mem_data; 
   
-  assign ext_mem_data_in = ext_mem_data_r
+//  assign ext_mem_data_in = ext_mem_data_r
 /**
                                      (
                                       ext_read_dn_r == 1
@@ -279,7 +279,7 @@ parameter INTERNAL_MEM_VALUE = 200;
 												 ? ext_mem_data_r 
                                      : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
 /**/
-                                     ;
+//                                     ;
 												 
 /**
   assign ext_mem_data = 
@@ -291,13 +291,13 @@ parameter INTERNAL_MEM_VALUE = 200;
                                      ? int_mem_data 
                                      : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
 /** /
-                                     ;
+//                                     ;
 /**/
   
   
   
   
-  
+/**  
   reg [`ADDR_SIZE0:0] tmp_addr;
   reg [`DATA_SIZE0:0] tmp_data;
   
@@ -308,7 +308,8 @@ parameter INTERNAL_MEM_VALUE = 200;
   
 	reg [`DATA_SIZE:0] mem [0:INTERNAL_MEM_VALUE]; 
    initial $readmemh("mem.txt", mem);
-  
+/**/
+	
 //  reg [7:0] stage;
 
 //parameter STEP = 20;
@@ -376,8 +377,9 @@ wire [CPU_QUANTITY-1:0] bus_busy_in_a;
 wire bus_busy_out = ( |bus_busy_in_a ) | bus_busy;
 
 
-//wire want_write_in;
-//trior want_write_out;
+wire [CPU_QUANTITY-1:0] want_write_out_a;
+wire want_write_in = |want_write_out_a;
+
 
 wire clk_oe;
 
@@ -391,8 +393,8 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .rw_halt_in(rw_halt),
             .rw_halt_out(rw_halt_a),
             
-//            .want_write_in(want_write_in),
-//            .want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out_a),
             
             .addr_in(addr_out),
             .addr_out(addr_in),
@@ -424,83 +426,6 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             .dispatcher_q(dispatcher_q)
           );
 /**/
-
-
-/**
-wire rst_w1;
-
-Cpu cpu0 (
-            .clk(clk),
-            
-            .halt_q(halt_q),
-            .rw_halt(rw_halt),
-            
-            .want_write(want_write),
-            
-            .addr_in(addr_in),
-            .addr_out(addr_out),
-            .data_in(data_out),
-            .data_out(data_in),
-            
-            .read_q(read_q),
-            .write_q(write_q),
-            .read_dn(read_dn),
-            .write_dn(write_dn),
-            
-            .bus_busy(bus_busy),
-            
-            .ext_rst_b(ext_rst_b),
-            .ext_rst_e(rst_w1),    //ext_rst_e),
-            
-            .ext_cpu_index(ext_cpu_index),
-            
-            .ext_cpu_q(ext_cpu_q),
-            .ext_cpu_e(ext_cpu_e),
-            
-            .cpu_msg(cpu_msg_a[0]),
-				.disp_online(disp_online[0]),
-            
-            .dispatcher_q(dispatcher_q)
-          );
-			 
-//assign ext_rst_e = rst_w1;
-
-/**
-Cpu cpu1 (
-            .clk(clk),
-            
-            .halt_q(halt_q),
-            .rw_halt(rw_halt),
-            
-            .want_write(want_write),
-            
-            .addr_in(addr_in),
-            .addr_out(addr_out),
-            .data_in(data_out),
-            .data_out(data_in),
-            
-            .read_q(read_q),
-            .write_q(write_q),
-            .read_dn(read_dn),
-            .write_dn(write_dn),
-            
-            .bus_busy(bus_busy),
-            
-            .ext_rst_b(rst_w1),
-            .ext_rst_e(ext_rst_e),    //ext_rst_e),
-            
-            .ext_cpu_index(ext_cpu_index),
-            
-            .ext_cpu_q(ext_cpu_q),
-            .ext_cpu_e(ext_cpu_e),
-            
-            .cpu_msg(cpu_msg_a[1]),
-				.disp_online(disp_online[1]),
-            
-            .dispatcher_q(dispatcher_q)
-          );
-/**/
-
 
 
 /**/
@@ -544,8 +469,8 @@ DispatcherOfCpus disp_1(
             
             .ext_read_q(ext_read_q),
             .ext_write_q(ext_write_q),
-            .ext_read_dn(ext_read_dn_r),
-            .ext_write_dn(ext_write_dn_r),
+            .ext_read_dn(ext_read_dn),
+            .ext_write_dn(ext_write_dn),
             
             .ext_rw_busy(ext_rw_busy),
 
@@ -561,6 +486,31 @@ defparam disp_1.PROC_QUANTITY = PROC_QUANTITY;
 
 
 
+/**/
+InternalStartupRAM int_ram(
+	.clk(clk),
+	.clk_oe(clk_oe),
+	
+	.data_in(ext_mem_data_out),
+	.data_out(ext_mem_data_in),
+	
+	.addr_in(ext_mem_addr_out),
+	.addr_out(ext_mem_addr_in),
+	
+	.read_q(read_q),
+	.write_q(write_q),
+	
+	.read_dn(ext_read_dn),
+	.write_dn(ext_write_dn),
+	
+   .rw_halt(ext_rw_halt),
+	
+	.rst(rst)
+);
+/**/
+
+
+/**
 always @(posedge clk) begin
 //  ext_write_dn = 0;
 //  ext_read_dn = 0;
@@ -604,7 +554,6 @@ always @(posedge clk) begin
   end else
   begin
 
-/**/
     case(mem_wrk_state)
     
       `MEM_CTLR_WAIT: begin
@@ -615,7 +564,7 @@ always @(posedge clk) begin
 //        ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 //        ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
-        if(/*ext_*/ read_q == 1 && ext_rw_halt == 0) begin
+        if(read_q == 1 && ext_rw_halt == 0) begin
           if(ext_mem_addr_out <= INTERNAL_MEM_VALUE) begin
 			 
           tmp_addr = ext_mem_addr_out;
@@ -628,7 +577,7 @@ always @(posedge clk) begin
 			 end
         end
         else
-        if(/*ext_*/ write_q == 1 && ext_rw_halt == 0) begin
+        if(write_q == 1 && ext_rw_halt == 0) begin
           if(ext_mem_addr_out <= INTERNAL_MEM_VALUE) begin
 			 
           tmp_addr = ext_mem_addr_out;
@@ -678,214 +627,12 @@ always @(posedge clk) begin
       end
           
     endcase
+
+  end
+  
+  end
+          
+end
 /**/
-
-  end
-  
-  end
-          
-end
-
-
-
-
-
-
-//always @(posedge clk) begin
-//          Q = Q+1;
-          
-//       end
-
-
-/*
-always @(negedge clk) begin
-
-//    addr_out_r = 32'h zzzzzzzz;
-//    data_wire_r = 32'h zzzzzzzz;
-    
-    ext_rst_b = 0;
-    
-    read_dn_r = 1'b z;
-    write_dn_r = 1'b z;
-    bus_busy_r = 1'b z;
-    
-//    ext_rst_e_r = 1'b z;
-    cpu_q_r = 0;
-//    ext_cpu_index_r = 32'h zzzzzzzz;
-    
-  if(rst == 1) begin 
-    cpu_num = 0;
-    data_wire_r = cpu_num; //Q;
-    bus_busy_r  = 1'bz;
-    
-    state_ctl = `CTL_RESET_WAIT;
-    
-        //read_dn = 1;
-
-    //addr_out_r = 32'h zzzzzzzz;
-    //bus_busy_r = 1'b z;
-    //read_dn = 0;
-    //write_dn = 0;
-    
-    ext_cpu_index_r = 32'h zzzzzzzz;
-    cpu_q_r = 0;
-    
-//    cpu_running = 0;
-    
-    //stage = 0;
-    
-    ext_rst_b = 1;
-    
-//    ext_rst_e_r = 1;
-  end else begin
-  
-//    data_wire_r = 32'h zzzzzzzz;
-//    addr_out_r  = 32'h zzzzzzzz;
-
-    case(state_ctl)
-      `CTL_RESET_WAIT: begin
-        if(read_dn == 1) begin
-          data_wire_r = 32'h zzzzzzzz;
-          addr_out_r  = 32'h zzzzzzzz;
-        end
-          
-        if(bus_busy == 1) begin
-          cpu_tbl[data_wire] = 0; //32'h ffffffff;
-        end
-        
-        if(ext_rst_e == 1) begin
-          ext_rst_b = 0;
-          
-          state_ctl = `CTL_CPU_LOOP;
-        end
-      end
-      
-      `CTL_CPU_LOOP: begin
-        if(cpu_num == CPU_QUANTITY) begin
-          cpu_num = 0;
-        end
-        ext_cpu_index_r = cpu_num;
-        
-        cpu_num = cpu_num + 1;
-        
-        addr_out_r = cpu_tbl[cpu_num];
-        
-        cpu_q_r = 1;
-        
-        state_ctl = `CTL_CPU_CMD;
-      end
-      
-      `CTL_CPU_CMD: begin
-        if(cpu_q_r == 1) begin
-          cpu_q_r = 0;
-        end
-        if(ext_cpu_e == 1) begin
-          //cpu_running = 1;
-          addr_out_r = 32'h zzzzzzzz;
-          ext_cpu_index_r = 32'h zzzzzzzz;
-          
-          case(data_wire)
-            `CPU_R_START: begin
-            end
-            
-            `CPU_R_END: begin
-            end
-            
-          endcase
-          
-          state_ctl = `CTL_MEM_WORK;
-        end
-      end
-      
-      `CTL_MEM_WORK: begin
-
-        data_wire_r = 32'h zzzzzzzz;
-        addr_out_r  = 32'h zzzzzzzz;
-        
-
-//    if(stage < 3) stage = stage + 1;
-//  
-//    if(stage == 2) begin
-//    
-//      addr_out_r = 0;
-//      ext_cpu_index_r = cpu_num;
-//      cpu_q_r = 1;
-    
-//    end else if( cpu_q_r == 1) begin
-//      cpu_q_r = 0;
-//    end else if(ext_cpu_e == 1) begin
-//      cpu_running = 1;
-//    end else 
-
-//    if(cpu_running == 1) begin
-
-          data_wire_r = 32'h zzzzzzzz;
-//      case(state)
-/*
-        `FINISH_END: begin
-          state_ctl = `CTL_CPU_LOOP;
-        end
-        
-        `READ_COND, 
-        `READ_DATA, 
-        `START_READ_CMD: begin
-          if(read_q == 1) begin
-            //addr_out_r = 32'h zzzzzzzz;
-            addr_out_r = addr_out;
-            data_wire_r = mem[addr_out];
-            read_dn_r = 1;
-            bus_busy_r = 1;
-         // end else begin
-         //            data_wire_r = 32'h zzzzzzzz;
-          end
-        end
-*/
-
-/*
-        
-//        default: begin
-          if(read_q == 1) begin
-            //addr_out_r = 32'h zzzzzzzz;
-            addr_out_r = addr_out;
-            data_wire_r = mem[addr_out];
-            read_dn_r = 1;
-            bus_busy_r = 1;
-          end else begin
-         //            data_wire_r = 32'h zzzzzzzz;
-          end
-
-          if(write_q == 1) begin
-            addr_out_r = addr_out;
-            mem[addr_out] = data_wire;
-            //$monitor("wrote mem[ %x ] = %x",addr_out,mem[addr_out]);
-            write_dn_r = 1;
-          end
-          
-          if(dispatcher_q == 1) begin
-            state_ctl = `CTL_CPU_LOOP;
-          end
-          
-//        end
-//      endcase
-      
-    end
-    
-    
-      //end
-    endcase
-    
-    
-    
-  end
-  
-end
-*/
-
-
-//always @(negedge rst) begin
-//  data_wire_r = 32'h zzzzzzzz;
-//  addr_out_r = 32'h zzzzzzzz;
-//  bus_busy_r = 1'b z;
-//end
        
 endmodule

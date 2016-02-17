@@ -336,7 +336,11 @@ module BridgeToOutside (
     int_cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz_zzzz;
 	 
 	 
-	 
+	 if(ext_next_cpu_e_r == 1) begin
+//      ext_next_cpu_e_r = 1'b 0; //z;
+      disp_online_r = 0;
+    end
+
 	 
 	 
 	 
@@ -576,11 +580,12 @@ module BridgeToOutside (
             ext_next_cpu_e_r = 1;
 //            disp_online_r = 0;
           end 
+        end // if(disp_online_r == 1)
           else if(ext_next_cpu_e_r == 1) begin
             ext_next_cpu_e_r = 1'b 0; //z;
-            disp_online_r = 0;
+//!!!            disp_online_r = 0;
           end
-        end // if(disp_online_r == 1)
+//!!!        end // if(disp_online_r == 1)
 		  
 //        else if(ext_next_cpu_e_r === 1'b 1) begin
 //          ext_next_cpu_e_r = 1'b 0; //z;

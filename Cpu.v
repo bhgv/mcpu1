@@ -23,8 +23,8 @@ module Cpu(
             rw_halt_in,
             rw_halt_out,
             
-//            want_write_in,
-//				want_write_out,
+            want_write_in,
+            want_write_out,
             
             read_q,
             write_q,
@@ -103,8 +103,8 @@ module Cpu(
   input wire halt_q_in;
   output wire halt_q_out;
   
-//  input wire want_write_in;
-//  output wire want_write_out;
+  input wire want_write_in;
+  output wire want_write_out;
   
   wire [1:0] cpu_ind_rel;
    
@@ -240,8 +240,8 @@ BridgeToOutside outside_bridge (
 				
             .cpu_ind_rel(cpu_ind_rel),
             
-//            .want_write_in(want_write_in),
-//            .want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out),
             
             .bus_busy(bus_busy_in),
             .addr_in(addr_in),

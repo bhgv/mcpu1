@@ -19,8 +19,9 @@ module RegisterManager (
             halt_q_out,
             rw_halt_in,
             rw_halt_out,
-            //want_write_in,
-            //want_write_out,
+            
+				want_write_in,
+            want_write_out,
             
             is_bus_busy,
             addr_in,
@@ -89,7 +90,7 @@ module RegisterManager (
   reg [`DATA_SIZE0:0] register_r_ptr;
   reg [`DATA_SIZE0:0] register_r;
   tri [`DATA_SIZE0:0] register = (reg_op == `REG_OP_CATCH_DATA) 
-                                              ? `ADDR_SIZE'h zzzzzzzz
+                                              ? `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                               : register_r
                                               ;  // tri or wire ??
 
@@ -159,8 +160,8 @@ module RegisterManager (
   
   wire rw_halt_stim =
               (
-               halt_q_in === 1
-               && cpu_ind_rel === 2'b01
+               halt_q_in == 1
+               && cpu_ind_rel == 2'b01
                && (registerw_waiting == 1'b 1
                  && (
                    (/*reg_op == `REG_OP_READ*/ /*isRegPtr == 1 &&*/ addr_in == register_r_adr)
@@ -168,16 +169,16 @@ module RegisterManager (
                  )
                )
               )
-            ? 1'b 1
-            : 1'b 0 //z
+//            ? 1'b 1
+//            : 1'b 0 //z
             ;
             
             
-//  input want_write_in;
-//  output want_write_out;
+  input want_write_in;
+  output want_write_out;
   reg want_write_r;
   wire want_write_out = want_write_r; //disp_online == 1 ? want_write_r : 1'b z;
-  wire want_write_in = want_write_r;
+  wire want_write_in; // = want_write_r;
 
   
   output read_q;
@@ -239,6 +240,8 @@ module RegisterManager (
  
   input wire clk_oe; 
   
+  reg is_can_read;
+  
   
 
   always @(posedge clk) begin
@@ -251,6 +254,10 @@ module RegisterManager (
     
 //    is_bus_busy_r = 1'b z;
     
+	 
+	 is_can_read = ~(want_write_in ^ want_write_r);
+	 
+	 
     
     next_state_r <= 1'b 0;
 //    next_state_r <= 1'b z;
@@ -338,6 +345,7 @@ module RegisterManager (
 //  end
   else begin
 
+//!!!  rw_halt_r <= rw_halt_stim;
   halt_q_r <= 0;
   
 //    read_q_r <= 1'b 0; //z;
@@ -392,8 +400,8 @@ module RegisterManager (
             if(is_bus_busy == 1) begin
             
               if(
-                  (read_dn == 1 && register_waiting == 1) 
-                  || (write_dn === 1 && register_waiting == 0 && isTopR == 1) 
+                  (read_dn == 1 && register_waiting == 1 && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/) 
+                  || (write_dn == 1 && register_waiting == 0 && isTopR == 1) 
               ) begin
                   if(addr_in == register_r_adr) begin
                     register_r <= data_in;
@@ -435,6 +443,7 @@ module RegisterManager (
                 if(read_q_r == 1) begin
                   addr_r <= 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
                   read_q_r <= 1'b 0; //z;
+//		want_write_r <= 0; //!!!
                 end else
 					 begin 
                   if(disp_online == 1 && single == 1) begin
@@ -459,7 +468,7 @@ module RegisterManager (
         `REG_OP_READ_P: begin
           if(is_bus_busy == 1) begin
             if(
-                (read_dn == 1 && registerptr_waiting == 1)
+                (read_dn == 1 && registerptr_waiting == 1 && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/)
                 || (write_dn == 1 && registerptr_waiting == 0 && isTopP == 1) 
             ) begin
                 if(addr_in == (register_r_ptr + base_addr) ) begin
@@ -498,6 +507,7 @@ module RegisterManager (
             if(read_q_r == 1) begin
               addr_r <= 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
               read_q_r <= 1'b 0; //z;
+//		want_write_r <= 0; //!!!
             end else
             if(disp_online == 1 && single == 1) begin
 //              register_r_ptr <= register_r;

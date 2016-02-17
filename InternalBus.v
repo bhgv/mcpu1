@@ -27,8 +27,8 @@ module InternalBus(
 
 			cpu_ind_rel,
         
-//        want_write_in,
-//		  want_write_out,
+         want_write_in,
+         want_write_out,
         
             addr_in,
 				addr_out,
@@ -75,8 +75,8 @@ module InternalBus(
   
   input tri [1:0] cpu_ind_rel;
   
-//  input wire want_write_in;
-//  output wire want_write_out;
+  input wire want_write_in;
+  output wire want_write_out;
   
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
@@ -104,13 +104,13 @@ module InternalBus(
 //  reg [`DATA_SIZE0:0] data_r;
   input wire [`DATA_SIZE0:0] data_in; // = data_r;
   output [`DATA_SIZE0:0] data_out; // = data_r;
-  wire [`DATA_SIZE0:0] data_out_s; // = data_r;
+//  wire [`DATA_SIZE0:0] data_out_s; // = data_r;
   wire [`DATA_SIZE0:0] data_out_m; // = data_r;
   wire [`DATA_SIZE0:0] data_out_t; // = data_r;
   wire [`DATA_SIZE0:0] data_out = 
                                  data_out_m
                                  | data_out_t
-                                 | data_out_s
+//                                 | data_out_s
                                  ;
   
 
@@ -132,13 +132,13 @@ module InternalBus(
   input next_state;
   wire next_state;
   
-  wire next_state_m, next_state_a, next_state_s, next_state_t;
+  wire next_state_m, next_state_a, next_state_t;//, next_state_s;
   
   wire next_state_rslt = 
 								next_state
 								| next_state_m
 								| next_state_a
-								| next_state_s
+//								| next_state_s
 								| next_state_t
 								;
  
@@ -269,8 +269,8 @@ module InternalBus(
             .rw_halt_in(rw_halt_in),
             .rw_halt_out(rw_halt_out),
             
-//            .want_write_in(want_write_in),
-//            .want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out),
             
             .is_bus_busy(bus_busy),
             .addr_in(addr_in),

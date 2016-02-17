@@ -212,7 +212,8 @@ parameter PROC_QUANTITY = 8;
   wire [`ADDR_SIZE0:0] addr_out = 
 //                                (ext_cpu_q === 1 || read_dn_r === 1 || write_dn_r === 1)
 //                                ? 
-                                  addr_out_r
+                                  addr_out_r 
+											 | addr_in
 //                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                 ;
 
@@ -496,6 +497,8 @@ always @(negedge clk) begin
           mem_wr == 0 &&
 			 rw_halt == 0
         ) begin
+//!!!			 addr_out_r = addr_in;
+			 
           mem_addr_tmp = addr_in;
           mem_rd = 1;
           mem_wr = 0;
@@ -506,6 +509,8 @@ always @(negedge clk) begin
           mem_wr == 0 &&
 			 rw_halt == 0
         ) begin
+//!!!			 addr_out_r = addr_in;
+			 
           mem_addr_tmp = addr_in;
           mem_data_tmp = data_in;
           mem_rd = 0;
@@ -612,6 +617,9 @@ always @(negedge clk) begin
 
 //        data_r = 0; //32'h zzzz_zzzz_zzzz_zzzz;
 //        addr_out_r  = 0; //32'h zzzz_zzzz_zzzz_zzzz;
+
+//!!!			addr_out_r = 0;
+			
 		  
 		  if(rw_halt == 1) begin
           mem_rd = 0;

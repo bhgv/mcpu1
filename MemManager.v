@@ -22,8 +22,9 @@ module MemManager (
             halt_q_out,
             rw_halt_in,
             rw_halt_out,
-//            want_write_in,
-//            want_write_out,
+
+            want_write_in,
+            want_write_out,
             
             is_bus_busy,
             addr_in,
@@ -258,10 +259,18 @@ module MemManager (
 
 
 
-//  input 
-  wire want_write_in;
-//  output 
-  trior want_write_out;
+  wire want_write_out_ip, want_write_out_s1, want_write_out_s0, want_write_out_d, want_write_out_c;
+  
+  input wire want_write_in;
+  output want_write_out;
+  
+  wire want_write_out = 
+                       want_write_out_ip
+							  | want_write_out_s1
+							  | want_write_out_s0
+							  | want_write_out_d
+							  | want_write_out_c
+							  ;
   
   
   inout  [`DATA_SIZE0:0] cond;
@@ -315,8 +324,8 @@ module MemManager (
             .rw_halt_in(rw_halt_in),
             .rw_halt_out(rw_halt_ip),
             
-            //.want_write_in(want_write_in),
-            //.want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out_ip),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
@@ -418,8 +427,8 @@ module MemManager (
             .rw_halt_in(rw_halt_in),
             .rw_halt_out(rw_halt_s1),
             
-            //.want_write_in(want_write_in),
-            //.want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out_s1),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
@@ -521,8 +530,8 @@ module MemManager (
             .rw_halt_in(rw_halt_in),
             .rw_halt_out(rw_halt_s0),
             
-            //.want_write_in(want_write_in),
-            //.want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out_s0),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
@@ -628,8 +637,8 @@ module MemManager (
             .rw_halt_in(rw_halt_in),
             .rw_halt_out(rw_halt_d),
             
-            //.want_write_in(want_write_in),
-            //.want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out_d),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
@@ -720,8 +729,8 @@ module MemManager (
             .rw_halt_in(rw_halt_in),
             .rw_halt_out(rw_halt_c),
             
-            //.want_write_in(want_write_in),
-            //.want_write_out(want_write_out),
+            .want_write_in(want_write_in),
+            .want_write_out(want_write_out_c),
             
             .is_bus_busy(is_bus_busy),
             .addr_in(addr_in),
