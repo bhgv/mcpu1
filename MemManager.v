@@ -890,6 +890,19 @@ module MemManager (
             
 //            next_state = 1;
         end
+		  
+		  
+        `FILL_DST_P: begin
+          dst_op = `REG_OP_CATCH_DATA;
+        end
+
+        `READ_DST: begin
+          dst_op = `REG_OP_READ;
+        end
+
+        `WRITE_DST_P: begin
+          dst_op = `REG_OP_WRITE_P;
+        end
         
         
 //        `START_READ_CMD: begin

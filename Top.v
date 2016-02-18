@@ -252,7 +252,7 @@ parameter INTERNAL_MEM_VALUE = 200;
   tri [`DATA_SIZE0:0] ext_mem_data = 
   
 //  assign ext_mem_data_in = ext_mem_data_r
-/**/
+/**
                                      (
                                       //ext_read_dn_r == 1
                                       //|| ext_write_dn_r == 1
@@ -260,8 +260,9 @@ parameter INTERNAL_MEM_VALUE = 200;
 												  || mem_wrk_state == `MEM_CTLR_WRITE_SET_WE
 												  || mem_wrk_state == `MEM_CTLR_WRITE_FINISH
                                      ) 
+/**/
 //                                     && (
-//												   bus_director == 1
+												   bus_director == 1
 //												 )
 												 ? ext_mem_data_r 
                                      : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
@@ -564,10 +565,10 @@ always @(posedge clk) begin
         if(read_q == 1 && ext_rw_halt == 0) begin
           if(mem_addr_out >= INTERNAL_MEM_VALUE) begin
 			 
-          tmp_addr = mem_addr_out - INTERNAL_MEM_VALUE;
+          tmp_addr = mem_addr_out;// - INTERNAL_MEM_VALUE;
           mem_wrk_state = `MEM_CTLR_READ_SET_ADDRESS;
 
-          bus_director = 1;
+          bus_director = 0;
 			 
 			 end
         end
@@ -575,7 +576,7 @@ always @(posedge clk) begin
         if(write_q == 1 && ext_rw_halt == 0) begin
           if(mem_addr_out >= INTERNAL_MEM_VALUE) begin
 			 
-          tmp_addr = mem_addr_out - INTERNAL_MEM_VALUE;
+          tmp_addr = mem_addr_out;// - INTERNAL_MEM_VALUE;
           tmp_data = mem_data_out;
           mem_wrk_state = `MEM_CTLR_WRITE_SET_ADDRESS;
 
@@ -591,8 +592,9 @@ always @(posedge clk) begin
            mem_wrk_state = `MEM_CTLR_WAIT;			 
 			 bus_director = 0;
         end else
-        if(bus_director == 1) begin
-          ext_mem_addr_r = tmp_addr;
+//        if(bus_director == 1)
+        begin
+          ext_mem_addr_r = tmp_addr - INTERNAL_MEM_VALUE;
 
           prg_ce_r = 0;
 			 prg_oe_r = 0;
@@ -607,9 +609,11 @@ always @(posedge clk) begin
            mem_wrk_state = `MEM_CTLR_WAIT;			 
 			 bus_director = 0;
         end else
-        if(bus_director == 1) begin
+//        if(bus_director == 1) 
+        begin
           tmp_data = ext_mem_data;
-//          ext_mem_addr_r = tmp_addr;
+//          ext_mem_addr_r = 
+//          tmp_addr = tmp_addr + INTERNAL_MEM_VALUE;
           ext_read_dn_r = 1;
                     
           mem_wrk_state = `MEM_CTLR_READ_FINISH;
@@ -621,7 +625,8 @@ always @(posedge clk) begin
            mem_wrk_state = `MEM_CTLR_WAIT;			 
 			 bus_director = 0;
        end else
-       if(bus_director == 1) begin
+//       if(bus_director == 1) 
+       begin
          tmp_addr = 0;
 	      tmp_data = 0;
 
@@ -639,9 +644,10 @@ always @(posedge clk) begin
           mem_wrk_state = `MEM_CTLR_WAIT;			 
           bus_director = 0;
         end else
-        if(bus_director == 1) begin
+//        if(bus_director == 1) 
+        begin
 		  
-          ext_mem_addr_r = tmp_addr;
+          ext_mem_addr_r = tmp_addr - INTERNAL_MEM_VALUE;
           ext_mem_data_r = tmp_data;
 
           prg_ce_r = 0;
@@ -650,13 +656,14 @@ always @(posedge clk) begin
           mem_wrk_state = `MEM_CTLR_WRITE_SET_WE;
         end
       end
-          
+      
       `MEM_CTLR_WRITE_SET_WE: begin
 		  if(ext_rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;			 
+          mem_wrk_state = `MEM_CTLR_WAIT;
           bus_director = 0;
         end else
-        if(bus_director == 1) begin
+//        if(bus_director == 1) 
+        begin
 		  
           prg_we_r = 0;
 			 
@@ -666,10 +673,11 @@ always @(posedge clk) begin
           
       `MEM_CTLR_WRITE_FINISH: begin
 		  if(ext_rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;			 
+          mem_wrk_state = `MEM_CTLR_WAIT;
           bus_director = 0;
         end else
-        if(bus_director == 1) begin
+//        if(bus_director == 1) 
+        begin
 		  
 //          mem[tmp_addr] = tmp_data;
 //          ext_mem_data_r = tmp_data;
@@ -683,7 +691,7 @@ always @(posedge clk) begin
 			 bus_director = 0;
         end
       end
-                
+    
     endcase
 	 
 /**/
@@ -691,7 +699,7 @@ always @(posedge clk) begin
   end
   
   end
-          
+
 end
 
        

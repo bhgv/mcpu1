@@ -142,8 +142,8 @@ always @(posedge clk) begin
         read_dn_r  = 0;
         write_dn_r = 0;
 
-//        data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-//        addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+        data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+        addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
         if(/*ext_*/ read_q == 1 && rw_halt == 0) begin
           if(addr_in <= INTERNAL_MEM_VALUE) begin
