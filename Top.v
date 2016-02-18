@@ -49,10 +49,15 @@
 `include "inter_cpu_msgs.v"
 
 
-`define MEM_CTLR_WAIT  0
-`define MEM_CTLR_READ  1
-`define MEM_CTLR_WRITE 2
-//`define MEM_CTLR_NULL  3
+`define MEM_CTLR_WAIT               0
+
+`define MEM_CTLR_READ_SET_ADDRESS   1
+`define MEM_CTLR_READ_DATA_GET      2
+`define MEM_CTLR_READ_FINISH        3
+
+`define MEM_CTLR_WRITE_SET_ADDRESS  4
+`define MEM_CTLR_WRITE_SET_WE       5
+`define MEM_CTLR_WRITE_FINISH       6
 
 
 
@@ -99,6 +104,7 @@ parameter INTERNAL_MEM_VALUE = 200;
 	output wire prg_bc = 0;
 	output wire prg_bd = 0;
 	
+	reg prg_ce_r;
 	output wire prg_ce0 = 0;
 	output wire prg_ce1 = 0;
 	output wire prg_ce2 = 0;
@@ -132,19 +138,39 @@ parameter INTERNAL_MEM_VALUE = 200;
   trior [`DATA_SIZE0:0] data_in; // = data_wire_r;
   wire [`DATA_SIZE0:0] data_out; // = data_wire_r;
   
-   
-/*
-  wire [`DATA_SIZE0:0] src1;
-  wire [`DATA_SIZE0:0] src0;
-  wire [`DATA_SIZE0:0] dst;
-  wire [`DATA_SIZE0:0] dst_h;
-  wire [`DATA_SIZE0:0] cond;
   
-  wire [`STATE_SIZE0:0] state;
-  wire nxt_state;
-*/
+  
+  
+  
+  reg [7:0] mem_wrk_state;
+  
+  reg bus_director;
+  
+  reg [`ADDR_SIZE0:0] tmp_addr;
+  reg [`DATA_SIZE0:0] tmp_data;
+  
+  wire [`ADDR_SIZE0:0] int_mem_addr_in;
+  wire [`DATA_SIZE0:0] int_mem_data_in;
+  
+  wire [`ADDR_SIZE0:0] int_mem_addr_out;
+  wire [`DATA_SIZE0:0] int_mem_data_out;
 
-//  reg bus_busy_r;
+  wire [`ADDR_SIZE0:0] mem_addr_out;
+  wire [`DATA_SIZE0:0] mem_data_out;
+
+  wire [`ADDR_SIZE0:0] mem_addr_in = int_mem_addr_out | tmp_addr; 
+  wire [`DATA_SIZE0:0] mem_data_in = int_mem_data_out | tmp_data; 
+  
+  reg ext_read_dn_r;
+  reg ext_write_dn_r;
+
+  wire int_mem_read_dn; // | ext_mem_read_dn;
+  wire int_mem_write_dn; // | ext_mem_write_dn;
+
+  wire mem_read_dn = int_mem_read_dn | ext_read_dn_r;
+  wire mem_write_dn = int_mem_write_dn | ext_write_dn_r;
+   
+
   wire bus_busy; // = bus_busy_r;
   
   
@@ -170,39 +196,15 @@ parameter INTERNAL_MEM_VALUE = 200;
                     }*/
 //                    ;
 
-/*
-  wire [`ADDR_SIZE0:0] base_addr;
-  
-  wire rst;
-  
-  
-  reg ext_rst_e_r;
-*/
-
-  //reg
-//  wire ext_rst_b; // = rst;
-//  wire ext_rst_e; // = ext_rst_e_r;
-  
-//  reg [`DATA_SIZE0:0] ext_cpu_index_r;
   wire [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
   
 //  reg cpu_q_r;
   tri0 ext_cpu_q; // = cpu_q_r;
   trior ext_cpu_e;
-  
-//  reg cpu_running;
-  
-//  wire ext_bus_busy;
-  
+    
   trior dispatcher_q;
-  
-//  tri [`CPU_MSG_SIZE0:0] cpu_msg;
+   
  
- 
-
-//  reg bus_director;
-  
-
   output 
   wire ext_read_q;
   output 
@@ -211,17 +213,11 @@ parameter INTERNAL_MEM_VALUE = 200;
 //  inout ext_read_dn;
 //  inout ext_write_dn;
   
-  reg ext_read_dn_r;
-  reg ext_write_dn_r;
 
   wire ext_read_dn;// = ext_read_dn_r; // == 1 ? 1 : 1'b z;
   wire ext_write_dn;// = ext_write_dn_r;// == 1 ? 1 : 1'b z;
   
   reg ext_rw_busy;
-
-
-  // tri [`ADDR_SIZE0:0] int_mem_addr;
- // tri [`DATA_SIZE0:0] int_mem_data;
 
   
   wire [`ADDR_SIZE0:0] ext_mem_addr_in; 
@@ -229,7 +225,7 @@ parameter INTERNAL_MEM_VALUE = 200;
 
   inout [`ADDR_SIZE0:0] ext_mem_addr; 
   reg [`ADDR_SIZE0:0] ext_mem_addr_r;
-  tri [`ADDR_SIZE0:0] ext_mem_addr; 
+  tri [`ADDR_SIZE0:0] ext_mem_addr = 
   
 //  assign ext_mem_addr_in = ext_mem_addr_r
 /**
@@ -241,58 +237,37 @@ parameter INTERNAL_MEM_VALUE = 200;
 //                                     && (
 //												     bus_director == 1
 //												   )
-												 ? ext_mem_addr_r 
-                                     : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+												 ? 
 /**/
-//                                     ;
-	
-/**	
-  assign ext_mem_addr = 
-/** /
-                                     ! (
-                                      ext_read_dn === 1
-                                      || ext_write_dn === 1
-                                     ) 
-                                     ? int_mem_addr 
-                                     : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
-/** /
+												 ext_mem_addr_r 
+//                                     : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                      ;
-/**/
+	
   
   wire [`DATA_SIZE0:0] ext_mem_data_in; 
   wire [`DATA_SIZE0:0] ext_mem_data_out; 
 
   inout [`DATA_SIZE0:0] ext_mem_data; 
   reg [`DATA_SIZE0:0] ext_mem_data_r;
-  tri [`DATA_SIZE0:0] ext_mem_data; 
+  tri [`DATA_SIZE0:0] ext_mem_data = 
   
 //  assign ext_mem_data_in = ext_mem_data_r
-/**
+/**/
                                      (
-                                      ext_read_dn_r == 1
-                                      || ext_write_dn_r == 1
+                                      //ext_read_dn_r == 1
+                                      //|| ext_write_dn_r == 1
+												  mem_wrk_state == `MEM_CTLR_WRITE_SET_ADDRESS
+												  || mem_wrk_state == `MEM_CTLR_WRITE_SET_WE
+												  || mem_wrk_state == `MEM_CTLR_WRITE_FINISH
                                      ) 
-												 && 0
 //                                     && (
 //												   bus_director == 1
 //												 )
 												 ? ext_mem_data_r 
                                      : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
 /**/
-//                                     ;
+                                     ;
 												 
-/**
-  assign ext_mem_data = 
-/** /
-                                     ! (
-                                      ext_read_dn === 1
-                                      || ext_write_dn === 1
-                                     ) 
-                                     ? int_mem_data 
-                                     : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
-/** /
-//                                     ;
-/**/
   
   
   
@@ -303,17 +278,8 @@ parameter INTERNAL_MEM_VALUE = 200;
   
   reg [2:0] mem_wrk_state;
   
-  
- 
-  
-	reg [`DATA_SIZE:0] mem [0:INTERNAL_MEM_VALUE]; 
-   initial $readmemh("mem.txt", mem);
 /**/
 	
-//  reg [7:0] stage;
-
-//parameter STEP = 20;
-
 
   wire ext_rst_b; // = rst;
   wire ext_rst_e; // = ext_rst_e_r;
@@ -459,18 +425,28 @@ DispatcherOfCpus disp_1(
             .ext_cpu_e(ext_cpu_e),
             
 
-            .ext_mem_addr_in(ext_mem_addr_in),
-            .ext_mem_addr_out(ext_mem_addr_out),
+//            .ext_mem_addr_in(ext_mem_addr_in),
+//            .ext_mem_addr_out(ext_mem_addr_out),
+ 
+            .ext_mem_addr_in(mem_addr_in),
+            .ext_mem_addr_out(mem_addr_out),				
 				
-            .ext_mem_data_in(ext_mem_data_in),
-            .ext_mem_data_out(ext_mem_data_out),
+            .ext_mem_data_in(mem_data_in),
+            .ext_mem_data_out(mem_data_out),
+
+//            .ext_mem_data_in(ext_mem_data_in),
+//            .ext_mem_data_out(ext_mem_data_out),
 				
 				.ext_rw_halt(ext_rw_halt),
             
             .ext_read_q(ext_read_q),
             .ext_write_q(ext_write_q),
-            .ext_read_dn(ext_read_dn),
-            .ext_write_dn(ext_write_dn),
+				
+//            .ext_read_dn(ext_read_dn),
+//            .ext_write_dn(ext_write_dn),
+
+            .ext_read_dn(mem_read_dn),
+            .ext_write_dn(mem_write_dn),
             
             .ext_rw_busy(ext_rw_busy),
 
@@ -491,17 +467,26 @@ InternalStartupRAM int_ram(
 	.clk(clk),
 	.clk_oe(clk_oe),
 	
-	.data_in(ext_mem_data_out),
-	.data_out(ext_mem_data_in),
+//	.data_in(ext_mem_data_out),
+//	.data_out(ext_mem_data_in),
+
+	.data_in(mem_data_out),
+	.data_out(int_mem_data_out), //mem_data_in), //
 	
-	.addr_in(ext_mem_addr_out),
-	.addr_out(ext_mem_addr_in),
+	.addr_in(mem_addr_out),
+	.addr_out(int_mem_addr_out), //mem_addr_in), //
+
+//	.addr_in(ext_mem_addr_out),
+//	.addr_out(ext_mem_addr_in),
 	
 	.read_q(read_q),
 	.write_q(write_q),
 	
-	.read_dn(ext_read_dn),
-	.write_dn(ext_write_dn),
+//	.read_dn(ext_read_dn),
+//	.write_dn(ext_write_dn),
+
+	.read_dn(int_mem_read_dn), //mem_read_dn), //
+	.write_dn(int_mem_write_dn), //mem_write_dn), //
 	
    .rw_halt(ext_rw_halt),
 	
@@ -510,7 +495,8 @@ InternalStartupRAM int_ram(
 /**/
 
 
-/**
+
+/**/
 always @(posedge clk) begin
 //  ext_write_dn = 0;
 //  ext_read_dn = 0;
@@ -538,7 +524,10 @@ always @(posedge clk) begin
   end else begin
   
   if(rst == 1) begin
-    data_wire_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    tmp_addr = 0;
+	 tmp_data =0;
+	 
+//    data_wire_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
     mem_wrk_state = `MEM_CTLR_WAIT;
     
@@ -551,9 +540,14 @@ always @(posedge clk) begin
 	 
 	 ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 
+	 prg_ce_r = 1;
+	 prg_oe_r = 0;
+	 prg_we_r = 1;
   end else
   begin
-
+  
+/**/
     case(mem_wrk_state)
     
       `MEM_CTLR_WAIT: begin
@@ -561,16 +555,17 @@ always @(posedge clk) begin
         ext_read_dn_r  = 0;
         ext_write_dn_r = 0;
 
+        tmp_addr = 0;
+	     tmp_data =0;
+
 //        ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 //        ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
         if(read_q == 1 && ext_rw_halt == 0) begin
-          if(ext_mem_addr_out <= INTERNAL_MEM_VALUE) begin
+          if(mem_addr_out >= INTERNAL_MEM_VALUE) begin
 			 
-          tmp_addr = ext_mem_addr_out;
-          mem_wrk_state = `MEM_CTLR_READ;
-//          ext_mem_data_r = mem[ext_mem_addr];
-//          ext_read_dn = 1;
+          tmp_addr = mem_addr_out - INTERNAL_MEM_VALUE;
+          mem_wrk_state = `MEM_CTLR_READ_SET_ADDRESS;
 
           bus_director = 1;
 			 
@@ -578,13 +573,11 @@ always @(posedge clk) begin
         end
         else
         if(write_q == 1 && ext_rw_halt == 0) begin
-          if(ext_mem_addr_out <= INTERNAL_MEM_VALUE) begin
+          if(mem_addr_out >= INTERNAL_MEM_VALUE) begin
 			 
-          tmp_addr = ext_mem_addr_out;
-          tmp_data = ext_mem_data_out;
-          mem_wrk_state = `MEM_CTLR_WRITE;
-//          mem[ext_mem_addr] = ext_mem_data;
-//          ext_write_dn = 1;
+          tmp_addr = mem_addr_out - INTERNAL_MEM_VALUE;
+          tmp_data = mem_data_out;
+          mem_wrk_state = `MEM_CTLR_WRITE_SET_ADDRESS;
 
           bus_director = 1;
 			 
@@ -592,47 +585,114 @@ always @(posedge clk) begin
         end
       end
 
-      `MEM_CTLR_READ: begin
+		// read states
+      `MEM_CTLR_READ_SET_ADDRESS: begin
+		  if(ext_rw_halt == 1) begin
+           mem_wrk_state = `MEM_CTLR_WAIT;			 
+			 bus_director = 0;
+        end else
+        if(bus_director == 1) begin
+          ext_mem_addr_r = tmp_addr;
+
+          prg_ce_r = 0;
+			 prg_oe_r = 0;
+			 prg_we_r = 1;
+			 
+          mem_wrk_state = `MEM_CTLR_READ_DATA_GET;
+        end
+      end
+  
+      `MEM_CTLR_READ_DATA_GET: begin
+		  if(ext_rw_halt == 1) begin
+           mem_wrk_state = `MEM_CTLR_WAIT;			 
+			 bus_director = 0;
+        end else
+        if(bus_director == 1) begin
+          tmp_data = ext_mem_data;
+//          ext_mem_addr_r = tmp_addr;
+          ext_read_dn_r = 1;
+                    
+          mem_wrk_state = `MEM_CTLR_READ_FINISH;
+        end
+      end
+      
+      `MEM_CTLR_READ_FINISH: begin
 		  if(ext_rw_halt == 1) begin
            mem_wrk_state = `MEM_CTLR_WAIT;			 
 			 bus_director = 0;
        end else
        if(bus_director == 1) begin
-          ext_mem_data_r = mem[tmp_addr];
-          ext_mem_addr_r = tmp_addr;
-          ext_read_dn_r = 1;
+         tmp_addr = 0;
+	      tmp_data = 0;
+
+          ext_read_dn_r = 0;
                     
           mem_wrk_state = `MEM_CTLR_WAIT;
 			 
 			 bus_director = 0;
         end
       end
-          
-      `MEM_CTLR_WRITE: begin
+      
+		// write states
+      `MEM_CTLR_WRITE_SET_ADDRESS: begin
 		  if(ext_rw_halt == 1) begin
           mem_wrk_state = `MEM_CTLR_WAIT;			 
           bus_director = 0;
         end else
         if(bus_director == 1) begin
 		  
-          mem[tmp_addr] = tmp_data;
-          ext_mem_data_r = tmp_data;
           ext_mem_addr_r = tmp_addr;
+          ext_mem_data_r = tmp_data;
+
+          prg_ce_r = 0;
+			 prg_oe_r = 0;
+          
+          mem_wrk_state = `MEM_CTLR_WRITE_SET_WE;
+        end
+      end
+          
+      `MEM_CTLR_WRITE_SET_WE: begin
+		  if(ext_rw_halt == 1) begin
+          mem_wrk_state = `MEM_CTLR_WAIT;			 
+          bus_director = 0;
+        end else
+        if(bus_director == 1) begin
+		  
+          prg_we_r = 0;
+			 
+          mem_wrk_state = `MEM_CTLR_WRITE_FINISH;
+        end
+      end
+          
+      `MEM_CTLR_WRITE_FINISH: begin
+		  if(ext_rw_halt == 1) begin
+          mem_wrk_state = `MEM_CTLR_WAIT;			 
+          bus_director = 0;
+        end else
+        if(bus_director == 1) begin
+		  
+//          mem[tmp_addr] = tmp_data;
+//          ext_mem_data_r = tmp_data;
+//          ext_mem_addr_r = tmp_addr;
           ext_write_dn_r = 1;
+			 
+			 prg_we_r = 1;
           
           mem_wrk_state = `MEM_CTLR_WAIT;
 			 
 			 bus_director = 0;
         end
       end
-          
+                
     endcase
+	 
+/**/
 
   end
   
   end
           
 end
-/**/
+
        
 endmodule
