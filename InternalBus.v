@@ -114,15 +114,17 @@ module InternalBus(
                                  ;
   
 
-  //inout 
-  tri [`DATA_SIZE0:0] src1;
-  //inout 
-  tri [`DATA_SIZE0:0] src0;
-  //inout 
-  tri [`DATA_SIZE0:0] dst;
-  //output 
+  wire [`DATA_SIZE0:0] src1_in;
+  wire [`DATA_SIZE0:0] src0_in;
+  wire [`DATA_SIZE0:0] dst_in;
+  
+  wire [`DATA_SIZE0:0] src1_out;
+  wire [`DATA_SIZE0:0] src0_out;
+  wire [`DATA_SIZE0:0] dst_out;
+  
+  
   wire [`DATA_SIZE0:0] dst_h;
-  /*output*/ wire [`DATA_SIZE0:0] cond;
+  wire [`DATA_SIZE0:0] cond;
   
   wire [`DATA_SIZE0:0] cmd_ptr;
   
@@ -296,11 +298,17 @@ module InternalBus(
 //            .read_e(read_e),
 //            .write_e(write_e),
             
-            .src1(src1),
-            .src0(src0),
-            .dst(dst),
-            .dst_h(dst_h),
-            .cond(cond),
+            .src1_in(src1_in),
+            .src0_in(src0_in),
+            .dst_in(dst_in),
+            .dst_h_in(dst_h),
+//            .cond_in(cond),
+				
+            .src1_out(src1_out),
+            .src0_out(src0_out),
+            .dst_out(dst_out),
+//            .dst_h(dst_h),
+            .cond_out(cond),
             
             .cmd_ptr(cmd_ptr),
             
@@ -343,10 +351,15 @@ module InternalBus(
         
         .state(state),
         
-        .src1(src1),
-        .src0(src0),
-        .dst(dst),
-        .dst_h(dst_h),
+        .src1_in(src1_out),
+        .src0_in(src0_out),
+//        .dst(dst),
+		  
+        .src1_out(src1_in),
+        .src0_out(src0_in),
+        .dst_out(dst_in),
+		  
+        .dst_h_out(dst_h),
         
         .next_state(next_state_a),
         
@@ -368,9 +381,14 @@ module InternalBus(
         
         .state(state),
         
-        .src1(src1),
-        .src0(src0),
-        .dst(dst),
+        .src1(src1_out),
+        .src0(src0_out),
+//        .dst_in(dst_out),
+		  
+//        .src1_out(src1),
+//        .src0_out(src0),
+        .dst(dst_in),
+		  
         .dst_h(dst_h),
         
         .data_in(data_in),

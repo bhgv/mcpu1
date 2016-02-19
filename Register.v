@@ -29,8 +29,10 @@ module RegisterManager (
             data_in,
             data_out,
             
-            register,
-            reg_ptr,
+            register_in,
+            register_out,
+            reg_ptr_in,
+            reg_ptr_out,
             
             isRegPtr,
             regFlags,
@@ -87,14 +89,17 @@ module RegisterManager (
 
 
 
-  inout [`DATA_SIZE0:0] register;
-  inout [`DATA_SIZE0:0] reg_ptr;
+  input wire [`DATA_SIZE0:0] register_in;
+  output [`DATA_SIZE0:0] register_out;
+  input wire [`DATA_SIZE0:0] reg_ptr_in;
+  output [`DATA_SIZE0:0] reg_ptr_out;
   wire [`DATA_SIZE0:0] register_r_adr = base_addr + regNum /* `DATA_SIZE*/;
   reg [`DATA_SIZE0:0] register_r_ptr;
   reg [`DATA_SIZE0:0] register_r;
-  tri [`DATA_SIZE0:0] register = (reg_op == `REG_OP_CATCH_DATA) 
-                                              ? `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
-                                              : register_r
+  wire [`DATA_SIZE0:0] register_out = //(reg_op == `REG_OP_CATCH_DATA) 
+//                                              ? `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+//                                              : 
+															 register_r
                                               ;  // tri or wire ??
 
   wire is_data_not_ptr_to_data = (isRegPtr == 0 && reg_op == `REG_OP_WRITE)
@@ -118,9 +123,10 @@ module RegisterManager (
                                               ;
 
 
-  tri [`DATA_SIZE0:0] reg_ptr = (reg_op == `REG_OP_CATCH_DATA) 
-                                              ? `ADDR_SIZE'h zzzzzzzz
-                                              : data_post_inc_dec
+  wire [`DATA_SIZE0:0] reg_ptr_out = //(reg_op == `REG_OP_CATCH_DATA) 
+//                                              ? `ADDR_SIZE'h zzzzzzzz
+//                                              : 
+															 data_post_inc_dec
                                               ;  // tri or wire ??
                                               
   
@@ -385,11 +391,11 @@ module RegisterManager (
       
         `REG_OP_CATCH_DATA: begin
           if(catched == 0) begin
-            register_r <= state == `ALU_RESULTS ? register : reg_ptr;
+            register_r <= state == `ALU_RESULTS ? register_in : reg_ptr_in;
 				is_read_r <= 1;
             
             if(state != `ALU_RESULTS) begin
-              register_r_ptr <= reg_ptr;
+              register_r_ptr <= reg_ptr_in;
 				  is_read_ptr_r <= 1;
             end
             catched <= 1;

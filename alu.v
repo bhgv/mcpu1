@@ -13,10 +13,14 @@ module Alu(
         
         state,
         
-        src1,
-        src0,
-        dst,
-        dst_h,
+        src1_in,
+        src0_in,
+//        dst_in,
+		  
+        src1_out,
+        src0_out,
+        dst_out,
+        dst_h_out,
         
         next_state,
         
@@ -34,28 +38,33 @@ module Alu(
   
   input wire [`STATE_SIZE0:0] state;
   
-  inout [`DATA_SIZE0:0] src1;
-  inout [`DATA_SIZE0:0] src0;
-  inout [`DATA_SIZE0:0] dst;
-  output reg [`DATA_SIZE0:0] dst_h;
+  input [`DATA_SIZE0:0] src1_in;
+  input [`DATA_SIZE0:0] src0_in;
+
+  output [`DATA_SIZE0:0] src1_out;
+  output [`DATA_SIZE0:0] src0_out;
+  output [`DATA_SIZE0:0] dst_out;
+
+  reg [`DATA_SIZE0:0] dst_h;
+  output wire [`DATA_SIZE0:0] dst_h_out = dst_h;
 
   reg [`DATA_SIZE0:0] src1_r;
   reg [`DATA_SIZE0:0] src0_r;
   reg [`DATA_SIZE0:0] dst_r;
   
-  tri [`DATA_SIZE0:0] src1 = state == `ALU_RESULTS 
+  wire [`DATA_SIZE0:0] src1_out = state == `ALU_RESULTS 
                                         ? src1_r 
-                                        : `DATA_SIZE'h zzzzzzzz;
-  tri [`DATA_SIZE0:0] src0 = state == `ALU_RESULTS 
+                                        : 0; //`DATA_SIZE'h zzzzzzzz;
+  wire [`DATA_SIZE0:0] src0_out = state == `ALU_RESULTS 
                                         ? src0_r 
-                                        : `DATA_SIZE'h zzzzzzzz;
-  tri [`DATA_SIZE0:0] dst = state == `ALU_RESULTS 
+                                        : 0; //`DATA_SIZE'h zzzzzzzz;
+  wire [`DATA_SIZE0:0] dst_out = state == `ALU_RESULTS 
                                         ? dst_r 
-                                        : `DATA_SIZE'h zzzzzzzz;
+                                        : 0; //`DATA_SIZE'h zzzzzzzz;
 
   output next_state;
   reg next_state_r;
-  tri next_state = next_state_r;
+  wire next_state = next_state_r;
   
   input wire rst;
   
@@ -99,12 +108,12 @@ module Alu(
         `ALU_BEGIN: begin
           dst_h = 0;
           
-          src1_r = src1;
-          src0_r = src0;
+          src1_r = src1_in;
+          src0_r = src0_in;
           
           case(cmd_code)
             `CMD_MOV: begin
-              {dst_r, src0_r} = {src0, src1};
+              {dst_r, src0_r} = {src0_in, src1_in};
               //src = src0;
               //src0_r = dst_h;
               
@@ -112,13 +121,13 @@ module Alu(
             end
             
             `CMD_ADD: begin
-              {dst_h, dst_r} = src0 + src1;
+              {dst_h, dst_r} = src0_in + src1_in;
               
               next_state_r = 1;
             end
             
             `CMD_SUB: begin
-              {dst_h, dst_r} = src0 - src1;
+              {dst_h, dst_r} = src0_in - src1_in;
               
               next_state_r = 1;
             end
@@ -145,9 +154,9 @@ module Alu(
 			       end
 				  end
 */
-              {dst_h, dst_r} = src0 * src1;
+              {dst_h, dst_r} = src0_in * src1_in;
               
-              next_state_r = 1;       
+              next_state_r = 1;
             end
             
             `CMD_DIV: begin
@@ -172,38 +181,38 @@ module Alu(
 			       end
 				  end
 */
-              dst_r = src0 / src1;
-              dst_h = src0 % src1;
+              dst_r = src0_in / src1_in;
+              dst_h = src0_in % src1_in;
               
               next_state_r = 1;
             end
             
             `CMD_SHR: begin
-              dst_r = src0 >> src1;
+              dst_r = src0_in >> src1_in;
               
               next_state_r = 1;
             end
             
             `CMD_SHL: begin
-              dst_r = src0 << src1;
+              dst_r = src0_in << src1_in;
               
               next_state_r = 1;
             end
             
             `CMD_XOR: begin
-              dst_r = src0 ^ src1;
+              dst_r = src0_in ^ src1_in;
               
               next_state_r = 1;
             end
             
             `CMD_AND: begin
-              dst_r = src0 & src1;
+              dst_r = src0_in & src1_in;
               
               next_state_r = 1;
             end
             
             `CMD_OR: begin
-              dst_r = src0 | src1;
+              dst_r = src0_in | src1_in;
               
               next_state_r = 1;
             end

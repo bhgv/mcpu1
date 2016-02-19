@@ -38,11 +38,17 @@ module MemManager (
 //            read_e,
 //            write_e,
             
-            src1,
-            src0,
-            dst,
-            dst_h,
-            cond,
+            src1_in,
+            src0_in,
+            dst_in,
+            dst_h_in,
+            cond_in,
+            
+            src1_out,
+            src0_out,
+            dst_out,
+//            dst_h_out,
+            cond_out,
             
             cmd_ptr,
             
@@ -297,15 +303,27 @@ module MemManager (
 
   
   
-  
+/**  
   inout  [`DATA_SIZE0:0] cond;
   inout  [`DATA_SIZE0:0] src1;
   inout  [`DATA_SIZE0:0] src0;
   inout  [`DATA_SIZE0:0] dst;
+/**/
+
+  input  [`DATA_SIZE0:0] cond_in;
+  input wire [`DATA_SIZE0:0] src1_in;
+  input wire [`DATA_SIZE0:0] src0_in;
+  input  [`DATA_SIZE0:0] dst_in;
+
+  output  [`DATA_SIZE0:0] cond_out;
+  output  [`DATA_SIZE0:0] src1_out;
+  output  [`DATA_SIZE0:0] src0_out;
+  output  [`DATA_SIZE0:0] dst_out;
 
 
 
-  tri [`DATA_SIZE0:0] cond_ptr;
+  wire [`DATA_SIZE0:0] cond_ptr_in;
+  wire [`DATA_SIZE0:0] cond_ptr_out;
 
 
   reg [`SIZE_REG_OP-1:0] cmd_op;
@@ -330,7 +348,8 @@ module MemManager (
                                   ;
   /**/
                                   
-  tri [`DATA_SIZE0:0] ip_ptr;
+  wire [`DATA_SIZE0:0] ip_ptr_in;
+  wire [`DATA_SIZE0:0] ip_ptr_out;
   
   input wire isIpSaveAllowed;
   
@@ -358,8 +377,9 @@ module MemManager (
             .data_in(data_in),
             .data_out(data_out_ip),
             
-            .register(command_word),
-            .reg_ptr(ip_ptr),
+            .register_out(command_word),
+            .reg_ptr_in(ip_ptr_in),
+            .reg_ptr_out(ip_ptr_out),
             
             .isRegPtr(1),      //ip is ptr of cmd
             .regFlags(2'b 01), //post-increment
@@ -418,23 +438,25 @@ module MemManager (
                                   ;
   /**/
   
-  tri [`DATA_SIZE0:0] src1_ptr = (src1_op == `REG_OP_CATCH_DATA) 
+  wire [`DATA_SIZE0:0] src1_ptr_out;
+  wire [`DATA_SIZE0:0] src1_ptr_in = (src1_op == `REG_OP_CATCH_DATA) 
                                               ? ( regNumS1 == `REG_IP 
-                                                            ? ip_ptr 
+                                                            ? ip_ptr_out 
                                                             : ( regNumS1 == regNumCnd
-                                                                          ? cond_ptr
-                                                                          : `ADDR_SIZE'h zzzzzzzz 
+                                                                          ? cond_ptr_out
+                                                                          : 0 //`ADDR_SIZE'h zzzzzzzz 
                                                               )
                                                 )
-                                              : `ADDR_SIZE'h zzzzzzzz
+                                              : 0 //`ADDR_SIZE'h zzzzzzzz
                                               ;
                                               
-  tri [`DATA_SIZE0:0] src1 = (state == `FILL_SRC1) 
+  wire [`DATA_SIZE0:0] src1_out;
+  wire [`DATA_SIZE0:0] int_src1_in = (state == `FILL_SRC1) 
                                   ? (regNumS1 == regNumCnd
-                                       ? cond
-                                       : `ADDR_SIZE'h zzzzzzzz
+                                       ? cond_out
+                                       : src1_in //0 //`ADDR_SIZE'h zzzzzzzz
                                     )
-                                  : `ADDR_SIZE'h zzzzzzzz
+                                  : src1_in //0 //`ADDR_SIZE'h zzzzzzzz
                                   ;
   
   input wire isS1SaveAllowed;
@@ -464,8 +486,10 @@ module MemManager (
             .data_in(data_in),
             .data_out(data_out_s1),
             
-            .register(src1),
-            .reg_ptr(src1_ptr),
+            .register_in(int_src1_in),
+            .register_out(src1_out),
+            .reg_ptr_in(src1_ptr_in),
+            .reg_ptr_out(src1_ptr_out),
             
             .isRegPtr(isRegS1Ptr),
             .regFlags(regS1Flags),
@@ -519,28 +543,30 @@ module MemManager (
                                   ;
   /**/
   
-  tri [`DATA_SIZE0:0] src0_ptr = (src0_op == `REG_OP_CATCH_DATA) 
+  wire [`DATA_SIZE0:0] src0_ptr_out;
+  wire [`DATA_SIZE0:0] src0_ptr_in = (src0_op == `REG_OP_CATCH_DATA) 
                                               ? ( regNumS0 == `REG_IP 
-                                                            ? ip_ptr 
+                                                            ? ip_ptr_out
                                                             : ( regNumS0 == regNumCnd
-                                                                          ? cond_ptr
+                                                                          ? cond_ptr_out
                                                                           : (regNumS0 == regNumS1 
-                                                                                       ? src1_ptr
-                                                                                       : `ADDR_SIZE'h zzzzzzzz 
+                                                                                       ? src1_ptr_out
+                                                                                       : 0 //`ADDR_SIZE'h zzzzzzzz 
                                                                             )
                                                               )
                                                 )
-                                              : `ADDR_SIZE'h zzzzzzzz
+                                              : 0 //`ADDR_SIZE'h zzzzzzzz
                                               ;
 
-  tri [`DATA_SIZE0:0] src0 =  (src0_op == `REG_OP_CATCH_DATA) 
+  wire [`DATA_SIZE0:0] src0_out;
+  wire [`DATA_SIZE0:0] int_src0_in =  (src0_op == `REG_OP_CATCH_DATA) 
                                    ? (regNumS0 == regNumCnd
-                                         ? cond
+                                         ? cond_out
                                          : (regNumS0 == regNumS1)
-                                                   ? src1 
-                                                   : `ADDR_SIZE'h zzzzzzzz
+                                                   ? src1_out 
+                                                   : src0_in //0 //`ADDR_SIZE'h zzzzzzzz
                                      )
-                                   : `ADDR_SIZE'h zzzzzzzz
+                                   : src0_in //0 //`ADDR_SIZE'h zzzzzzzz
                               ;
  
   input wire isS0SaveAllowed;
@@ -570,8 +596,10 @@ module MemManager (
             .data_in(data_in),
             .data_out(data_out_s0),
             
-            .register(src0),
-            .reg_ptr(src0_ptr),
+            .register_in(int_src0_in),
+            .register_out(src0_out),
+            .reg_ptr_in(src0_ptr_in),
+            .reg_ptr_out(src0_ptr_out),
             
             .isRegPtr(isRegS0Ptr),
             .regFlags(regS0Flags),
@@ -629,24 +657,26 @@ module MemManager (
                                   ;
   /**/
   
-  tri [`DATA_SIZE0:0] dst_ptr = (dst_op == `REG_OP_CATCH_DATA) 
+  wire [`DATA_SIZE0:0] dst_ptr_out;
+  wire [`DATA_SIZE0:0] dst_ptr_in = (dst_op == `REG_OP_CATCH_DATA) 
                                               ? ( regNumD == `REG_IP 
-                                                            ? ip_ptr 
+                                                            ? ip_ptr_out 
                                                             : (regNumD == regNumCnd
-                                                                        ? cond_ptr
+                                                                        ? cond_ptr_out
                                                                         : (regNumD == regNumS1 
-                                                                                    ? src1_ptr
+                                                                                    ? src1_ptr_out
                                                                                     : (regNumD == regNumS0 
-                                                                                                ? src0_ptr
-                                                                                                : `ADDR_SIZE'h zzzzzzzz 
+                                                                                                ? src0_ptr_out
+                                                                                                : 0 //`ADDR_SIZE'h zzzzzzzz 
                                                                                       )
                                                                           )
                                                               )
                                                 )
-                                              : `ADDR_SIZE'h zzzzzzzz
+                                              : 0 //`ADDR_SIZE'h zzzzzzzz
                                               ;
                                               
-  tri [`DATA_SIZE0:0] dst;
+  wire [`DATA_SIZE0:0] dst_in;
+  wire [`DATA_SIZE0:0] dst_out;
   
   input wire isDSaveAllowed;
   input wire isDSavePtrAllowed;
@@ -680,8 +710,10 @@ module MemManager (
             .data_in(data_in),
             .data_out(data_out_d),
             
-            .register(dst),
-            .reg_ptr(dst_ptr),
+            .register_in(dst_in),
+            .register_out(dst_out),
+            .reg_ptr_in(dst_ptr_in),
+            .reg_ptr_out(dst_ptr_out),
             
             .isRegPtr(isRegDPtr),
             .regFlags(regDFlags),
@@ -710,7 +742,7 @@ module MemManager (
             );
   
   
-  input wire [`DATA_SIZE0:0] dst_h;
+  input wire [`DATA_SIZE0:0] dst_h_in;
   reg [`DATA_SIZE0:0] dst_h_r;
 
 
@@ -741,9 +773,9 @@ module MemManager (
                                   ;
   /**/
   
-  assign cond_ptr = (cond_op == `REG_OP_CATCH_DATA) 
-                                              ? ( regNumCnd == `REG_IP ? ip_ptr : `ADDR_SIZE'h zzzzzzzz )
-                                              : `ADDR_SIZE'h zzzzzzzz
+  assign cond_ptr_in = (cond_op == `REG_OP_CATCH_DATA) 
+                                              ? ( regNumCnd == `REG_IP ? ip_ptr_out : 0 /*`ADDR_SIZE'h zzzzzzzz*/ )
+                                              : 0 //`ADDR_SIZE'h zzzzzzzz
                                               ;
                                               
   tri [`DATA_SIZE0:0] cond;
@@ -775,8 +807,10 @@ module MemManager (
             .data_in(data_in),
             .data_out(data_out_c),
             
-            .register(cond),
-            .reg_ptr(cond_ptr),
+            .register_in(cond_in),
+            .register_out(cond_out),
+            .reg_ptr_in(cond_ptr_in),
+            .reg_ptr_out(cond_ptr_out),
             
             .isRegPtr(isRegCondPtr),
             .regFlags(regCondFlags),
