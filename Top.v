@@ -105,9 +105,9 @@ parameter INTERNAL_MEM_VALUE = 200;
 	output wire prg_bd = 0;
 	
 	reg prg_ce_r;
-	output wire prg_ce0 = 0;
-	output wire prg_ce1 = 0;
-	output wire prg_ce2 = 0;
+	output wire prg_ce0 = prg_ce_r;
+	output wire prg_ce1 = prg_ce_r;
+	output wire prg_ce2 = prg_ce_r;
 	
 	reg prg_oe_r;
 	output wire prg_oe = prg_oe_r;
@@ -558,6 +558,8 @@ always @(posedge clk) begin
 
         tmp_addr = 0;
 	     tmp_data =0;
+		  
+		  prg_ce_r = 1;
 
 //        ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 //        ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;

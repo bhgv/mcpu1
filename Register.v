@@ -47,7 +47,10 @@ module RegisterManager (
             write_dn,
 //            read_e,
 //            write_e,
-                        
+
+            is_read,
+				is_read_ptr,
+				
             cmd_ptr,
             
             disp_online,
@@ -124,6 +127,15 @@ module RegisterManager (
   reg register_waiting;
   reg registerptr_waiting;
   reg registerw_waiting;
+  
+  output is_read;
+  reg is_read_r;
+  wire is_read = is_read_r;
+  
+  output is_read_ptr;
+  reg is_read_ptr_r;
+  wire is_read_ptr = is_read_ptr_r;
+
 
 
 
@@ -177,7 +189,8 @@ module RegisterManager (
   input want_write_in;
   output want_write_out;
   reg want_write_r;
-  wire want_write_out = want_write_r; //disp_online == 1 ? want_write_r : 1'b z;
+  reg want_write_ptr_r;
+  wire want_write_out = want_write_r | want_write_ptr_r; //disp_online == 1 ? want_write_r : 1'b z;
   wire want_write_in; // = want_write_r;
 
   
@@ -255,7 +268,7 @@ module RegisterManager (
 //    is_bus_busy_r = 1'b z;
     
 	 
-	 is_can_read = ~(want_write_in ^ want_write_r);
+	 is_can_read = ~(want_write_in ^ (want_write_r | want_write_ptr_r));
 	 
 	 
     
@@ -335,8 +348,13 @@ module RegisterManager (
     isTopP <= 0;
     
     want_write_r <= 1'b 0; //z;
+    want_write_ptr_r <= 1'b 0; //z;
 	 
 	 rw_halt_r <= 1'b 0; //z;
+	 
+	 is_read_r <= 0;
+	 is_read_ptr_r <= 0;
+	 
   end
 //  else if(state == `ALU_RESULTS) begin
 //    register_r <= register;
@@ -368,9 +386,11 @@ module RegisterManager (
         `REG_OP_CATCH_DATA: begin
           if(catched == 0) begin
             register_r <= state == `ALU_RESULTS ? register : reg_ptr;
+				is_read_r <= 1;
             
             if(state != `ALU_RESULTS) begin
               register_r_ptr <= reg_ptr;
+				  is_read_ptr_r <= 1;
             end
             catched <= 1;
           end
@@ -408,6 +428,8 @@ module RegisterManager (
                     register_r_ptr <= data_in;
                     /*if(! isDinamic )*/ register_waiting <= 0;
                     next_state_r <= 1;
+						  
+						  is_read_r <= 1;
                     
                     want_write_r <= 1'b 0; //z;
                   end
@@ -476,8 +498,10 @@ module RegisterManager (
                   register_r <= data_in;
                   /*if(! isDinamic )*/ registerptr_waiting <= 0;
                   next_state_r <= 1;
+						
+						is_read_ptr_r <= 1;
                   
-                  want_write_r <= 1'b 0; //z;
+                  want_write_ptr_r <= 1'b 0; //z;
                 end
             end
 			 
@@ -490,7 +514,7 @@ module RegisterManager (
               addr_r <= 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
               read_q_r <= 1'b 0; //z;
               
-              want_write_r <= 1'b 0; //z;
+              want_write_ptr_r <= 1'b 0; //z;
 
               // VV thinking if it possible to make read in time of write
               if(cpu_ind_rel == 2'b10 && (want_write_in == 1 /* || want_write_r == 1 */) ) begin
@@ -517,7 +541,7 @@ module RegisterManager (
               halt_q_r <= 1;
               registerptr_waiting <= 1;
               
-              want_write_r <= isSavePtrAllowed;
+              want_write_ptr_r <= isSavePtrAllowed;
     
               single <= 0;
             end
@@ -570,6 +594,13 @@ module RegisterManager (
             ) begin
               registerw_waiting <= 0;
               next_state_r <= 1;
+				  
+				  if(reg_op == `REG_OP_WRITE) begin //!! VV
+				    want_write_r <= 0;
+				  end else begin
+				    want_write_ptr_r <= 0; 
+				  end                               //!! AA
+				  
             end
           end else begin
             if(write_q_r === 1) begin

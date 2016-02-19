@@ -153,21 +153,23 @@ module InternalBus(
   inout tri [`CPU_MSG_SIZE0:0] cpu_msg;
   
   
-//	reg [31:0] mem [0:100]; 
-//  initial $readmemh("mem.txt", mem);
   
-
-//parameter STEP = 20;
-
-/*
-  tri [`DATA_SIZE0:0] data_inout = 
-						 disp_online == 1 && (read_q === 1 || write_q === 1) 
-						 ? data_out
-						 : (bus_busy === 1)
-						 ? data_in
-						 : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
-						;
-*/
+  
+  wire 
+		is_ip_read,
+		is_ip_read_ptr,
+		is_cnd_read,
+		is_cnd_read_ptr,
+		is_s1_read,
+		is_s1_read_ptr,
+		is_s0_read,
+		is_s0_read_ptr,
+		is_d_read
+		;
+  
+  
+  
+  
 
 /**
   StartManager start_mng(
@@ -246,6 +248,16 @@ module InternalBus(
             .isS1SavePtrAllowed(isS1SavePtrAllowed),
             .isS0SaveAllowed(isS0SaveAllowed),
             .isS0SavePtrAllowed(isS0SavePtrAllowed),
+				
+				.is_ip_read(is_ip_read),
+				.is_ip_read_ptr(is_ip_read_ptr),
+				.is_cnd_read(is_cnd_read),
+				.is_cnd_read_ptr(is_cnd_read_ptr),
+				.is_s1_read(is_s1_read),
+				.is_s1_read_ptr(is_s1_read_ptr),
+				.is_s0_read(is_s0_read),
+				.is_s0_read_ptr(is_s0_read_ptr),
+				.is_d_read(is_d_read),
 
             .rst(rst)
             );
@@ -305,6 +317,16 @@ module InternalBus(
             .isS1SavePtrAllowed(isS1SavePtrAllowed),
             .isS0SaveAllowed(isS0SaveAllowed),
             .isS0SavePtrAllowed(isS0SavePtrAllowed),
+
+				.is_ip_read(is_ip_read),
+				.is_ip_read_ptr(is_ip_read_ptr),
+				.is_cnd_read(is_cnd_read),
+				.is_cnd_read_ptr(is_cnd_read_ptr),
+				.is_s1_read(is_s1_read),
+				.is_s1_read_ptr(is_s1_read_ptr),
+				.is_s0_read(is_s0_read),
+				.is_s0_read_ptr(is_s0_read_ptr),
+				.is_d_read(is_d_read),
             
             .rst(rst)
             );

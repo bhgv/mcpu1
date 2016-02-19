@@ -644,6 +644,8 @@ module BridgeToOutside (
               
             end
             
+				`READ_DST,
+				`READ_DST_P,
             `READ_COND, 
             `READ_COND_P,
             `READ_SRC1,
@@ -655,6 +657,8 @@ module BridgeToOutside (
                 ext_dispatcher_q_r = 1;
             end
             
+				`WRITE_DST,
+				`WRITE_DST_P,
             `WRITE_REG_IP,
             `WRITE_DST,
             `WRITE_SRC1,
@@ -707,6 +711,8 @@ module BridgeToOutside (
               //read_dn_r = 1;
             end
             
+				`READ_DST,
+				`READ_DST_P,
             `READ_COND, 
             `READ_COND_P,
             `READ_SRC1,
@@ -745,6 +751,8 @@ module BridgeToOutside (
             end
             /**/
             
+				`WRITE_DST,
+				`WRITE_DST_P,
             `WRITE_REG_IP,
             `WRITE_DST,
             `WRITE_SRC1,

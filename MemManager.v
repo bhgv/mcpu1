@@ -59,6 +59,16 @@ module MemManager (
             isS1SavePtrAllowed,
             isS0SaveAllowed,
             isS0SavePtrAllowed,
+				
+				is_ip_read,
+				is_ip_read_ptr,
+				is_cnd_read,
+				is_cnd_read_ptr,
+				is_s1_read,
+				is_s1_read_ptr,
+				is_s0_read,
+				is_s0_read_ptr,
+				is_d_read,
             
             rst
             );
@@ -273,6 +283,21 @@ module MemManager (
 							  ;
   
   
+  output wire
+            is_ip_read,
+				is_ip_read_ptr,
+				is_cnd_read,
+				is_cnd_read_ptr,
+				is_s1_read,
+				is_s1_read_ptr,
+				is_s0_read,
+				is_s0_read_ptr,
+				is_d_read
+            ;
+
+  
+  
+  
   inout  [`DATA_SIZE0:0] cond;
   inout  [`DATA_SIZE0:0] src1;
   inout  [`DATA_SIZE0:0] src0;
@@ -349,6 +374,9 @@ module MemManager (
             .write_q(write_q_ip),
             .read_dn(read_dn),
             .write_dn(write_dn),
+				
+				.is_read(is_ip_read),
+				.is_read_ptr(is_ip_read_ptr),
             
             .cmd_ptr(cmd_ptr),
             
@@ -452,6 +480,9 @@ module MemManager (
             .write_q(write_q_s1),
             .read_dn(read_dn),
             .write_dn(write_dn),
+				
+				.is_read(is_s1_read),
+				.is_read_ptr(is_s1_read_ptr),
             
             .cmd_ptr(cmd_ptr),
             
@@ -555,6 +586,9 @@ module MemManager (
             .write_q(write_q_s0),
             .read_dn(read_dn),
             .write_dn(write_dn),
+				
+				.is_read(is_s0_read),
+				.is_read_ptr(is_s0_read_ptr),
             
             .cmd_ptr(cmd_ptr),
             
@@ -662,6 +696,9 @@ module MemManager (
             .write_q(write_q_d),
             .read_dn(read_dn),
             .write_dn(write_dn),
+				
+				.is_read(is_d_read),
+//				.is_read_ptr(1'b z), //is_d_read_ptr),
             
             .cmd_ptr(cmd_ptr),
             
@@ -754,6 +791,9 @@ module MemManager (
             .write_q(write_q_c),
             .read_dn(read_dn),
             .write_dn(write_dn),
+				
+				.is_read(is_cnd_read),
+				.is_read_ptr(is_cnd_read_ptr),
             
             .cmd_ptr(cmd_ptr),
             

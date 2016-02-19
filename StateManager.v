@@ -24,6 +24,16 @@ module StateManager(
             isS1SavePtrAllowed,
             isS0SaveAllowed,
             isS0SavePtrAllowed,
+
+				is_ip_read,
+				is_ip_read_ptr,
+				is_cnd_read,
+				is_cnd_read_ptr,
+				is_s1_read,
+				is_s1_read_ptr,
+				is_s0_read,
+				is_s0_read_ptr,
+				is_d_read,
             
             rst
             );
@@ -145,7 +155,17 @@ module StateManager(
   output isS0SavePtrAllowed;
   wire isS0SavePtrAllowed = 0 ;
 
-  
+  input wire 
+		is_ip_read,
+		is_ip_read_ptr,
+		is_cnd_read,
+		is_cnd_read_ptr,
+		is_s1_read,
+		is_s1_read_ptr,
+		is_s0_read,
+		is_s0_read_ptr,
+		is_d_read
+		;
   
   reg anti_continuous;
   
@@ -223,20 +243,20 @@ module StateManager(
             else if(&regS1Flags == 0) 
               state = (
 				            regNumS1 == `REG_IP 
-								|| (&regCondFlags == 0 && regNumS1 == regNumCnd)
+								|| (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
                       ) ? `FILL_SRC1 : `READ_SRC1;
             else if(&regS0Flags == 0) 
               state = (
 				            regNumS0 == `REG_IP 
-								|| (&regCondFlags == 0 && regNumS0 == regNumCnd)
-								|| (&regS1Flags == 0 && regNumS0 == regNumS1)
+								|| (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read)
+								|| (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 							 ) ? `FILL_SRC0 : `READ_SRC0;
             else if(isRegDPtr == 1) 
               state = (
 				            regNumD == `REG_IP 
-								|| (&regCondFlags == 0 && regNumD == regNumCnd) 
-								|| (&regS1Flags == 0 && regNumD == regNumS1) 
-								|| (&regS0Flags == 0 && regNumD == regNumS0)
+								|| (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read)
+								|| (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+								|| (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 							 ) ? `FILL_DST_P : `READ_DST;
             else
               state = `ALU_BEGIN;
@@ -254,14 +274,20 @@ module StateManager(
           else if(&regS1Flags == 0) 
             state = (
 				          regNumS1 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS1 == regNumCnd)
+							 || (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
 						  ) ? `FILL_SRC1 : `READ_SRC1;
+          else if(&regS0Flags == 0) 
+            state = (
+				          regNumS0 == `REG_IP 
+							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read)
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
@@ -281,13 +307,13 @@ module StateManager(
           if(&regS1Flags == 0) 
             state = (
 				          regNumS1 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS1 == regNumCnd)
+							 || (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
 						  ) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
             state = (
 				          regNumS0 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS0 == regNumCnd)
-							 || (&regS1Flags == 0 && regNumS0 == regNumS1)
+							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read)
+							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
 //          else if(&regS0Flags == 0) 
 //            state = (
@@ -298,9 +324,9 @@ module StateManager(
           else if(isRegDPtr == 1) 
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
@@ -325,20 +351,20 @@ module StateManager(
           if(&regS1Flags == 0) 
             state = (
 				          regNumS1 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS1 == regNumCnd)
+							 || (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
 						  ) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
             state = (
 				          regNumS0 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS0 == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumS0 == regNumS1)
+							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
@@ -355,15 +381,15 @@ module StateManager(
           if(&regS0Flags == 0) 
             state = (
 				          regNumS0 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS0 == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumS0 == regNumS1)
+							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
@@ -380,18 +406,19 @@ module StateManager(
           if(&regS0Flags == 0) 
             state = (
 				          regNumS0 == `REG_IP 
-							 || (&regCondFlags == 0 && regNumS0 == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumS0 == regNumS1)
+							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
-          else
+          else begin
             state = `ALU_BEGIN;
+		    end
         end
 
         `READ_SRC0, `FILL_SRC0: begin
@@ -404,9 +431,9 @@ module StateManager(
           else if(isRegDPtr == 1) begin
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           end else begin
             state = `ALU_BEGIN;
@@ -417,9 +444,9 @@ module StateManager(
           if(isRegDPtr == 1) 
             state = (
 				          regNumD == `REG_IP 
-							 || (&regCondFlags == 0 && regNumD == regNumCnd) 
-							 || (&regS1Flags == 0 && regNumD == regNumS1) 
-							 || (&regS0Flags == 0 && regNumD == regNumS0)
+							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
+							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
+							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
