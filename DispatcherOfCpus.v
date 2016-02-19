@@ -37,7 +37,7 @@ module DispatcherOfCpus(
             
 				ext_rw_halt,
 				
-            ext_rw_busy,
+//            ext_rw_busy,
             
             read_q,
             write_q,
@@ -274,7 +274,7 @@ parameter PROC_QUANTITY = 8;
   input wire ext_read_dn;
   input wire ext_write_dn;
   
-  input wire ext_rw_busy;
+//  input wire ext_rw_busy;
   
   
   output ext_rw_halt;

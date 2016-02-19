@@ -32,8 +32,8 @@ module InternalStartupRAM(
 	rst
 );
 
-parameter INTERNAL_MEM_VALUE = 200;
-parameter INTERNAL_MEM_FILE = "mem.txt";
+parameter INTERNAL_MEM_VALUE = 0; //200;
+parameter INTERNAL_MEM_FILE = ""; //"mem.txt";
 
 
 
