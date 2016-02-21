@@ -82,9 +82,14 @@ module Top(
 	prg_oe,
 	
 	prg_we,
+	
+	TxD,
+	RxD,
 
 	rst
 );
+
+parameter ClkFrequency = 50_000_000;
 
 parameter CPU_QUANTITY = 2;
 parameter PROC_QUANTITY = 7;
@@ -95,6 +100,15 @@ parameter INTERNAL_MEM_FILE = "mem.txt";
 parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
 
 
+
+  parameter TX_ADDR = 999980;
+  parameter RX_ADDR = 999980 + 1;
+
+  parameter Baud = 9600; //115200;
+
+
+
+  
 	input wire clk;
 	input wire rst;
 	
@@ -113,6 +127,10 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
 	
 //	reg prg_we_r;
 	output wire prg_we;// = prg_we_r;
+	
+	
+	output wire TxD;
+	input wire RxD;
 
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
@@ -139,6 +157,11 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
   
   
   
+  wire [`ADDR_SIZE0:0] com_prt_addr_out;
+  wire [`DATA_SIZE0:0] com_prt_data_out;
+  
+  wire com_prt_read_dn;
+  wire com_prt_write_dn;
   
   
 //  reg [7:0] mem_wrk_state;
@@ -160,8 +183,17 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
   wire [`ADDR_SIZE0:0] mem_addr_out;
   wire [`DATA_SIZE0:0] mem_data_out;
 
-  wire [`ADDR_SIZE0:0] mem_addr_in = int_mem_addr_out | ext_mem_addr_out; //tmp_addr; 
-  wire [`DATA_SIZE0:0] mem_data_in = int_mem_data_out | ext_mem_data_out; //tmp_data; 
+  wire [`ADDR_SIZE0:0] mem_addr_in = 
+                                    int_mem_addr_out 
+												| ext_mem_addr_out
+												| com_prt_addr_out
+												; //tmp_addr; 
+												
+  wire [`DATA_SIZE0:0] mem_data_in = 
+                                    int_mem_data_out 
+												| ext_mem_data_out
+												| com_prt_data_out
+												; //tmp_data; 
   
 //  reg ext_read_dn_r;
 //  reg ext_write_dn_r;
@@ -172,8 +204,17 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
   wire ext_mem_read_dn;
   wire ext_mem_write_dn;
 
-  wire mem_read_dn = int_mem_read_dn | ext_mem_read_dn; //ext_read_dn_r;
-  wire mem_write_dn = int_mem_write_dn | ext_mem_write_dn; //ext_write_dn_r;
+  wire mem_read_dn = 
+                     int_mem_read_dn 
+							| ext_mem_read_dn
+							| com_prt_read_dn
+							; //ext_read_dn_r;
+							
+  wire mem_write_dn = 
+                     int_mem_write_dn 
+							| ext_mem_write_dn
+							| com_prt_write_dn
+							; //ext_write_dn_r;
    
 
   wire bus_busy; // = bus_busy_r;
@@ -404,7 +445,7 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
 DispatcherOfCpus disp_1(
             .clk(clk),
 				.clk_oe(clk_oe),
-            .rst(rst),
+            .rst(~rst),
             
             .halt_q(halt_q),
             .rw_halt(rw_halt),
@@ -496,7 +537,7 @@ InternalStartupRAM int_ram(
 	
    .rw_halt(ext_rw_halt),
 	
-	.rst(rst)
+	.rst(~rst)
 );
 defparam int_ram.INTERNAL_MEM_VALUE = INTERNAL_MEM_VALUE;
 defparam int_ram.INTERNAL_MEM_FILE = INTERNAL_MEM_FILE;
@@ -539,11 +580,40 @@ ExternalSRAMInterface ext_ram_itf(
 	
 	.prg_we(prg_we),
 
-	.rst(rst)
+	.rst(~rst)
 );
 defparam ext_ram_itf.MEM_BEGIN = INTERNAL_MEM_VALUE;
 defparam ext_ram_itf.MEM_END = RAM_TOTAL;
 /**/
+
+
+
+Rs232 com_itf (
+  .clk(clk),
+  .clk_oe(clk_oe),
+
+  .addr_in(mem_addr_out),
+  .addr_out(com_prt_addr_out),
+  
+  .data_in(mem_data_out),
+  .data_out(com_prt_data_out),
+
+  .read_q(read_q),
+  .write_q(write_q),
+  
+  .read_dn(com_prt_read_dn),
+  .write_dn(com_prt_write_dn),
+
+  .RxD(RxD),
+  .TxD(TxD),
+
+  .rst(~rst)
+);
+defparam com_itf.TX_ADDR = TX_ADDR; //1_000_000;
+defparam com_itf.RX_ADDR = RX_ADDR; //1_000_000;
+
+defparam com_itf.ClkFrequency = ClkFrequency;
+defparam com_itf.Baud = Baud; //115200;
 
 
 
