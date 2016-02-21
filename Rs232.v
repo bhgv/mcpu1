@@ -32,7 +32,7 @@ module Rs232 (
   parameter TX_ADDR = `ADDR_SIZE'h f000_0000;
   parameter RX_ADDR = `ADDR_SIZE'h f000_0001;
 
-  parameter ClkFrequency = 50_000_000;
+  parameter ClkFrequency = 50000000;
   parameter Baud = 9600; //115200;
 
   
@@ -80,7 +80,7 @@ module Rs232 (
   
   
 //  reg [7:0] tmp_data;
-  reg tx_start;
+  wire tx_start = state == `UART_SEND_BYTE;
   wire is_tx_busy;
   reg [7:0] tx_data;
   
@@ -90,6 +90,7 @@ module Rs232 (
 //  reg [`DATA_SIZE0:0] tmp_data;
 
   
+  /**
   async_transmitter tx(
     .clk(clk),
     .TxD_start(tx_start),
@@ -99,7 +100,10 @@ module Rs232 (
   );
   defparam tx.ClkFrequency = ClkFrequency;
   defparam tx.Baud = Baud; //115200;
+  /**/
   
+  
+  reg rst_uart;
   
   
   wire is_rx_ready;
@@ -107,7 +111,11 @@ module Rs232 (
   
   wire rx_idle;        //only for packets
   wire rx_endofpacket; //only for packets
+  
+  reg [7:0] rx_buf;
+  reg is_rx_buf;
 
+/**
 async_receiver rx(
 	.clk(clk),
 	.RxD(RxD),
@@ -122,17 +130,55 @@ async_receiver rx(
 );
   defparam rx.ClkFrequency = ClkFrequency;
   defparam rx.Baud = Baud; //115200;
+/**/
 
 
+  wire is_receiving, is_transmitting, recv_error;
+
+    uart 
+//	 #(
+//        .baud_rate(baud_rate),            // default is 9600
+//        .sys_clk_freq(sys_clk_freq)       // default is 100000000
+//     )
+    rs232(
+        .clk(clk_oe),                        // The master clock for this module
+        .rst(rst_uart),                        // Synchronous reset
+        .rx(RxD),                          // Incoming serial line
+        .tx(TxD),                          // Outgoing serial line
+        .transmit(tx_start),              // Signal to transmit
+        .tx_byte(tx_data),                // Byte to transmit       
+        .received(is_rx_ready),              // Indicated that a byte has been received
+        .rx_byte(rx_data),                // Byte received
+        .is_receiving(is_receiving),      // Low when receive line is idle
+        .is_transmitting(is_transmitting),// Low when transmit line is idle
+        .recv_error(recv_error)           // Indicates error in receiving packet.
+      //.recv_state(recv_state),          // for test bench
+      //.tx_state(tx_state)               // for test bench
+    );
+	 defparam rs232.baud_rate = Baud;
+	 defparam rs232.sys_clk_freq = ClkFrequency/2;
+
+	 
   
   always @(posedge clk) begin
   
     if(clk_oe == 0) begin
 
+	   if(rst == 1) begin
+		  rst_uart = 1;
+		end else begin
+//		  rst_uart = 0;
+		  
+        if(is_rx_ready == 1) begin
+		    rx_buf = rx_data;
+			 is_rx_buf = 1;
+		  end
+		end
+
     end else begin //clk_oe
 	 
 	   if(rst == 1) begin
-		  tx_start = 0;
+//		  tx_start = 0;
 //		  tmp_data = 0;
 		  
 		  addr_r = 0;
@@ -143,8 +189,12 @@ async_receiver rx(
 		  
 		  state = `UART_WAIT_CMD;
 		  
+		  is_rx_buf = 0;
+		  
+		  rst_uart = 1;
+		  
 		end else begin //rst
-		  tx_start = 0;
+//		  tx_start = 0;
 		  
 		  read_dn_r = 0;
 		  write_dn_r = 0;
@@ -154,10 +204,14 @@ async_receiver rx(
 		  
 		  case(state)
 		    `UART_WAIT_CMD: begin
+			   rst_uart = 0;
+				
 		      if(write_q == 1 && addr_in == TX_ADDR) begin
 			     data_r = data_in;
 				  addr_r = addr_in;
 				
+              tx_data = data_in[7:0];
+
 				  state = `UART_SEND_BYTE;
 				end else
 		      if(read_q == 1 && addr_in == RX_ADDR) begin
@@ -171,12 +225,12 @@ async_receiver rx(
 			 
 			 `UART_SEND_BYTE: begin
 		      if(is_tx_busy == 0) begin
-			     tx_start = 1;
+//			     tx_start = 1;
 			 
 //			     addr_r = tmp_addr;
 //			     data_r = tmp_data;
 
-              tx_data = data_r[7:0];
+//              tx_data = data_r[7:0];
 			 
 			     write_dn_r = 1;
 				  
@@ -185,12 +239,14 @@ async_receiver rx(
 			 end
 			 
 			 `UART_RECEIVE_BYTE: begin
-		      if(is_rx_ready == 1) begin
+		      if(is_rx_buf == 1) begin
 //			     tx_start = 1;
 			 
 //			     addr_r = tmp_addr;
-			     data_r = {`DATA_SIZE'h 0000_0000_0000_0000, rx_data};
+			     data_r = {`DATA_SIZE'h0000000000000000, rx_buf};
 			 
+              is_rx_buf = 0;
+				  
 			     read_dn_r = 1;
 				  
 				  state = `UART_WAIT_CMD;
