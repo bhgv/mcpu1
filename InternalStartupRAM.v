@@ -131,6 +131,8 @@ always @(posedge clk) begin
 	 
 	 data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+	 
+	 mem[2 + 15] = `DATA_SIZE'h 10;
   end else
   begin
 

@@ -609,13 +609,26 @@ module RegisterManager (
 				  
             end
           end else begin
+			   if(rw_halt_in == 1) begin //!! VV
+				  addr_r <= 0;
+				  data_r <= 0;
+//				  halt_q_r <= 0;
+				  
+              write_q_r <= 1'b 0; //z;
+				end else                  //!! AA
             if(write_q_r === 1) begin
+				  addr_r <= 0;    //!! VV
+				  data_r <= 0;
+//				  halt_q_r <= 0;  //!! AA
+				  
               write_q_r <= 1'b 0; //z;
             end else //if(write_dn == 0) 
             if(disp_online == 1 && single == 1) begin
               data_r <= /*reg_op == `REG_OP_WRITE_P ?*/ data_post_inc_dec; // : register_r; //register_r;
               addr_r <= addr_to_save;
               write_q_r <= 1;
+				  
+//				  halt_q_r <= 1; //!!
               
 //              registerw_waiting <= 1;
               

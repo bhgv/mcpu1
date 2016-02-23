@@ -46,7 +46,8 @@ module Alu(
   output [`DATA_SIZE0:0] dst_out;
 
   reg [`DATA_SIZE0:0] dst_h;
-  output wire [`DATA_SIZE0:0] dst_h_out = dst_h;
+  output [`DATA_SIZE0:0] dst_h_out;
+  wire [`DATA_SIZE0:0] dst_h_out = dst_h;
 
   reg [`DATA_SIZE0:0] src1_r;
   reg [`DATA_SIZE0:0] src0_r;

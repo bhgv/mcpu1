@@ -85,7 +85,24 @@ module Top(
 	
 	TxD,
 	RxD,
-
+	
+	
+	pix_clk,
+	de,
+	
+	hs,
+	vs,
+		 
+	r,
+	g,
+	b,
+		
+	ttl_en_,
+	vga1_oe_,
+	vga1_we_,
+	vga2_oe_,
+	vga2_we_,
+	
 	rst
 );
 
@@ -101,12 +118,17 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
 
 
 
-  parameter TX_ADDR = 999980;
-  parameter RX_ADDR = 999980 + 1;
+  parameter RS232_DATA_ADDR = 999980;
 
-  parameter Baud = 9600; //115200;
+  parameter Baud = 9600; //115200; //
 
 
+  
+		parameter ADDR_VGA_R = 999979;
+		parameter ADDR_VGA_G = 999978;
+		parameter ADDR_VGA_B = 999977;
+
+		
 
   
 	input wire clk;
@@ -164,6 +186,13 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
   wire com_prt_write_dn;
   
   
+  wire [`ADDR_SIZE0:0] vga_addr_out;
+  wire [`DATA_SIZE0:0] vga_data_out;
+  
+  wire vga_read_dn;
+  wire vga_write_dn;
+  
+  
 //  reg [7:0] mem_wrk_state;
   
 //  reg bus_director;
@@ -187,12 +216,14 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
                                     int_mem_addr_out 
 												| ext_mem_addr_out
 												| com_prt_addr_out
+												| vga_addr_out
 												; //tmp_addr; 
 												
   wire [`DATA_SIZE0:0] mem_data_in = 
                                     int_mem_data_out 
 												| ext_mem_data_out
 												| com_prt_data_out
+												| vga_data_out
 												; //tmp_data; 
   
 //  reg ext_read_dn_r;
@@ -208,14 +239,29 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
                      int_mem_read_dn 
 							| ext_mem_read_dn
 							| com_prt_read_dn
+							| vga_read_dn
 							; //ext_read_dn_r;
 							
   wire mem_write_dn = 
                      int_mem_write_dn 
 							| ext_mem_write_dn
 							| com_prt_write_dn
+							| vga_write_dn
 							; //ext_write_dn_r;
    
+
+  wire rw_halt_rs232;
+  
+  
+  
+  wire DOC_rw_halt_out;
+  
+  wire DOC_ext_rw_halt_out;
+  wire DOC_ext_rw_halt_in = 
+                            rw_halt_rs232
+									 ;
+  
+  
 
   wire bus_busy; // = bus_busy_r;
   
@@ -378,7 +424,7 @@ wire [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
 
 
 wire [CPU_QUANTITY-1:0] rw_halt_a;
-wire rw_halt = |rw_halt_a;
+wire rw_halt = (|rw_halt_a) | DOC_rw_halt_out;
 
 wire [CPU_QUANTITY-1:0] halt_q_a;
 wire halt_q = |halt_q_a;
@@ -448,7 +494,8 @@ DispatcherOfCpus disp_1(
             .rst(~rst),
             
             .halt_q(halt_q),
-            .rw_halt(rw_halt),
+            .rw_halt_in(rw_halt),
+            .rw_halt_out(DOC_rw_halt_out),
             
             .addr_in(addr_in),
             .addr_out(addr_out),
@@ -484,7 +531,8 @@ DispatcherOfCpus disp_1(
 //            .ext_mem_data_in(ext_mem_data_in),
 //            .ext_mem_data_out(ext_mem_data_out),
 				
-				.ext_rw_halt(ext_rw_halt),
+				.ext_rw_halt_in(DOC_ext_rw_halt_in),
+				.ext_rw_halt_out(ext_rw_halt),
             
             .ext_read_q(ext_read_q),
             .ext_write_q(ext_write_q),
@@ -526,8 +574,8 @@ InternalStartupRAM int_ram(
 //	.addr_in(ext_mem_addr_out),
 //	.addr_out(ext_mem_addr_in),
 	
-	.read_q(read_q),
-	.write_q(write_q),
+	.read_q(ext_read_q), //read_q),
+	.write_q(ext_write_q), //write_q),
 	
 //	.read_dn(ext_read_dn),
 //	.write_dn(ext_write_dn),
@@ -555,8 +603,8 @@ ExternalSRAMInterface ext_ram_itf(
 	.data_in(mem_data_out),
 	.data_out(ext_mem_data_out),
 	
-   .read_q(read_q),
-   .write_q(write_q),
+   .read_q(ext_read_q), //read_q),
+   .write_q(ext_write_q), //write_q),
 	
    .read_dn(ext_mem_read_dn),
    .write_dn(ext_mem_write_dn),
@@ -582,38 +630,103 @@ ExternalSRAMInterface ext_ram_itf(
 
 	.rst(~rst)
 );
-defparam ext_ram_itf.MEM_BEGIN = INTERNAL_MEM_VALUE;
-defparam ext_ram_itf.MEM_END = RAM_TOTAL;
+  defparam ext_ram_itf.MEM_BEGIN = INTERNAL_MEM_VALUE;
+  defparam ext_ram_itf.MEM_END = RAM_TOTAL;
 /**/
 
 
 
-Rs232 com_itf (
-  .clk(clk),
-  .clk_oe(clk_oe),
+  Rs232 com_itf (
+    .clk(clk),
+    .clk_oe(clk_oe),
 
-  .addr_in(mem_addr_out),
-  .addr_out(com_prt_addr_out),
+    .addr_in(mem_addr_out),
+    .addr_out(com_prt_addr_out),
   
-  .data_in(mem_data_out),
-  .data_out(com_prt_data_out),
+    .data_in(mem_data_out),
+    .data_out(com_prt_data_out),
 
-  .read_q(read_q),
-  .write_q(write_q),
+    .read_q(ext_read_q), //read_q),
+    .write_q(ext_write_q), //write_q),
   
-  .read_dn(com_prt_read_dn),
-  .write_dn(com_prt_write_dn),
+    .read_dn(com_prt_read_dn),
+    .write_dn(com_prt_write_dn),
+	 
+	 .halt_q(halt_q),
+	 .rw_halt_out(rw_halt_rs232),
 
-  .RxD(RxD),
-  .TxD(TxD),
+    .RxD(RxD),
+    .TxD(TxD),
 
-  .rst(~rst)
-);
-defparam com_itf.TX_ADDR = TX_ADDR; //1_000_000;
-defparam com_itf.RX_ADDR = RX_ADDR; //1_000_000;
+    .rst(~rst)
+  );
+  defparam com_itf.RS232_DATA_ADDR = RS232_DATA_ADDR; //1_000_000;
 
-defparam com_itf.ClkFrequency = ClkFrequency;
-defparam com_itf.Baud = Baud; //115200;
+  defparam com_itf.ClkFrequency = ClkFrequency;
+  defparam com_itf.Baud = Baud; //115200;
+
+
+
+
+
+  output wire pix_clk;
+  output wire de;
+
+  output wire hs;
+  output wire vs;
+
+  output wire ttl_en_;
+  output wire vga1_oe_;
+  output wire vga1_we_;
+  output wire vga2_oe_;
+  output wire vga2_we_;
+
+  output wire [3:0] g;
+  output wire [3:0] r;
+  output wire [3:0] b;
+
+  RGB_640x480 vga(
+		 .clk(clk),
+		 .clk_oe(clk_oe),
+		 
+		 .pix_clk(pix_clk),
+		 .de(de),
+		 
+		 .hs(hs),
+		 .vs(vs),
+		 
+		 .r(r),
+		 .g(g),
+		 .b(b),
+		
+		 .ttl_en_(ttl_en_),
+		 .vga1_oe_(vga1_oe_),
+		 .vga1_we_(vga1_we_),
+		 .vga2_oe_(vga2_oe_),
+		 .vga2_we_(vga2_we_),
+		 
+		 
+		 
+		 .data_in(mem_data_out),
+		 .data_out(vga_data_out),
+		 
+		 .addr_in(mem_addr_out),
+		 .addr_out(vga_addr_out),
+		 
+       .read_q(ext_read_q), //read_q),
+       .write_q(ext_write_q), //write_q),
+		 
+		 .read_dn(vga_read_dn),
+		 .write_dn(vga_write_dn),
+
+		 .rst(~rst)
+		);
+		defparam vga.ADDR_VGA_R = ADDR_VGA_R;
+		defparam vga.ADDR_VGA_G = ADDR_VGA_G;
+		defparam vga.ADDR_VGA_B = ADDR_VGA_B;
+
+
+
 
 
 

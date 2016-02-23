@@ -1,41 +1,68 @@
 
 def main(){
 init{
-  r1 = 8;
-  r2 = 1;
+  r4 = 999978;
+  r3 = 999978;
+  r9 = 32;
+
+  r10 = 185;
+  r1 = 4;
+
+  r8 = 244;
+
+  r11 = 999977;
+  r2 = 1024;
+
   r15 = 16;
-  r7 = 15;
 }
 
 var{
 	tst;
 }
-//loop:
 
-        r3  = z + [ip++];
-//        999978; //999998; //1000000;
-        999979; //8; //999998; //1000000;
+//	[r4] = r8+z;
+begin:
+//	r2 = [r3]+z;
+//	[r4] = r2+z;
+	
+//	ip = [ip]+z;
+//	begin;
+	
+//	[r11] = r8 + z;
+
+//	[r4] = r8 + z;
+
+//	[r4] = [ip++] + z;
+//	999977;
+
+//	r2 = z + [r3];
+
+	[r4] = r10 + z; // uart out "b9"
 
 loop:
-//	r2 = [ip++] +z;
- //       49;
-//        [r3] = r2 + z;
-//	r2 = [ip++] +z;
-//        50;
-//        [r3] = r2 + z;
+        r2 = [r4] + z; // uart in
+        [r4] = r2 + z; // uart out (echo)
 
-//	r2 = [ip++] +z;
-//        10;
-//        [r3] = r2 + z;
-//	r2 = [ip++] +z;
-//        13;
-//        [r3] = r2 + z;
+	r7 = r2 >> r1; // calculate of chanel (1, 2 or 3) 
+	[r4] = r7 + z; // uart out of chanel
 
-        r2 = [r3--] + z;
-        [r3++] = r2 + z;
+	r5 = r4 - r7; // calculate addr of chanel
+//	[r4] = r7 + z;
 
-        ip = z + [ip];
+	[r5] = r2 & [ip++]; // out of masked data
+	15;
+
+	[r4] = [r5] + z;
+
+        ip = z + [ip]; // goto "loop" label
         loop;
+
+
+        ip = z + [ip]; // goto "begin" label
+        loop;
+
+
+
 
         r1 = [ip++] + z;
         5;

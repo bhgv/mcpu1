@@ -86,7 +86,8 @@ module MemManager (
   input wire [`DATA_SIZE0:0] cmd_ptr;
   
   wire next_state_ip, next_state_s1, next_state_s0, next_state_d, next_state_c;
-  output wire next_state = 
+  output next_state;
+  wire next_state = 
 									  next_state_ip 
 									| next_state_s1
 									| next_state_s0
@@ -226,14 +227,16 @@ module MemManager (
   wire read_q_ip, read_q_s1, read_q_s0, read_q_d, read_q_c;
   wire write_q_ip, write_q_s1, write_q_s0, write_q_d, write_q_c;
 
-  output /*reg*/ wire read_q =
+  output read_q;
+  wire read_q =
 										read_q_ip
 										| read_q_s1
 										| read_q_s0
 										| read_q_d
 										| read_q_c
 										;
-  output /*reg*/ wire write_q =
+  output write_q;
+  wire write_q =
 										write_q_ip
 										| write_q_s1
 										| write_q_s0
