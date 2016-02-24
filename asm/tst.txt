@@ -1,3 +1,4 @@
+//hello
 
 def main(){
 init{
@@ -39,8 +40,19 @@ begin:
 
 	[r4] = r10 + z; // uart out "b9"
 
+	[r4] = [ip++] + z; //68 65 6C 6C 6F
+	104;
+	[r4] = [ip++] + z; //68 65 6C 6C 6F
+	101;
+	[r4] = [ip++] + z; //68 65 6C 6C 6F
+	108;
+	[r4] = [ip++] + z; //68 65 6C 6C 6F
+	108;
+	[r4] = [ip++] + z; //68 65 6C 6C 6F
+	111;
+
 loop:
-        r2 = [r4] + z; // uart in
+        r2 = [r3] + z; // uart in
         [r4] = r2 + z; // uart out (echo)
 
 	r7 = r2 >> r1; // calculate of chanel (1, 2 or 3) 
@@ -58,7 +70,7 @@ loop:
         loop;
 
 
-        ip = z + [ip]; // goto "begin" label
+        ip = z + [ip++]; // goto "begin" label
         loop;
 
 

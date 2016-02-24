@@ -103,6 +103,8 @@ module Top(
 	vga2_oe_,
 	vga2_we_,
 	
+	tst1_out,
+	
 	rst
 );
 
@@ -154,6 +156,7 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
 	output wire TxD;
 	input wire RxD;
 
+	output wire tst1_out;
   
 //  reg [`ADDR_SIZE0:0] addr_out_r;
 //  inout 
@@ -657,6 +660,8 @@ ExternalSRAMInterface ext_ram_itf(
 
     .RxD(RxD),
     .TxD(TxD),
+	 
+	 .rx_received(tst1_out),
 
     .rst(~rst)
   );
