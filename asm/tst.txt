@@ -1,6 +1,21 @@
 //hello
 
+
 def main(){
+init{
+  r2 = h'400;
+
+  r15 =h'10;
+}
+
+  r8 = fork [ip++] (r2);
+  man;
+
+lp:
+  ip = z + [ip];
+  lp;
+
+def man(){
 init{
   r4 = h'FFFFFFEE;
   r3 = h'FFFFFFEE;
@@ -227,5 +242,9 @@ l2:
 		l1;
 	}
 }
+
+
+}
+
 
 entry: main.

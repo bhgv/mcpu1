@@ -47,7 +47,8 @@ module InternalBus(
 //        dst,
         //dst_h,
         
-        cpu_msg,
+        cpu_msg_in,
+        cpu_msg_out,
         
         disp_online,
         
@@ -65,6 +66,10 @@ module InternalBus(
   wire bus_busy; // = bus_busy_r;
   
   output wire [31:0] command;
+  
+  
+  wire [3:0] cmd_code = command[31:28];
+  
     
   input wire rst;
   
@@ -118,6 +123,8 @@ module InternalBus(
   wire [`DATA_SIZE0:0] src0_in;
   wire [`DATA_SIZE0:0] dst_in;
   
+  wire [`DATA_SIZE0:0] dst_trd_ctl_in;
+  
   wire [`DATA_SIZE0:0] src1_out;
   wire [`DATA_SIZE0:0] src0_out;
   wire [`DATA_SIZE0:0] dst_out;
@@ -152,7 +159,8 @@ module InternalBus(
   input wire disp_online;
   
   
-  inout tri [`CPU_MSG_SIZE0:0] cpu_msg;
+  input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
+  output wire [`CPU_MSG_SIZE0:0] cpu_msg_out;
   
   
   
@@ -300,7 +308,12 @@ module InternalBus(
             
             .src1_in(src1_in),
             .src0_in(src0_in),
-            .dst_in(dst_in),
+            .dst_in(
+			               cmd_code == `CMD_FORK
+						   || cmd_code == `CMD_STOP
+						 ? dst_trd_ctl_in
+						 : dst_in 
+						),
             .dst_h_in(dst_h),
 //            .cond_in(cond),
 				
@@ -387,7 +400,7 @@ module InternalBus(
 		  
 //        .src1_out(src1),
 //        .src0_out(src0),
-        .dst(dst_in),
+        .dst(dst_trd_ctl_in),
 		  
         .dst_h(dst_h),
         
@@ -398,7 +411,8 @@ module InternalBus(
         
         .disp_online(disp_online),
         
-        .cpu_msg(cpu_msg),
+        .cpu_msg_in(cpu_msg_in),
+        .cpu_msg_out(cpu_msg_out),
         
         .next_state(next_state_t),
         

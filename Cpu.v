@@ -144,9 +144,10 @@ module Cpu(
   input wire ext_cpu_q;
   output wire ext_cpu_e;
   
-  wire [`CPU_MSG_SIZE0:0] int_cpu_msg;
-  output wire [`CPU_MSG_SIZE0:0] cpu_msg;
+  wire [`CPU_MSG_SIZE0:0] int_cpu_msg_in;
+  wire [`CPU_MSG_SIZE0:0] int_cpu_msg_out;
   
+  output wire [`CPU_MSG_SIZE0:0] cpu_msg;
   input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
   
 //  reg cpu_running;
@@ -211,9 +212,10 @@ BridgeToOutside outside_bridge (
             .ext_next_cpu_q(ext_cpu_q),
             .ext_next_cpu_e(ext_cpu_e),
                         
-            .int_cpu_msg(int_cpu_msg),
-            .ext_cpu_msg(cpu_msg),
-				
+            .int_cpu_msg_in(int_cpu_msg_out),
+            .int_cpu_msg_out(int_cpu_msg_in),
+
+            .ext_cpu_msg(cpu_msg),				
 				.ext_cpu_msg_in(cpu_msg_in),
             
             .ext_dispatcher_q(dispatcher_q),
@@ -261,7 +263,8 @@ BridgeToOutside outside_bridge (
             //.dst_h(dst_h),
             //.cond(cond),
             
-            .cpu_msg(int_cpu_msg),
+            .cpu_msg_in(int_cpu_msg_in),
+            .cpu_msg_out(int_cpu_msg_out),
             
             .disp_online(disp_online),
             

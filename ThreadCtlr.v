@@ -30,7 +30,8 @@ module ThreadCtlr(
         
         disp_online,
         
-        cpu_msg,
+        cpu_msg_in,
+        cpu_msg_out,
         
         next_state,
         
@@ -53,27 +54,33 @@ module ThreadCtlr(
   
   input wire [`STATE_SIZE0:0] state;
   
-  inout [`DATA_SIZE0:0] src1;
-  inout [`DATA_SIZE0:0] src0;
-  inout [`DATA_SIZE0:0] dst;
+  input [`DATA_SIZE0:0] src1;
+  input [`DATA_SIZE0:0] src0;
+  output [`DATA_SIZE0:0] dst;
   output reg [`DATA_SIZE0:0] dst_h;
 
-  reg [`DATA_SIZE0:0] src1_r;
-  reg [`DATA_SIZE0:0] src0_r;
+ // reg [`DATA_SIZE0:0] src1_r;
+ // reg [`DATA_SIZE0:0] src0_r;
   reg [`DATA_SIZE0:0] dst_r;
   
-  tri [`DATA_SIZE0:0] src1 = src1_r;
-  tri [`DATA_SIZE0:0] src0 = src0_r;
-  tri [`DATA_SIZE0:0] dst  = dst_r;
+  wire [`DATA_SIZE0:0] src1 /*= src1_r*/;
+  wire [`DATA_SIZE0:0] src0 /*= src0_r*/;
+  wire [`DATA_SIZE0:0] dst  = dst_r;
   
   
   input wire disp_online;
   
   
-  reg cpu_msg_in;
-  inout [`CPU_MSG_SIZE0:0] cpu_msg;
+//  reg cpu_msg_in_r;
+  
+  input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
+  output [`CPU_MSG_SIZE0:0] cpu_msg_out;
+  
   reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
-  tri [`CPU_MSG_SIZE0:0] cpu_msg = cpu_msg_in == 0 ? cpu_msg_r : `CPU_MSG_SIZE'h zzzz_zzzz;
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_r;
+//                                      cpu_msg_in_r == 0 
+//												  ? cpu_msg_r 
+//												  : 0;//`CPU_MSG_SIZE'h zzzz_zzzz;
 
 
   input [`DATA_SIZE0:0] data_in;
@@ -85,8 +92,8 @@ module ThreadCtlr(
                               disp_online == 1 
                               && state == `ALU_BEGIN 
                               && (
-                                cpu_msg_r === `CPU_R_FORK_THRD
-                                || cpu_msg_r === `CPU_R_STOP_THRD
+                                cpu_msg_r == `CPU_R_FORK_THRD
+                                || cpu_msg_r == `CPU_R_STOP_THRD
                                 )
                              )
                              ? data_r 
@@ -101,8 +108,8 @@ module ThreadCtlr(
                               disp_online == 1
                               && state == `ALU_BEGIN 
                               && (
-                                cpu_msg_r === `CPU_R_FORK_THRD
-                                || cpu_msg_r === `CPU_R_STOP_THRD
+                                cpu_msg_r == `CPU_R_FORK_THRD
+                                || cpu_msg_r == `CPU_R_STOP_THRD
                                 )
                              )
                              ? addr_r 
@@ -134,23 +141,23 @@ module ThreadCtlr(
     
 //    is_bus_busy_r = 1'b z;
     
-    cpu_msg_r = `CPU_MSG_SIZE'h zzzz;
+    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
     
-    cpu_msg_in = 0;
+//    cpu_msg_in_r = 0;
 	 
 	 end else begin
 
     if(rst == 1) begin
-      src1_r = `DATA_SIZE'h zzzzzzzz;
-      src0_r = `DATA_SIZE'h zzzzzzzz;
-      dst_r =  `DATA_SIZE'h zzzzzzzz;
-      dst_h =  `DATA_SIZE'h zzzzzzzz;
+//      src1_r = 0;//`DATA_SIZE'h zzzzzzzz;
+//      src0_r = 0; //`DATA_SIZE'h zzzzzzzz;
+      dst_r =  0;//`DATA_SIZE'h zzzzzzzz;
+      dst_h =  0;//`DATA_SIZE'h zzzzzzzz;
       
       cpu_msg_r = 0; //8'h 00;
       
       signal_sent = 0;
       
-      cpu_msg_in = 0;
+ //     cpu_msg_in_r = 0;
 //      is_bus_busy_r = 1'b z;
 
 		next_state_r = 1'b 0;
@@ -181,9 +188,9 @@ module ThreadCtlr(
 //                  end
 //                  else begin
                     cpu_msg_r = 0; //8'h 00;
-                    cpu_msg_in = 1;
+ //                   cpu_msg_in_r = 1;
                   
-                    if(cpu_msg === `CPU_R_FORK_DONE) begin
+                    if(cpu_msg_in == `CPU_R_FORK_DONE) begin
                     
                       signal_sent = 0;
                       next_state_r = 1;
@@ -217,9 +224,9 @@ module ThreadCtlr(
 //                  end
 //                  else begin
                     cpu_msg_r = 0; //8'h 00;
-                    cpu_msg_in = 1;
+     //               cpu_msg_in_r = 1;
                   
-                    if(cpu_msg === `CPU_R_STOP_DONE) begin
+                    if(cpu_msg_in == `CPU_R_STOP_DONE) begin
                     
                       signal_sent = 0;
                       next_state_r = 1;
