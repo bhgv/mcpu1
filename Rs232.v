@@ -170,7 +170,9 @@ async_receiver rx(
 	 defparam rs232.sys_clk_freq = ClkFrequency/2;
 /**/
 	 
-	 wire is_rs232_busy = is_tx_busy
+	 wire is_rs232_busy = 
+	                      is_tx_busy == 1
+								 //|| rx_idle == 0
 //	                    (
 //									  is_receiving == 1
 //								  || is_transmitting == 1
@@ -225,14 +227,14 @@ async_receiver rx(
 									    read_q == 1
 										 && (
 //										      is_receiving == 1 //
-												is_rs232_busy == 1
-												|| 
+//												is_rs232_busy == 1
+//												|| 
 												is_rx_buf == 0
 										 )
 									  )
 									  || (
 									    write_q == 1
-										 && is_rs232_busy == 1
+										 && is_tx_busy == 1
 									  )
 								)
 			             )
@@ -368,7 +370,7 @@ async_receiver rx(
 		  rw_halt_r = 0;
 		  
 		end else begin //rst
-//		  tx_start = 0;
+		  //tx_start = 0;
 		  //rw_halt_r = 0;
 		  
 //		  read_dn_r = 0;
@@ -390,7 +392,7 @@ async_receiver rx(
 				  addr_r = addr_in;
 		        
 				  if(write_q == 1) begin  
-					 if(/*is_tx_busy == 0*/ is_rs232_busy == 0) begin
+					 if(/*is_tx_busy == 0*/ is_tx_busy == 0 /*rw_halt_stim == 0*/) begin
 					   tx_data = data_r[7:0];
 			         tx_start = 1;
 
@@ -399,7 +401,7 @@ async_receiver rx(
 				      state = `UART_SEND_BYTE;
 				    end
 				  end else if(read_q == 1) begin
-				    if(is_rx_buf == 1 && is_rs232_busy == 0) begin
+				    if(is_rx_buf == 1) begin
 //			         data_r = data_in;
 			         
 						data_r = {`DATA_SIZE'h0000000000000000, rx_buf};

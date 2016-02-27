@@ -1,46 +1,4 @@
 
-/**
- * format
-      --------
- * 00 - 
- * 01 - src
- * 02 - 1
- * 03 - 
-      --------
- * 04 - 
- * 05 - src
- * 06 - 0
- * 07 - 
-      --------
- * 08 - 
- * 09 - dst
- * 10 - 
- * 11 - 
-      --------
- * 12 - 
- * 13 - cond
- * 14 - 
- * 15 - 
-      --------
- * 16 - 
- * 17 - 
- * 18 - 
- * 19 - 
-      --------
- * 20 - 
- * 21 - 
- * 22 - 
- * 23 - 
- * 24 - 
- * 25 - 
- * 26 - 
- * 27 - 
- * 28 - 
- * 29 - 
- * 30 - 
- * 31 - 
-*/
-
 `include "sizes.v"
 `include "states.v"
 `include "inter_cpu_msgs.v"
@@ -64,6 +22,9 @@ module Top(
 	ext_mem_addr,
 	ext_mem_data,
 	
+	video1_addr,
+	video1_data,
+	
 //	ext_read_q,
 //   ext_write_q,
 	
@@ -82,6 +43,11 @@ module Top(
 	prg_oe,
 	
 	prg_we,
+	
+	video1_oe,
+	
+	video1_we,
+
 	
 	TxD,
 	RxD,
@@ -103,12 +69,16 @@ module Top(
 	vga2_oe_,
 	vga2_we_,
 	
+	vga1_ce1,
+	vga1_ce2,
+	vga1_ce3,
+	
 	tst1_out,
 	
 	rst
 );
 
-parameter ClkFrequency = 50_000_000;
+parameter ClkFrequency = 50_000_000; //50_000_000;
 
 parameter CPU_QUANTITY = 2;
 parameter PROC_QUANTITY = 7;
@@ -116,13 +86,20 @@ parameter PROC_QUANTITY = 7;
 parameter INTERNAL_MEM_VALUE = 200;
 parameter INTERNAL_MEM_FILE = "mem.txt";
 
-parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
+parameter EXTERNAL_PRG_ADDR_E = 524288;
 
+  parameter VIDEO1_ADDR_B = EXTERNAL_PRG_ADDR_E;
+  parameter VIDEO1_ADDR_E = VIDEO1_ADDR_B + (640*480);
+  
+  
+parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
+  
 
-
-  parameter RS232_DATA_ADDR = 999980;
+  parameter RS232_DATA_ADDR = `ADDR_SIZE'h fffffff0;
 
   parameter Baud = 9600; //115200; //
+  
+  
 
 
   
@@ -136,47 +113,41 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
 	input wire clk;
 	input wire rst;
 	
+	wire clk_int = clk;
+	
 	output wire prg_ba;// = 0;
 	output wire prg_bb;// = 0;
 	output wire prg_bc;// = 0;
 	output wire prg_bd;// = 0;
 	
-//	reg prg_ce_r;
 	output wire prg_ce0;// = prg_ce_r;
 	output wire prg_ce1;// = prg_ce_r;
 	output wire prg_ce2;// = prg_ce_r;
 	
-//	reg prg_oe_r;
 	output wire prg_oe;// = prg_oe_r;
 	
-//	reg prg_we_r;
 	output wire prg_we;// = prg_we_r;
 	
+	
+	output wire video1_oe;
+	output wire video1_we;
+	
+	
+	output wire vga1_ce1;
+	output wire vga1_ce2;
+	output wire vga1_ce3;
+
+
 	
 	output wire TxD;
 	input wire RxD;
 
 	output wire tst1_out;
   
-//  reg [`ADDR_SIZE0:0] addr_out_r;
-//  inout 
-//  wire [`ADDR_SIZE0:0] addr_in; // = addr_out_r;
-//  wire [`ADDR_SIZE0:0] addr_out; // = addr_out_r;
-  
-//  reg read_dn_r;
-  //output 
   wire read_dn; // = read_dn_r;
   
-//  reg write_dn_r;
-  //output 
   wire write_dn; // = write_dn_r;
   
-//  wire read_e;
-//  wire write_e;
-  
-  
- // inout [`DATA_SIZE0:0] data_wire; // = data_wire_r;
-//  reg [`DATA_SIZE0:0] data_wire_r;
   trior [`DATA_SIZE0:0] data_in; // = data_wire_r;
   wire [`DATA_SIZE0:0] data_out; // = data_wire_r;
   
@@ -196,16 +167,17 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
   wire vga_write_dn;
   
   
-//  reg [7:0] mem_wrk_state;
   
-//  reg bus_director;
   
-//  reg [`ADDR_SIZE0:0] tmp_addr;
-//  reg [`DATA_SIZE0:0] tmp_data;
+  output [`ADDR_SIZE0:0] video1_addr;
+  wire [`ADDR_SIZE0:0] video1_addr;
   
-//  wire [`ADDR_SIZE0:0] int_mem_addr_in;
-//  wire [`DATA_SIZE0:0] int_mem_data_in;
+  inout [`DATA_SIZE0:0] video1_data;
+  tri [`DATA_SIZE0:0] video1_data;
   
+  
+  
+    
   wire [`ADDR_SIZE0:0] int_mem_addr_out;
   wire [`DATA_SIZE0:0] int_mem_data_out;
 
@@ -300,81 +272,16 @@ parameter RAM_TOTAL = 524288 + INTERNAL_MEM_VALUE;
   trior dispatcher_q;
    
  
-//  output 
   wire ext_read_q;
-//  output 
   wire ext_write_q;
   
-//  inout ext_read_dn;
-//  inout ext_write_dn;
-  
-
-//  wire ext_read_dn;// = ext_read_dn_r; // == 1 ? 1 : 1'b z;
-//  wire ext_write_dn;// = ext_write_dn_r;// == 1 ? 1 : 1'b z;
-  
-//  reg ext_rw_busy;
-
-  
-//  wire [`ADDR_SIZE0:0] ext_mem_addr_in; 
-//  wire [`ADDR_SIZE0:0] ext_mem_addr_out; 
-
   inout [`ADDR_SIZE0:0] ext_mem_addr; 
-//  reg [`ADDR_SIZE0:0] ext_mem_addr_r;
-  tri [`ADDR_SIZE0:0] ext_mem_addr;// = 
-  
-//  assign ext_mem_addr_in = ext_mem_addr_r
-/**
-                                     (
-                                      ext_read_dn_r == 1
-                                      || ext_write_dn_r == 1
-                                     ) 
-												 //&& 0
-//                                     && (
-//												     bus_director == 1
-//												   )
-												 ? 
-/**/
-												 //ext_mem_addr_r 
-//                                     : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
-                                     //;
+  tri [`ADDR_SIZE0:0] ext_mem_addr;
 	
   
-//  wire [`DATA_SIZE0:0] ext_mem_data_in; 
-//  wire [`DATA_SIZE0:0] ext_mem_data_out; 
 
   inout [`DATA_SIZE0:0] ext_mem_data; 
-//  reg [`DATA_SIZE0:0] ext_mem_data_r;
-  tri [`DATA_SIZE0:0] ext_mem_data;// = 
-  
-//  assign ext_mem_data_in = ext_mem_data_r
-/**
-                                     (
-                                      //ext_read_dn_r == 1
-                                      //|| ext_write_dn_r == 1
-												  mem_wrk_state == `MEM_CTLR_WRITE_SET_ADDRESS
-												  || mem_wrk_state == `MEM_CTLR_WRITE_SET_WE
-												  || mem_wrk_state == `MEM_CTLR_WRITE_FINISH
-                                     ) 
-/**/
-//                                     && (
-											//	   bus_director == 1
-//												 )
-											//	 ? ext_mem_data_r 
-                                 //    : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
-/**/
-                                 //    ;
-												 
-  
-  
-  
-  
-/**  
-  reg [`ADDR_SIZE0:0] tmp_addr;
-  reg [`DATA_SIZE0:0] tmp_data;
-  
-  reg [2:0] mem_wrk_state;
-  
-/**/
+  tri [`DATA_SIZE0:0] ext_mem_data;
 	
 
   wire ext_rst_b; // = rst;
@@ -447,7 +354,7 @@ wire clk_oe;
 
 /**/
 Cpu cpu1 [CPU_QUANTITY-1:0] (
-            .clk(clk),
+            .clk(clk_int),
 				.clk_oe(clk_oe),
             
             .halt_q_in(halt_q),
@@ -492,7 +399,7 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
 
 /**/
 DispatcherOfCpus disp_1(
-            .clk(clk),
+            .clk(clk_int),
 				.clk_oe(clk_oe),
             .rst(~rst),
             
@@ -562,7 +469,7 @@ defparam disp_1.PROC_QUANTITY = PROC_QUANTITY;
 
 /**/
 InternalStartupRAM int_ram(
-	.clk(clk),
+	.clk(clk_int),
 	.clk_oe(clk_oe),
 	
 //	.data_in(ext_mem_data_out),
@@ -597,7 +504,7 @@ defparam int_ram.INTERNAL_MEM_FILE = INTERNAL_MEM_FILE;
 
 /**/
 ExternalSRAMInterface ext_ram_itf(
-	.clk(clk),
+	.clk(clk_int),
 	.clk_oe(clk_oe),
 	
 	.addr_in(mem_addr_out),
@@ -618,6 +525,9 @@ ExternalSRAMInterface ext_ram_itf(
 	.prg_addr(ext_mem_addr),
 	.prg_data(ext_mem_data),
 	
+//	.video1_addr(video1_addr),
+//	.video1_data(video1_data),
+	
 	.prg_ba(prg_ba),
 	.prg_bb(prg_bb),
 	.prg_bc(prg_bc),
@@ -631,15 +541,67 @@ ExternalSRAMInterface ext_ram_itf(
 	
 	.prg_we(prg_we),
 
+	
+//	.video1_oe(video1_oe),
+//	.video1_we(video1_we),
+
+	
 	.rst(~rst)
 );
   defparam ext_ram_itf.MEM_BEGIN = INTERNAL_MEM_VALUE;
-  defparam ext_ram_itf.MEM_END = RAM_TOTAL;
+  defparam ext_ram_itf.MEM_END = EXTERNAL_PRG_ADDR_E;
+  
+//  defparam ext_ram_itf.VIDEO1_ADDR_B = VIDEO1_ADDR_B;
+//  defparam ext_ram_itf.VIDEO1_ADDR_E = VIDEO1_ADDR_E;
 /**/
 
 
 
+/**/
   Rs232 com_itf (
+    .clk(clk_int),
+    .clk_oe(clk_oe),
+
+    .addr_in(mem_addr_out),
+    .addr_out(com_prt_addr_out),
+  
+    .data_in(mem_data_out),
+    .data_out(com_prt_data_out),
+
+    .read_q(ext_read_q), //read_q),
+    .write_q(ext_write_q), //write_q),
+  
+    .read_dn(com_prt_read_dn),
+    .write_dn(com_prt_write_dn),
+	 
+	 .halt_q(halt_q),
+	 .rw_halt_out(rw_halt_rs232),
+
+    .RxD(RxD),
+    .TxD(TxD),
+	 
+	 .rx_received(tst1_out),
+
+    .rst(~rst)
+  );
+  defparam com_itf.RS232_DATA_ADDR = RS232_DATA_ADDR; //1_000_000;
+
+  defparam com_itf.ClkFrequency = ClkFrequency;
+  defparam com_itf.Baud = Baud; //115200;
+/**/
+
+
+/**
+pll_core pll (
+//	.areset(~rst),
+	.inclk0(clk),
+	.c0(clk_int)
+	);
+/**/
+
+
+/**
+  Rs232_UART16550 com_itf (
     .clk(clk),
     .clk_oe(clk_oe),
 
@@ -669,7 +631,7 @@ ExternalSRAMInterface ext_ram_itf(
 
   defparam com_itf.ClkFrequency = ClkFrequency;
   defparam com_itf.Baud = Baud; //115200;
-
+/**/
 
 
 
@@ -686,13 +648,15 @@ ExternalSRAMInterface ext_ram_itf(
   output wire vga2_oe_;
   output wire vga2_we_;
 
-  output wire [3:0] g;
-  output wire [3:0] r;
-  output wire [3:0] b;
+  inout tri [3:0] g;
+  inout tri [3:0] r;
+  inout tri [3:0] b;
 
   RGB_640x480 vga(
-		 .clk(clk),
+		 .clk(clk_int),
 		 .clk_oe(clk_oe),
+		 
+		 .clk_video(clk),
 		 
 		 .pix_clk(pix_clk),
 		 .de(de),
@@ -705,6 +669,7 @@ ExternalSRAMInterface ext_ram_itf(
 		 .b(b),
 		
 		 .ttl_en_(ttl_en_),
+		 
 		 .vga1_oe_(vga1_oe_),
 		 .vga1_we_(vga1_we_),
 		 .vga2_oe_(vga2_oe_),
@@ -723,12 +688,27 @@ ExternalSRAMInterface ext_ram_itf(
 		 
 		 .read_dn(vga_read_dn),
 		 .write_dn(vga_write_dn),
+		 
+		 .rw_halt(ext_rw_halt),
+		 
+		 .video_mem_addr(video1_addr),
+		 .video_mem_data(video1_data),
+		 .video_mem_oe(video1_oe),
+		 .video_mem_we(video1_we),
+		 
+		.video_mem_ce1(vga1_ce1),
+		.video_mem_ce2(vga1_ce2),
+		.video_mem_ce3(vga1_ce3),
+
 
 		 .rst(~rst)
 		);
 		defparam vga.ADDR_VGA_R = ADDR_VGA_R;
 		defparam vga.ADDR_VGA_G = ADDR_VGA_G;
 		defparam vga.ADDR_VGA_B = ADDR_VGA_B;
+		
+		defparam vga.VIDEO_MEM_B = VIDEO1_ADDR_B;
+		defparam vga.VIDEO_MEM_E = VIDEO1_ADDR_E;
 
 
 

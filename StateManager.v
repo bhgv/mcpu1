@@ -85,7 +85,7 @@ module StateManager(
   assign regCondFlags = command[27:26];
 
 
-  input tri [`DATA_SIZE0:0] cond;
+  input wire [`DATA_SIZE0:0] cond;
   
   input wire next_state;
   

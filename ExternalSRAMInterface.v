@@ -40,6 +40,9 @@ module ExternalSRAMInterface(
 	prg_addr,
 	prg_data,
 	
+//	video1_addr,
+//	video1_data,
+	
 	prg_ba,
 	prg_bb,
 	prg_bc,
@@ -52,12 +55,21 @@ module ExternalSRAMInterface(
 	prg_oe,
 	
 	prg_we,
+	
+	
+//	video1_oe,
+//	video1_we,
+	
 
 	rst
 );
 
 parameter MEM_BEGIN = 0;
-parameter MEM_END = 0;
+parameter MEM_END = 10;
+
+//parameter VIDEO1_ADDR_B = 10;
+//parameter VIDEO1_ADDR_E = 100;
+
 
 
 
@@ -75,10 +87,10 @@ parameter MEM_END = 0;
 	output wire prg_ce2 = prg_ce_r;
 	
 	reg prg_oe_r;
-	output wire prg_oe = prg_oe_r;
+	output prg_oe;
 	
 	reg prg_we_r;
-	output wire prg_we = prg_we_r;
+	output prg_we;
 
   
   reg read_dn_r;
@@ -96,11 +108,23 @@ parameter MEM_END = 0;
   reg [`ADDR_SIZE0:0] tmp_addr;
   reg [`DATA_SIZE0:0] tmp_data;
   
+//  reg [`DATA_SIZE0:0] tmp_video_data;
+
+  
+  
+//   wire is_addr_video1 = prg_addr_r >= VIDEO1_ADDR_B && prg_addr_r < VIDEO1_ADDR_E;
+//   wire is_addr_prg = prg_addr_r >= MEM_BEGIN && prg_addr_r < VIDEO1_ADDR_B;
+
+//   wire is_addr_video1 = tmp_addr >= VIDEO1_ADDR_B && tmp_addr < VIDEO1_ADDR_E;
+   wire is_addr_prg = tmp_addr >= MEM_BEGIN && tmp_addr < MEM_END; //VIDEO1_ADDR_B;
+
+  
+
   input wire [`ADDR_SIZE0:0] addr_in;
   input wire [`DATA_SIZE0:0] data_in;
   
   output wire [`ADDR_SIZE0:0] addr_out = tmp_addr;
-  output wire [`DATA_SIZE0:0] data_out = tmp_data;
+  output wire [`DATA_SIZE0:0] data_out = /*is_addr_video1 ? tmp_video_data :*/ tmp_data;
 
   input wire read_q;
   input wire write_q;
@@ -109,17 +133,65 @@ parameter MEM_END = 0;
   inout [`ADDR_SIZE0:0] prg_addr;
   inout [`DATA_SIZE0:0] prg_data;
      
-  reg [`ADDR_SIZE0:0] prg_addr_r;
+  reg [`ADDR_SIZE0:0] prg_addr_r;  
   tri [`ADDR_SIZE0:0] prg_addr = 
-												 prg_addr_r 
-                                     ;
-	
+                                  prg_ce_r == 0
+											 ?
+											   prg_addr_r 
+											 : 0
+                                  ;
+
+												 
   reg [`DATA_SIZE0:0] prg_data_r;
   tri [`DATA_SIZE0:0] prg_data = 
-										   bus_director == 1
+											is_addr_prg
+										   && bus_director == 1
 										 ? prg_data_r 
                                : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
                                ;
+    
+
+//  inout [`ADDR_SIZE0:0] video1_addr;
+//  inout [`DATA_SIZE0:0] video1_data;
+     
+//  reg [`ADDR_SIZE0:0] prg_addr_r;
+//  tri [`ADDR_SIZE0:0] video1_addr = 
+//												 prg_addr_r 
+//                                     ;
+	
+//  reg [`DATA_SIZE0:0] prg_data_r;
+//  tri [`DATA_SIZE0:0] video1_data = 
+//                                 is_addr_video1
+//										   && bus_director == 1
+//										 ? prg_data_r 
+//                               : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+//                               ;
+
+
+//  output video1_oe;
+//  output video1_we;
+  
+//  wire video1_oe = is_addr_video1 ? prg_oe_r : 1;
+//  wire video1_we = is_addr_video1 ? prg_we_r : 1;
+
+
+	wire prg_oe = is_addr_prg ? prg_oe_r : 1;
+	wire prg_we = is_addr_prg ? prg_we_r : 1;
+
+/**
+  wire [`DATA_SIZE0:0] int_prg_data = (
+											  prg_addr_r >= MEM_BEGIN
+											  && prg_addr_r < VIDEO1_ADDR_B
+											)
+											? prg_data
+											: (
+                                     prg_addr_r >= VIDEO1_ADDR_B
+											    && prg_addr_r < VIDEO1_ADDR_E
+											  )
+											  ? video1_data
+											  : 0
+											  ;
+/**/
 
   input wire rw_halt;
   
@@ -147,7 +219,8 @@ always @(posedge clk) begin
   
   if(rst == 1) begin
     tmp_addr = 0;
-	 tmp_data =0;
+	 tmp_data = 0;
+//	 tmp_video_data = 0;
 	 	 
     mem_wrk_state = `MEM_CTLR_WAIT;
     
@@ -176,7 +249,8 @@ always @(posedge clk) begin
         write_dn_r = 0;
 
         tmp_addr = 0;
-	     tmp_data =0;
+	     tmp_data = 0;
+//		  tmp_video_data = 0;
 		  
 		  prg_ce_r = 1;
 		
@@ -196,6 +270,7 @@ always @(posedge clk) begin
 			 
           tmp_addr = addr_in;// - INTERNAL_MEM_VALUE;
           tmp_data = data_in;
+//			 tmp_video_data = data_in;
           mem_wrk_state = `MEM_CTLR_WRITE_SET_ADDRESS;
 
           bus_director = 1;
@@ -212,7 +287,7 @@ always @(posedge clk) begin
         end else
 //        if(bus_director == 1)
         begin
-          prg_addr_r = tmp_addr - MEM_BEGIN;
+          prg_addr_r = tmp_addr - (/*is_addr_video1 ? VIDEO1_ADDR_B :*/ MEM_BEGIN);
 
           prg_ce_r = 0;
 			 prg_oe_r = 0;
@@ -229,7 +304,16 @@ always @(posedge clk) begin
         end else
 //        if(bus_director == 1) 
         begin
-          tmp_data = prg_data;
+			 
+//		    if(
+//				  is_addr_video1
+//				  && bus_director == 0
+//			 ) begin
+//            tmp_video_data = video1_data;
+//          end else begin
+            tmp_data = prg_data;
+//          end
+			 
           read_dn_r = 1;
           
           mem_wrk_state = `MEM_CTLR_READ_FINISH;
@@ -245,6 +329,7 @@ always @(posedge clk) begin
        begin
          tmp_addr = 0;
 	      tmp_data = 0;
+//			tmp_video_data = 0;
 
           read_dn_r = 0;
                     
@@ -262,7 +347,7 @@ always @(posedge clk) begin
         end else
 //        if(bus_director == 1) 
         begin
-          prg_addr_r = tmp_addr - MEM_BEGIN;
+          prg_addr_r = tmp_addr - (/*is_addr_video1 ? VIDEO1_ADDR_B :*/ MEM_BEGIN);
           prg_data_r = tmp_data;
 
           prg_ce_r = 0;

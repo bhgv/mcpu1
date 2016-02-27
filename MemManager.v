@@ -313,7 +313,7 @@ module MemManager (
   inout  [`DATA_SIZE0:0] dst;
 /**/
 
-  input  [`DATA_SIZE0:0] cond_in;
+  input wire [`DATA_SIZE0:0] cond_in;
   input wire [`DATA_SIZE0:0] src1_in;
   input wire [`DATA_SIZE0:0] src0_in;
   input  [`DATA_SIZE0:0] dst_in;
@@ -322,6 +322,11 @@ module MemManager (
   output  [`DATA_SIZE0:0] src1_out;
   output  [`DATA_SIZE0:0] src0_out;
   output  [`DATA_SIZE0:0] dst_out;
+  
+  wire  [`DATA_SIZE0:0] cond_out;
+//  wire  [`DATA_SIZE0:0] src1_out;
+//  wire  [`DATA_SIZE0:0] src0_out;
+//  wire  [`DATA_SIZE0:0] dst_out;
 
 
 
@@ -781,7 +786,7 @@ module MemManager (
                                               : 0 //`ADDR_SIZE'h zzzzzzzz
                                               ;
                                               
-  tri [`DATA_SIZE0:0] cond;
+//  wire [`DATA_SIZE0:0] cond;
   
   input wire isCndSaveAllowed;
   input wire isCndSavePtrAllowed;
@@ -963,7 +968,7 @@ module MemManager (
             src0_op = `REG_OP_CATCH_DATA;
             src1_op = `REG_OP_CATCH_DATA;
             dst_op = `REG_OP_CATCH_DATA;
-            cond_op = `REG_OP_CATCH_DATA;
+            //???? it needs to do something. it catches 0 to cond reg ???//  cond_op = `REG_OP_CATCH_DATA;
             
 //            next_state = 1;
         end

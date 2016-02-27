@@ -73,6 +73,7 @@ CHARACTERS
   letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
   digit    = "0123456789" .
   hexdigit = digit + "ABCDEFabcdef" .
+  bindigit = "01" .
   tab      = CHR(9) .
   eol      = CHR(10) .
   files    = letter + digit + ":\\." .
@@ -83,7 +84,11 @@ CHARACTERS
 TOKENS
   identifier = ( "_" | letter) { "_" | letter | digit } .
   number     = digit { digit } [ "." { digit }] [ "U" | "u" | "L" | "l" ] .
+/*
   hexnumber  = "0" ( "x" | "X" ) hexdigit { hexdigit } [ "U" | "u" | "L" | "l" ] .
+*/
+  hexnumber  = "h'" hexdigit { hexdigit } [ "U" | "u" | "L" | "l" ] .
+  binnumber  = "b'" bindigit { bindigit } [ "U" | "u" | "L" | "l" ] .
   string     = '"' { strings } '"' .
   char       = "'" [ "\\" ] chars "'" .
   library    = "<" files { files } ">" .
@@ -478,6 +483,8 @@ PRODUCTIONS
 										   num = 0
 										.)
 				  | char 
+				  | hexnumber 				(. num = int( self.token.val[2:], 16 ) .)
+				  | binnumber 				(. num = int( self.token.val[2:], 2 ) .)
 				  | number 					(. num = int( self.token.val ) .)
 				  | "(" Conditional<out num, foo> ")" 
 				) 
