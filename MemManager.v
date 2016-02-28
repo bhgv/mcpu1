@@ -968,8 +968,8 @@ module MemManager (
 				.clk_oe(clk_oe),
             .state(state),
             
-            .base_addr(0),
-				.base_addr_data(0),
+            .base_addr(base_addr - `THREAD_HEADER_SPACE),
+				.base_addr_data(base_addr_data - `THREAD_HEADER_SPACE),
 				
 				.addr_unmodificable_b(addr_unmodificable_b),
 				

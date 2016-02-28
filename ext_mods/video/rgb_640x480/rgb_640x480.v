@@ -102,13 +102,15 @@ module RGB_640x480(
 		output wire hs = dot > `Thp;
 		output wire vs = row > `Tvp;
 
-		output wire ttl_en_;
+		output /*wire*/ ttl_en_;// = 0;
 		output wire vga1_oe_;
 		output wire vga1_we_;
 		output wire vga2_oe_;
 		output wire vga2_we_;
 		
-  	assign ttl_en_ = 0; //~is_mem_rw_idle; //0;
+	wire ttl_en_not;
+  	wire ttl_en_ = ~ttl_en_not; //~is_mem_rw_idle; //0;
+
 //	assign vga1_oe_ = 1;
 //	assign vga1_we_ = 1;
 //	assign vga2_oe_ = 1;
@@ -231,7 +233,7 @@ ExternalSRAMInterface ext_vram_itf(
 //	.prg_bd(prg_bd),
 	
 	.prg_ce0(is_mem_rw_idle),  //video_mem_ce1),
-//	.prg_ce1(video_mem_ce2),
+	.prg_ce1(ttl_en_not),
 //	.prg_ce2(video_mem_ce3),
 	
 	.prg_oe(video_mem_oe), //vga1_oe_),

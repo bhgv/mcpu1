@@ -12,17 +12,24 @@ init{
   r15 =h'10;
 }
 
-  [r4] = z + r10--; // uart out "b7"
+
+//  [r4] = z + r10--; // uart out "b7"
 
   r8 = fork [ip++] (r2);
   man;
 
-  [r4] = z + r10++; // uart out "b7"
+msg:
+  [r4] = z + r10; // uart out "b7"
 
+  r0 = z +[ip++];
+  3000;
 lpoo:
-  ip = z + [ip];
+  r0-- = r0+z;
+  ip = z + [ip++] ? r0;
   lpoo;
 
+  ip = z + [ip];
+  msg;
 
 
 
@@ -37,13 +44,13 @@ init{
 
   r8 = 244;
 
-  r11 = h'80000;
+  r11 = h'80001;
   r2 = h'fa; //1024;
 
   r15 = h'10; //16;
 
-  r12 = h'80000;
-  r13 = h'ab000;//caf00; //h'CB000;
+  r12 = h'80001;
+  r13 = h'bb000;//caf00; //h'CB000;
 }
 
 var{
@@ -122,10 +129,10 @@ loop:
 //r2 = z + [ip++];
 //0;
 
-	[r4] = z + r10;
+//	[r4] = z + r10;
 
-	r0 = z + [r4];
-	[r4] = z + r0;
+//	r0 = z + [r4];
+//	[r4] = z + r0;
 
 
 vga_fill:
@@ -150,27 +157,21 @@ vga_fill:
 
 	r2 = z + z;
 
-	r0 = z + [r4];
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + r0;
-	[r4] = z + r0;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
 
-	r0 = z + [r4];
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + r0;
-	[r4] = z + r0;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
 
-	r0 = z + [r4];
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + r0;
-	[r4] = z + r0;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
 
-
-        ip = z + [ip];
-        loop;
 
         ip = z + [ip]; // goto "loop" label
         loop;

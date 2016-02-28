@@ -465,7 +465,7 @@ module RegisterManager (
             if(is_bus_busy == 1) begin
             
               if(
-                  (read_dn == 1 /*&& register_waiting == 1*/ && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/) 
+                  (read_dn == 1 /**/&& register_waiting == 1/**/ && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/) 
                   || (write_dn == 1 && register_waiting == 0 && isTopR == 1) 
               ) begin
                   if(addr_in == register_r_adr) begin
