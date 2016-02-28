@@ -18,6 +18,8 @@ module DispatcherOfCpus(
             halt_q,
             rw_halt_in,
             rw_halt_out,
+				
+				addr_unmodificable_b,
             
 				addr_in,
             addr_out,
@@ -58,6 +60,7 @@ module DispatcherOfCpus(
             ext_cpu_e,
             
             cpu_msg_in,
+            cpu_msg_out,
             
             dispatcher_q
           );
@@ -69,12 +72,17 @@ parameter PROC_QUANTITY = 8;
   input wire clk;
   input wire rst;
 
+  output reg clk_oe;
+
   input wire halt_q;
   
   input wire rw_halt_in;
   output rw_halt_out;
   reg rw_halt_r;
   wire rw_halt_out = rw_halt_r;
+  
+  input wire [`ADDR_SIZE0:0] addr_unmodificable_b;
+  
   
   input wire [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
@@ -129,6 +137,8 @@ parameter PROC_QUANTITY = 8;
   input wire ext_cpu_e;
   
   input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
+  output [`CPU_MSG_SIZE0:0] cpu_msg_out;
+  
   reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
   wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_r;
   
@@ -203,8 +213,8 @@ parameter PROC_QUANTITY = 8;
                                   //(cpu_msg === `CPU_R_FORK_DONE)
                                   ext_cpu_q === 1 ||
                                   (
-                                   (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg_in === `CPU_R_FORK_DONE)
-                                   || (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg_in === `CPU_R_STOP_DONE)
+                                   (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg_in == `CPU_R_FORK_DONE)
+                                   || (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg_in == `CPU_R_STOP_DONE)
 //                                   || (state_ctl == `CTL_CPU_LOOP)
                                   )
                                   ? addr_chan_to_op_out
@@ -227,12 +237,13 @@ parameter PROC_QUANTITY = 8;
 
   ThreadsManager trds_mngr (
                     .clk(clk),
+						  .clk_oe(clk_oe),
                     
                     .cpu_q(ext_cpu_q),
                     
                     .ctl_state(state_ctl),
                     
-                    .cpu_msg(cpu_msg_in),
+                    .cpu_msg_in(cpu_msg_in),
                     
                     .proc(proc),
 
@@ -317,7 +328,6 @@ parameter PROC_QUANTITY = 8;
 //                                    : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                     ;
             
-  output reg clk_oe;
 
 
 always @(negedge clk) begin
@@ -334,7 +344,7 @@ always @(negedge clk) begin
     
 //    cpu_q_r = 0;
     
-    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz_zzzz;
+//    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz_zzzz;
     
     
 //    ext_read_q_r = 0;
@@ -398,7 +408,9 @@ always @(negedge clk) begin
 			 rw_halt_r = 0;
 			 ext_rw_halt_r = 0;
 
-			 /**
+          cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz_zzzz;
+
+          /**
           if(mem_rd == 1 || mem_wr == 1) begin
             if(rw_halt_in == 1) begin
               mem_rd = 0;

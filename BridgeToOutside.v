@@ -280,7 +280,8 @@ module BridgeToOutside (
                         state == `READ_SRC0_P ||
                         state == `READ_DST ||
                         state == `START_READ_CMD ||
-                        state == `START_READ_CMD_P
+                        state == `START_READ_CMD_P ||
+                        state == `READ_MEM_SIZE_1
                         ) &&
                         disp_online_r == 1 
 //                        && (!ext_next_cpu_e === 1)
@@ -622,7 +623,7 @@ module BridgeToOutside (
                 base_addr_r = addr_in + `THREAD_HEADER_SPACE;
                 
 /**/
-                if(data_in === 0 ) begin
+                if(data_in == 0 ) begin
                    base_addr_data_r = addr_in + `THREAD_HEADER_SPACE;
                 end else begin
                    base_addr_data_r = data_in + `THREAD_HEADER_SPACE;
@@ -647,6 +648,7 @@ module BridgeToOutside (
               
             end
             
+				`READ_MEM_SIZE_1,
 				`READ_DST,
 				`READ_DST_P,
             `READ_COND, 
@@ -686,12 +688,14 @@ module BridgeToOutside (
             
             `FINISH_BEGIN: begin
               //data_r
-              cpu_msg_r = `CPU_R_END;
+		//		  if(cpu_ind_rel == 2'b11) begin
+                cpu_msg_r = `CPU_R_END;
               //!! cpu_index_itf = cpu_index_r;
 //              cpu_index_r = `CPU_NONACTIVE;
 //              rst_state = 0; // = 1;
-              ext_next_cpu_e_r = 1;
-              next_state_r = 1;
+                ext_next_cpu_e_r = 1;
+                next_state_r = 1;
+      //        end
             end
             
             default: begin
@@ -714,6 +718,7 @@ module BridgeToOutside (
               //read_dn_r = 1;
             end
             
+				`READ_MEM_SIZE_1,
 				`READ_DST,
 				`READ_DST_P,
             `READ_COND, 
@@ -876,7 +881,7 @@ module BridgeToOutside (
 		
         if(
             cpu_index_r == 0 
-            && state === `START_BEGIN 
+            && state == `START_BEGIN 
 //            &&
             //data
 //            ext_cpu_msg_in === `CPU_R_START

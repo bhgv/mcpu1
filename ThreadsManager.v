@@ -13,10 +13,12 @@
 
 module ThreadsManager(
                     clk,
+						  clk_oe,
                     
                     ctl_state,
                     
-                    cpu_msg,
+                    cpu_msg_in,
+                    cpu_msg_out,
                     
                     proc,
 
@@ -39,6 +41,8 @@ parameter PROC_QUANTITY = 8;
 
                       
   input wire clk;
+  
+  input wire clk_oe;
 
   inout [`DATA_SIZE0:0] proc;
   reg [`DATA_SIZE0:0] proc_r;
@@ -46,7 +50,8 @@ parameter PROC_QUANTITY = 8;
   
   input wire [7:0] ctl_state;
   
-  inout tri [7:0] cpu_msg;
+  input wire [7:0] cpu_msg_in;
+  output wire [7:0] cpu_msg_out;
 
   output reg [`DATA_SIZE0:0] next_proc;
   
@@ -57,22 +62,22 @@ parameter PROC_QUANTITY = 8;
   wire [1:0] thrd_rslt = thrd_rslt_r;
   
   
-  input tri cpu_q;
+  input wire cpu_q;
   
   
-  input tri [`DATA_SIZE0:0] data_in;
+  input wire [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
-  tri [`DATA_SIZE0:0] data_out =
+  wire [`DATA_SIZE0:0] data_out =
 /**/
                              (
-                               (ctl_state == `CTL_CPU_CMD && cpu_msg === `CPU_R_FORK_DONE)
-                               || (ctl_state == `CTL_CPU_CMD && cpu_msg === `CPU_R_STOP_DONE)
+                               (ctl_state == `CTL_CPU_CMD && cpu_msg_in == `CPU_R_FORK_DONE)
+                               || (ctl_state == `CTL_CPU_CMD && cpu_msg_in == `CPU_R_STOP_DONE)
 //                               || (ctl_state == `CTL_CPU_LOOP)
                              )
                              || cpu_q === 1
                              ? data_r
-                             : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
 /**/
                              ;
   
@@ -115,6 +120,10 @@ parameter PROC_QUANTITY = 8;
   reg is_need_stop_thrd;
 
   always @(posedge clk) begin
+    if(clk_oe == 0) begin
+	 
+	 end else begin
+	 
     if(rst == 1) begin
       proc_r = 32'h zzzzzzzz;
       next_proc = 0; // 32'h zzzzzzzz;
@@ -258,6 +267,8 @@ parameter PROC_QUANTITY = 8;
       endcase
     
     end
+	 
+	 end
 
   end
                       

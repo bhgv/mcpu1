@@ -119,7 +119,7 @@ module ThreadCtlr(
 
   output next_state;
   reg next_state_r;
-  tri next_state = next_state_r;
+  wire next_state = next_state_r;
   
   input wire rst;
   
@@ -141,7 +141,7 @@ module ThreadCtlr(
     
 //    is_bus_busy_r = 1'b z;
     
-    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
+//    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
     
 //    cpu_msg_in_r = 0;
 	 
@@ -163,6 +163,8 @@ module ThreadCtlr(
 		next_state_r = 1'b 0;
 //		next_state_r = 1'b z;
     end else begin
+
+      cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
     
       case(state)
         `ALU_BEGIN: begin
@@ -273,9 +275,11 @@ module ThreadCtlr(
 //          next_state_r = 1;
         end
         
+/**
         `FINISH_BEGIN: begin
         end
-        
+/**/
+
       endcase
     
     

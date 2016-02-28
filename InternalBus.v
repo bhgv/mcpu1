@@ -15,6 +15,8 @@ module InternalBus(
         
         base_addr,
         base_addr_data,
+		  
+		  addr_unmodificable_b,
         
         command,
         
@@ -77,6 +79,10 @@ module InternalBus(
   output wire halt_q_out;
   input wire rw_halt_in;
   output wire rw_halt_out;
+  
+  
+  input wire[`ADDR_SIZE0:0] addr_unmodificable_b;
+  
   
   input tri [1:0] cpu_ind_rel;
   
@@ -281,6 +287,8 @@ module InternalBus(
             .state(state),
             .base_addr(base_addr),
             .base_addr_data(base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
             
             .command_word(command),
             
@@ -383,7 +391,7 @@ module InternalBus(
 /**/
   ThreadCtlr thrd_1 (
         .clk(clk),
- 				.clk_oe(clk_oe),
+ 		  .clk_oe(clk_oe),
 
 			.is_bus_busy(bus_busy),
         

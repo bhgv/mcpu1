@@ -12,6 +12,12 @@ module RegisterManager (
             state,        // processor cicle state (in)
             
             base_addr,    // base addres of process (in)
+				base_addr_data,
+				
+				addr_unmodificable_b,
+				
+				mem1sz,
+				
             reg_op,      // reg op  (in)
             
             cpu_ind_rel,
@@ -85,6 +91,11 @@ module RegisterManager (
   input wire isSavePtrAllowed;
   
   input wire [`ADDR_SIZE0:0] base_addr;
+  input wire [`ADDR_SIZE0:0] base_addr_data;
+  
+  input wire [`ADDR_SIZE0:0] addr_unmodificable_b;
+  
+  input wire [`DATA_SIZE0:0] mem1sz;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
 
 
@@ -161,7 +172,35 @@ module RegisterManager (
                         : 0 //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                         ;
   
-  wire [`ADDR_SIZE0:0] addr_to_save = ((/*isRegPtr &&*/ reg_op == `REG_OP_WRITE_P) ? register_r_ptr : regNum) + base_addr;
+  wire [`ADDR_SIZE0:0] addr_to_save_without_base = 
+                             (/*isRegPtr &&*/ reg_op == `REG_OP_WRITE_P) 
+									  ? register_r_ptr 
+									  : regNum
+									  ;
+									  
+  wire [`ADDR_SIZE0:0] addr_to_save = 
+//                             ((/*isRegPtr &&*/ reg_op == `REG_OP_WRITE_P) ? register_r_ptr : regNum) 
+                             addr_to_save_without_base +
+									  (
+									    addr_to_save_without_base >= addr_unmodificable_b
+										 ? 0 
+									    : (
+										     addr_to_save_without_base >= mem1sz 
+											  ? base_addr_data 
+											  : base_addr
+											)
+									  )
+									  ;
+
+  wire [`ADDR_SIZE0:0] base_addr_to_read_ptr = 
+									    register_r_ptr >= addr_unmodificable_b
+										 ? 0 
+									    : (
+										     register_r_ptr >= mem1sz 
+											  ? base_addr_data 
+											  : base_addr
+											)
+									  ;
 
  // dst(p:0, op:4, r:8(+)), src0(p:1, op:4, r:fh(+)), src0(p:1, op:4, r:fh(+))?, ip(p:1, op:6, 12:fh(-))
 
@@ -274,7 +313,7 @@ module RegisterManager (
 //    is_bus_busy_r = 1'b z;
     
 	 
-	 is_can_read = ~(want_write_in ^ (want_write_r | want_write_ptr_r));
+	 is_can_read <= ~(want_write_in ^ (want_write_r | want_write_ptr_r));
 	 
 	 
     
@@ -426,7 +465,7 @@ module RegisterManager (
             if(is_bus_busy == 1) begin
             
               if(
-                  (read_dn == 1 && register_waiting == 1 && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/) 
+                  (read_dn == 1 /*&& register_waiting == 1*/ && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/) 
                   || (write_dn == 1 && register_waiting == 0 && isTopR == 1) 
               ) begin
                   if(addr_in == register_r_adr) begin
@@ -499,7 +538,7 @@ module RegisterManager (
                 (read_dn == 1 && registerptr_waiting == 1 && is_can_read == 1 /*(want_write_in ^ want_write_r) == 0*/)
                 || (write_dn == 1 && registerptr_waiting == 0 && isTopP == 1) 
             ) begin
-                if(addr_in == (register_r_ptr + base_addr) ) begin
+                if(addr_in == (register_r_ptr + base_addr_to_read_ptr) ) begin
 //                  register_r_ptr <= register_r;
                   register_r <= data_in;
                   /*if(! isDinamic )*/ registerptr_waiting <= 0;
@@ -541,7 +580,7 @@ module RegisterManager (
             end else
             if(disp_online == 1 && single == 1) begin
 //              register_r_ptr <= register_r;
-              addr_r <= register_r_ptr + base_addr; //register_r; //cond_r_aux;
+              addr_r <= register_r_ptr + base_addr_to_read_ptr; //register_r; //cond_r_aux;
 //              register_r_adr <= register_r;
               read_q_r <= 1;
               halt_q_r <= 1;
@@ -593,10 +632,10 @@ module RegisterManager (
 
         
         `REG_OP_WRITE, `REG_OP_WRITE_P: begin
-          if(is_bus_busy === 1) begin
+          if(is_bus_busy == 1) begin
             if(
                 write_dn == 1 && 
-                addr_in === addr_to_save
+                addr_in == addr_to_save
             ) begin
               registerw_waiting <= 0;
               next_state_r <= 1;

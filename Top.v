@@ -100,6 +100,7 @@ parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
   parameter Baud = 9600; //115200; //
   
   
+  parameter UNMODIFICABLE_ADDR_B = VIDEO1_ADDR_B;
 
 
   
@@ -291,6 +292,8 @@ parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
 
 
   
+wire [`ADDR_SIZE0:0] addr_unmodificable_b = UNMODIFICABLE_ADDR_B;
+
 
 wire [CPU_QUANTITY-1:0] rst_w_e_a;
 wire [CPU_QUANTITY-1:0] rst_w_b_a;
@@ -308,7 +311,9 @@ assign ext_rst_e = rst_w_e_a[CPU_QUANTITY-1];
 //						? cpu_msg_in_a[7:0]
 //						: cpu_msg_in_a[15:8]
 						;
-  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_in;
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_dispatcher_out;
+  
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_in | cpu_msg_dispatcher_out;
 						
 
 wire [`ADDR_SIZE*CPU_QUANTITY-1:0] addr_in_a;
@@ -364,6 +369,8 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             
             .want_write_in(want_write_in),
             .want_write_out(want_write_out_a),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
             
             .addr_in(addr_out),
             .addr_out(addr_in),
@@ -406,6 +413,8 @@ DispatcherOfCpus disp_1(
             .halt_q(halt_q),
             .rw_halt_in(rw_halt),
             .rw_halt_out(DOC_rw_halt_out),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
             
             .addr_in(addr_in),
             .addr_out(addr_out),
@@ -455,7 +464,8 @@ DispatcherOfCpus disp_1(
             
 //            .ext_rw_busy(ext_rw_busy),
 
-            .cpu_msg_in(cpu_msg_in),
+            .cpu_msg_in(cpu_msg_out), //cpu_msg_in),
+            .cpu_msg_out(cpu_msg_dispatcher_out),
             
             .dispatcher_q(dispatcher_q)
           );
@@ -714,9 +724,15 @@ pll_core pll (
 
 
 
-
 /**
 always @(posedge clk) begin
+  if(rst == 1) begin
+    addr_unmodificable_b = UNMODIFICABLE_ADDR_B;
+  end
+end
+/**/
+
+/**
 //  ext_write_dn = 0;
 //  ext_read_dn = 0;
 

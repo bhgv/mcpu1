@@ -14,6 +14,8 @@ module MemManager (
             
             base_addr,
             base_addr_data,
+				
+				addr_unmodificable_b,
 
             command_word,
             
@@ -85,7 +87,7 @@ module MemManager (
   
   input wire [`DATA_SIZE0:0] cmd_ptr;
   
-  wire next_state_ip, next_state_s1, next_state_s0, next_state_d, next_state_c;
+  wire next_state_ip, next_state_s1, next_state_s0, next_state_d, next_state_c, next_state_mem1sz;
   output next_state;
   wire next_state = 
 									  next_state_ip 
@@ -93,6 +95,7 @@ module MemManager (
 									| next_state_s0
 									| next_state_d
 									| next_state_c
+									| next_state_mem1sz
 									;
   
   input wire rst;
@@ -151,9 +154,13 @@ module MemManager (
   input wire [`ADDR_SIZE0:0] base_addr_data;
 //  reg [`ADDR_SIZE0:0] base_addr_r;
 
+  
+  input wire [`ADDR_SIZE0:0] addr_unmodificable_b;
+  
+
   input wire [1:0] cpu_ind_rel;
   
-  wire halt_q_ip, halt_q_s1, halt_q_s0, halt_q_d, halt_q_c;
+  wire halt_q_ip, halt_q_s1, halt_q_s0, halt_q_d, halt_q_c, halt_q_mem1sz;
   
   input wire halt_q_in;
   output halt_q_out;
@@ -163,12 +170,13 @@ module MemManager (
 							 | halt_q_s0
 							 | halt_q_d
 							 | halt_q_c
+							 | halt_q_mem1sz
 //							 | halt_q_in
 							 ;
 //  reg halt_q_r;
 //  tri halt_q = halt_q_r;
 
-  wire rw_halt_ip, rw_halt_s1, rw_halt_s0, rw_halt_d, rw_halt_c;
+  wire rw_halt_ip, rw_halt_s1, rw_halt_s0, rw_halt_d, rw_halt_c, rw_halt_mem1sz;
   
   input wire rw_halt_in;
   output rw_halt_out;
@@ -178,6 +186,7 @@ module MemManager (
 							| rw_halt_s0
 							| rw_halt_d
 							| rw_halt_c
+//							| rw_halt_mem1sz
 							;
 //  reg rw_halt_r;
 //  tri rw_halt = rw_halt_r;
@@ -193,7 +202,7 @@ module MemManager (
   wire [`ADDR_SIZE0:0] addr_out_s0;
   wire [`ADDR_SIZE0:0] addr_out_d;
   wire [`ADDR_SIZE0:0] addr_out_c;
-//			[`ADDR_SIZE0:0] addr_out_ip,
+  wire [`ADDR_SIZE0:0] addr_out_mem1sz;
 //			[`ADDR_SIZE0:0] addr_out_ip,
 			
   wire [`ADDR_SIZE0:0] addr_out =
@@ -202,6 +211,7 @@ module MemManager (
 					  | addr_out_s0[`ADDR_SIZE0:0]
 					  | addr_out_d[`ADDR_SIZE0:0]
 					  | addr_out_c[`ADDR_SIZE0:0]
+					  | addr_out_mem1sz[`ADDR_SIZE0:0]
 					  ;
 					  
 /*
@@ -224,8 +234,8 @@ module MemManager (
                         : `ADDR_SIZE'h zzzzzzzz;
 */
 
-  wire read_q_ip, read_q_s1, read_q_s0, read_q_d, read_q_c;
-  wire write_q_ip, write_q_s1, write_q_s0, write_q_d, write_q_c;
+  wire read_q_ip, read_q_s1, read_q_s0, read_q_d, read_q_c, read_q_mem1sz;
+  wire write_q_ip, write_q_s1, write_q_s0, write_q_d, write_q_c, write_q_mem1sz;
 
   output read_q;
   wire read_q =
@@ -234,6 +244,7 @@ module MemManager (
 										| read_q_s0
 										| read_q_d
 										| read_q_c
+										| read_q_mem1sz
 										;
   output write_q;
   wire write_q =
@@ -242,6 +253,7 @@ module MemManager (
 										| write_q_s0
 										| write_q_d
 										| write_q_c
+//										| write_q_mem1sz
 										;
 
   input is_bus_busy;
@@ -261,6 +273,7 @@ module MemManager (
   wire [`DATA_SIZE0:0] data_out_s0; // = data_r;
   wire [`DATA_SIZE0:0] data_out_d; // = data_r;
   wire [`DATA_SIZE0:0] data_out_c; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_mem1sz; // = data_r;
   
   wire [`DATA_SIZE0:0] data_out =
                  data_out_ip[`DATA_SIZE0:0]
@@ -268,6 +281,7 @@ module MemManager (
 					  | data_out_s0[`DATA_SIZE0:0]
 					  | data_out_d[`DATA_SIZE0:0]
 					  | data_out_c[`DATA_SIZE0:0]
+//					  | data_out_mem1sz[`DATA_SIZE0:0]
 					  ;
 //  assign data = write_q === 1 ? data_int : 32'h zzzzzzzz;
   
@@ -278,7 +292,7 @@ module MemManager (
 
 
 
-  wire want_write_out_ip, want_write_out_s1, want_write_out_s0, want_write_out_d, want_write_out_c;
+  wire want_write_out_ip, want_write_out_s1, want_write_out_s0, want_write_out_d, want_write_out_c, want_write_out_mem1sz;
   
   input wire want_write_in;
   output want_write_out;
@@ -289,6 +303,7 @@ module MemManager (
 							  | want_write_out_s0
 							  | want_write_out_d
 							  | want_write_out_c
+//							  | want_write_out_mem1sz
 							  ;
   
   
@@ -332,6 +347,9 @@ module MemManager (
 
   wire [`DATA_SIZE0:0] cond_ptr_in;
   wire [`DATA_SIZE0:0] cond_ptr_out;
+  
+  
+  wire [`DATA_SIZE0:0] mem1sz;
 
 
   reg [`SIZE_REG_OP-1:0] cmd_op;
@@ -366,7 +384,13 @@ module MemManager (
 				.clk_oe(clk_oe),
             .state(state),
             
-            .base_addr((state == `START_READ_CMD_P) ? base_addr : base_addr_data),
+            .base_addr(base_addr), //(state == `START_READ_CMD_P) ? base_addr : base_addr_data),
+            .base_addr_data(base_addr_data), //(state == `START_READ_CMD_P) ? base_addr : base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
+				
+				.mem1sz(mem1sz),
+				
             .reg_op(cmd_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -475,7 +499,13 @@ module MemManager (
 				.clk_oe(clk_oe),
             .state(state),
             
-            .base_addr((regNumS1 == `REG_IP && state == `READ_SRC1_P) ? base_addr : base_addr_data),
+            .base_addr(base_addr), //(regNumS1 == `REG_IP && state == `READ_SRC1_P) ? base_addr : base_addr_data),
+				.base_addr_data(base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
+				
+				.mem1sz(mem1sz),
+				
             .reg_op(src1_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -585,7 +615,13 @@ module MemManager (
 				.clk_oe(clk_oe),
             .state(state),
             
-            .base_addr((regNumS0 == `REG_IP && state == `READ_SRC0_P) ? base_addr : base_addr_data),
+            .base_addr(base_addr), //(regNumS0 == `REG_IP && state == `READ_SRC0_P) ? base_addr : base_addr_data),
+				.base_addr_data(base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
+				
+				.mem1sz(mem1sz),
+				
             .reg_op(src0_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -694,12 +730,21 @@ module MemManager (
 				.clk_oe(clk_oe),
             .state(state),
             
-            .base_addr(
+            .base_addr(base_addr),
+/**
+				(
 //                      (regNumD == `REG_IP && state == `READ_DST) 
 //                              ? base_addr 
 //                              : 
                               base_addr_data
                       ),
+/**/
+            .base_addr_data(base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
+				
+				.mem1sz(mem1sz),
+				
             .reg_op(dst_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -796,7 +841,13 @@ module MemManager (
 				.clk_oe(clk_oe),
             .state(state),
             
-            .base_addr((regNumCnd == `REG_IP && state == `READ_COND_P) ? base_addr : base_addr_data),
+            .base_addr(base_addr), //(regNumCnd == `REG_IP && state == `READ_COND_P) ? base_addr : base_addr_data),
+				.base_addr_data(base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
+				
+				.mem1sz(mem1sz),
+				
             .reg_op(cond_op),
             
             .cpu_ind_rel(cpu_ind_rel),
@@ -904,6 +955,77 @@ module MemManager (
   
 //  reg single;
   
+
+  
+  
+  
+  
+    
+  reg [`SIZE_REG_OP-1:0] mem1sz_op;
+  
+  RegisterManager mem1sz_dev (
+            .clk(clk), 
+				.clk_oe(clk_oe),
+            .state(state),
+            
+            .base_addr(0),
+				.base_addr_data(0),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
+				
+				.mem1sz(0),
+				
+            .reg_op(mem1sz_op),
+            
+            .cpu_ind_rel(cpu_ind_rel),
+				
+            .halt_q_in(halt_q_in),
+            .halt_q_out(halt_q_mem1sz),
+            .rw_halt_in(rw_halt_in),
+//            .rw_halt_out(rw_halt_mem1sz),
+            
+            .want_write_in(want_write_in),
+//            .want_write_out(want_write_out_mem1sz),
+            
+            .is_bus_busy(is_bus_busy),
+				
+            .addr_in(addr_in),
+            .addr_out(addr_out_mem1sz),
+            .data_in(data_in),
+//            .data_out(data_out_mem1sz),
+            
+            .register_out(mem1sz),
+//            .reg_ptr_in(ip_ptr_in),
+//            .reg_ptr_out(ip_ptr_out),
+            
+            .isRegPtr(0),      //mem1sz not ptr
+            .regFlags(2'b 00), //not inc/dec
+            .regNum(0), //0 is the addr of mem1sz
+            
+            .isNeedSave(1'b 0),
+            .isDinamic(1'b 0),
+            .isSaveAllowed(1'b 0),
+            .isSavePtrAllowed(1'b 0),
+            
+            .read_q(read_q_mem1sz),
+//            .write_q(write_q_mem1sz),
+            .read_dn(read_dn),
+            .write_dn(write_dn),
+				
+				.is_read(is_mem1sz_read),
+//				.is_read_ptr(is_mem1sz_read_ptr),
+            
+            .cmd_ptr(cmd_ptr),
+            
+            .disp_online(disp_online),
+            
+            .next_state(next_state_mem1sz),
+            
+            .rst(rst)
+            );
+
+  
+  
   
 
   always @(posedge clk) begin
@@ -944,13 +1066,27 @@ module MemManager (
     cond_op = `REG_OP_NULL;
 
       case(state)
+		  `START_BEGIN: begin
+		    mem1sz_op = `REG_OP_PREEXECUTE;
+		  end
+		  
+		  `READ_MEM_SIZE_1: begin
+		    mem1sz_op = `REG_OP_READ;
+		  end
+		
+        `AFTER_MEM_SIZE_READ: begin	
+		    mem1sz_op = `REG_OP_NULL;
+
+          cmd_op = `REG_OP_PREEXECUTE;
+		  end
+		
         `ALU_BEGIN: begin
           cmd_op = `REG_OP_NULL;
         end
       
-        `START_BEGIN: begin
-          cmd_op = `REG_OP_PREEXECUTE;
-        end
+//        `START_BEGIN: begin
+//          cmd_op = `REG_OP_PREEXECUTE;
+//        end
 
         `START_READ_CMD: begin
           cmd_op = `REG_OP_READ;
@@ -1003,7 +1139,7 @@ module MemManager (
 //          if(^regCondFlags == 1) condw_waiting = 1;
 //          if(^regS1Flags == 1) src1w_waiting = 1;
 //          if(^regS0Flags == 1) src0w_waiting = 1;
-//            src0_op = `REG_OP_PREEXECUTE;
+            src0_op = `REG_OP_PREEXECUTE;
             src1_op = `REG_OP_PREEXECUTE;
             dst_op = `REG_OP_PREEXECUTE;
             cond_op = `REG_OP_PREEXECUTE;
@@ -1100,8 +1236,9 @@ module MemManager (
         `WRITE_SRC0: begin
           src0_op = `REG_OP_WRITE;
         end
-        
-        `FINISH_BEGIN: begin
+
+
+//        `FINISH_BEGIN: begin
           //dst_op = `REG_OP_FINISH_BEGIN;
           //cond_op = `REG_OP_FINISH_BEGIN;
           //src1_op = `REG_OP_FINISH_BEGIN;
@@ -1110,7 +1247,7 @@ module MemManager (
 //          condw_waiting = 0;
 //          src1w_waiting = 0;
 //          src0w_waiting = 0;
-        end
+//        end
 
       endcase
       

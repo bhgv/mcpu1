@@ -181,11 +181,11 @@ module StateManager(
       
       anti_continuous = 1;
     end
-    else if(next_state !== 1) begin
+    else if(next_state != 1) begin
       anti_continuous = 1;
     end
     else if(
-      next_state === 1 && 
+      next_state == 1 && 
       (
         anti_continuous == 1
         || state == `WAIT_FOR_START
@@ -233,6 +233,18 @@ module StateManager(
           state = `START_READ_CMD_P;
         end
 /**/
+
+        `START_BEGIN: begin
+		    state = `READ_MEM_SIZE_1;
+		  end
+		  
+		  `READ_MEM_SIZE_1: begin
+		    state = `AFTER_MEM_SIZE_READ;
+		  end
+		  
+		  `AFTER_MEM_SIZE_READ: begin
+		    state = `START_READ_CMD;
+		  end
         
         `PREEXECUTE: begin
           if(

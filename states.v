@@ -16,6 +16,11 @@
 `define PREEXECUTE       4
 `define WRITE_REG_IP     5
 
+`define READ_MEM_SIZE_1 28
+`define READ_MEM_SIZE_2 29
+
+`define AFTER_MEM_SIZE_READ 30
+
 
 //`define BASE_ADDR_SET 3
 

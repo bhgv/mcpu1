@@ -129,7 +129,7 @@ module StartManager (
   
   output next_state;
   reg next_state_r;
-  tri next_state = next_state_r;
+  wire next_state = next_state_r;
   
   input wire rst;
   

@@ -35,6 +35,8 @@ module Cpu(
 				bus_busy_out,
 				
 				disp_online,
+				
+				addr_unmodificable_b,
             
 				init,
             ext_rst_b,
@@ -153,6 +155,8 @@ module Cpu(
 //  reg cpu_running;
     
   output wire dispatcher_q;
+  
+  input wire [`ADDR_SIZE0:0] addr_unmodificable_b;
 
           
 /**/
@@ -232,6 +236,8 @@ BridgeToOutside outside_bridge (
             .state(state),
             .base_addr(base_addr),
             .base_addr_data(base_addr_data),
+				
+				.addr_unmodificable_b(addr_unmodificable_b),
 
             .command(command),
             

@@ -3,25 +3,36 @@
 
 def main(){
 init{
-  r2 = h'400;
+  r2 = h'0;
+
+  r4 = h'FFFFFFf0;//FFFFFFEE;
+
+  r10 = h'b9;
 
   r15 =h'10;
 }
 
+  [r4] = z + r10--; // uart out "b7"
+
   r8 = fork [ip++] (r2);
   man;
 
-lp:
+  [r4] = z + r10++; // uart out "b7"
+
+lpoo:
   ip = z + [ip];
-  lp;
+  lpoo;
+
+
+
 
 def man(){
 init{
-  r4 = h'FFFFFFEE;
-  r3 = h'FFFFFFEE;
+  r4 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
+  r3 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
   r9 = 32;
 
-  r10 = h'b9; //185;
+  r10 = h'd9; //185;
   r1 = 4;
 
   r8 = 244;
@@ -32,7 +43,7 @@ init{
   r15 = h'10; //16;
 
   r12 = h'80000;
-  r13 = h'caf00; //h'CB000;
+  r13 = h'ab000;//caf00; //h'CB000;
 }
 
 var{
@@ -86,9 +97,10 @@ begin:
 // AAA
 /**/
 
-/**
-	[r4] = z + r10; // uart out "b9"
+/**/
+//	[r4] = z + r10; // uart out "b9"
 
+/**
 	[r4] = z + [ip++]; //68 65 6C 6C 6F
 	h'68; //104;
 	[r4] = z + [ip++]; //68 65 6C 6C 6F
@@ -109,6 +121,12 @@ loop:
 //	h'80000; //524288
 //r2 = z + [ip++];
 //0;
+
+	[r4] = z + r10;
+
+	r0 = z + [r4];
+	[r4] = z + r0;
+
 
 vga_fill:
 	[r11++] = z + r2;
@@ -178,7 +196,7 @@ vga_fill:
 /**/
 
 
-
+/**
         r1 = [ip++] + z;
         5;
         [r3] = r1 + z;
@@ -241,6 +259,7 @@ l2:
 		ip = [ip++] + z;
 		l1;
 	}
+/**/
 }
 
 
