@@ -50,7 +50,7 @@ init{
   r15 = h'10; //16;
 
   r12 = h'80001;
-  r13 = h'bb000;//caf00; //h'CB000;
+  r13 = h'cafff;//caf00; //h'CB000;
 }
 
 var{

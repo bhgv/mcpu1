@@ -3,7 +3,7 @@
 
 
 
-`define Th   800
+`define Th   799 //800
 `define Thd  640
 
 `define Thp  96
@@ -11,7 +11,7 @@
 
 //`define DOT_TO_NEXT_ROW `Thd + 96
 
-`define Tv   525
+`define Tv   524 //525
 `define Tvd  480
 
 `define Tvp  2
@@ -99,8 +99,8 @@ module RGB_640x480(
 		output reg pix_clk = 1;
 		output wire de;
 		
-		output wire hs = dot > `Thp;
-		output wire vs = row > `Tvp;
+		output hs;//wire hs = dot > `Thp;
+		output vs;//wire vs = row > `Tvp;
 
 		output /*wire*/ ttl_en_;// = 0;
 		output wire vga1_oe_;
@@ -122,40 +122,93 @@ module RGB_640x480(
   
   reg clk_int = 0;
   
+//  wire hblank = (dot >= `Ths) && (dot < `Ths + `Thd);
+//  wire vblank = (row >= `Tvs) && (row < `Tvs + `Tvd);
+  
+  
+  
+  wire [9:0] r_hcnt = dot;
+  wire [9:0] r_vcnt = row;
+
+  
+  
+  
+  
+    reg            r_vsync_x;
+    reg            r_hsync_x;
+    reg            r_hsync_x_i; // internal use, vactive only
+
+    reg            r_blank_x;
+
+    reg            r_vsync_neg;
+    reg            r_hsync_neg;
+    reg            r_de;
+
+    // VGA : 60Hz
+    wire w_h_end = (r_hcnt == 'd799);  // 800 clock
+    wire w_v_end = w_h_end & (r_vcnt == 'd524);  // 525 line
+
+    wire w_vsync = ((r_vcnt == 10'd10) | (r_vcnt == 10'd11)) ? 1'b0 : 1'b1;
+    wire w_hsync = ((r_hcnt >= 10'd16)&(r_hcnt <= 10'd111)) ? 1'b0 : 1'b1;
+    wire w_hsync_dma = ((r_hcnt >= 10'd16)&(r_hcnt <= 10'd39)) ? 1'b0 : 1'b1;
+
+    wire w_hactive = ((r_hcnt >= 10'd160)&(r_hcnt <= 10'd799)) ? 1'b1 : 1'b0;
+    wire w_vactive = ((r_vcnt >= 10'd45)&(r_vcnt <= 10'd524))  ? 1'b1 : 1'b0;
+    wire w_vactive_first = (r_vcnt == 10'd45);
+
+    wire w_active = w_hactive & w_vactive;
+    wire w_active_first = w_vactive_first;
+
+    wire w_hsync_x_i = w_vactive & w_hsync_dma;
+    // color should be black in blanking
+    //assign w_r = (w_active) ? w_rgb[7:0]   : 8'h00;
+    //assign w_g = (w_active) ? w_rgb[15:8]  : 8'h00;
+    //assign w_b = (w_active) ? w_rgb[23:16] : 8'h00;
+
+    wire o_vsync_x = r_vsync_x;//r_vsync_neg;
+    wire o_hsync_x = r_hsync_x;//r_hsync_neg;
+    wire o_blank_x = r_blank_x;
+    wire o_de = r_de;
+	 
+  assign de = o_de; //hblank & vblank;
+  
+  wire hs = o_hsync_x;
+  wire vs = o_vsync_x;
+
   wire hblank = (dot >= `Ths) && (dot < `Ths + `Thd);
   wire vblank = (row >= `Tvs) && (row < `Tvs + `Tvd);
+
+
+//    wire o_r = (w_active) ? w_r_test : 8'h00;
+//    wire o_g = (w_active) ? w_g_test : 8'h00;
+//    wire o_b = (w_active) ? w_b_test : 8'h00;
+
+    wire o_vsync_i = r_vsync_x;
+    wire o_hsync_i = r_hsync_x_i;
+    wire o_active = w_active;
+    wire o_first_line = w_active_first;
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
 //  assign pix_clk = clk_int; //dot[0] & ~clk;
   
-  assign de = hblank & vblank;
+//  assign de = hblank & vblank;
   
 //  wire [10:0] row_dot = row + dot;
 
-  reg [`ADDR_SIZE0:0] scanline_pt;
-
-//  output wire [3:0] g = dot[4] ^ row[4] ? (row_dot[3:0] ^ ((row[5:4] == 2'b 00) ? dot[3:0] : row[3:0])) : 0; //dot[9:6]; //4'b 1111;
-//  output wire [3:0] g = dot[5:2]; //4'b 1111;
-
-//  output [3:0] g;
-  reg [3:0] g_r;
-//  wire [3:0] g = g_r;
-
-//  output wire [3:0] r = dot[4] ^ row[4] ? (row_dot[6:3] ^ ((row[5:4] == 2'b 01) ? dot[3:0] : row[3:0])) : 0; //dot[9:6]; //4'b 1111;
-//  output wire [3:0] r = dot[9:6]; //4'b 1111;
-
-//  output [3:0] r;
-  reg [3:0] r_r;
-//  wire [3:0] r = r_r;
-
-//  output wire [3:0] b = dot[4] ^ row[4] ? (row_dot[9:6] ^ ((row[5:4] == 2'b 10) ? dot[3:0] : row[3:0])) : 0; //dot[9:6]; //4'b 0000;
-//  output wire [3:0] b = row[7:4]; //4'b 0000;
-
-//  output [3:0] b;
-  reg [3:0] b_r;
-//  wire [3:0] b = b_r;
-  
-  
-  
+  reg [`ADDR_SIZE0:0] scanline_pt;  
   
   input wire clk_oe;
   
@@ -276,25 +329,47 @@ ExternalSRAMInterface ext_vram_itf(
 												  ;
 		
 
-  always @(posedge clk_int) begin	 
-    dot = dot + 1;
+  always @(posedge clk_int) begin
 
-	 if( dot >= `Th ) begin
+    if(rst == 1) begin
 	   dot = 0;
-//  end
-  
-//  always @(negedge clk_int and dot == 0) begin
-//	 if( dot == `DOT_TO_NEXT_ROW )
-	   row = row + 1;
-      if( row >= `Tv )
-        row = 0;
+		row = 9;
+    end else begin 	 
+      //dot = dot + 1;
+
+	   if( w_h_end ) begin //dot >= `Th ) begin
+	     dot = 0;
+		  
+		  if( w_v_end )
+		    row = 0;
+        else
+		    row = row + 1;
+//      if( row >= `Tv )
+//        row = 0;
+      end else begin
+		  dot = dot + 1;
+		end
     end
-//	 else begin
-//	   if( row < `Tv )
-//	     scanline_pt = scanline_pt + 1;
-//	 end
 
   end
+  
+    // sync
+    always @(posedge clk_int) begin
+        if (rst == 1) begin
+            r_vsync_x = 1'b1;
+            r_hsync_x = 1'b1;
+            r_blank_x = 1'b1;
+            r_de = 1'b0;
+        end else begin
+            r_vsync_x = w_vsync;
+            r_hsync_x = w_hsync;
+            r_hsync_x_i = w_hsync_x_i;
+            r_blank_x = w_active;
+            r_de = w_active;
+        end
+    end
+
+
   
   
   always @(posedge clk_video) begin
@@ -304,7 +379,7 @@ ExternalSRAMInterface ext_vram_itf(
 	   scanline_pt = 0;
     else
 	 if(pix_clk == 1) begin
-	   if( dot < `Th && row < `Tv) begin
+	   if( w_active ) begin //dot < `Th && row < `Tv) begin
 		  if(scanline_pt >= (`Thd * `Tvd) - 1) begin
 		    scanline_pt = 0;
 		  end else begin
