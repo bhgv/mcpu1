@@ -3,6 +3,9 @@
 `include "states.v"
 `include "inter_cpu_msgs.v"
 
+`include "defines.v"
+
+
 /**
 `define MEM_CTLR_WAIT               0
 
@@ -59,9 +62,9 @@ module Top(
 	hs,
 	vs,
 		 
-	r,
-	g,
-	b,
+//	r,
+//	g,
+//	b,
 		
 	ttl_en_,
 	vga1_oe_,
@@ -78,43 +81,40 @@ module Top(
 	rst
 );
 
-parameter ClkFrequency = 50_000_000; //50_000_000;
+  parameter ClkFrequency = `MAIN_CLK_FREQ; //50_000_000;
 
-parameter CPU_QUANTITY = 2;
-parameter PROC_QUANTITY = 7;
+  parameter CPU_QUANTITY = `CPU_QUANTITY;
+  parameter PROC_QUANTITY = `PROC_QUANTITY;
 
-parameter INTERNAL_MEM_VALUE = 200;
-parameter INTERNAL_MEM_FILE = "mem.txt";
+  parameter INTERNAL_MEM_VALUE = `INTERNAL_MEM_VALUE;
+  parameter INTERNAL_MEM_FILE = `INTERNAL_MEM_FILE;
 
-parameter EXTERNAL_PRG_ADDR_E = 524288;
+  parameter EXTERNAL_PRG_ADDR_E = `EXTERNAL_PRG_ADDR_E;
 
-  parameter VIDEO1_ADDR_B = EXTERNAL_PRG_ADDR_E;
-  parameter VIDEO1_ADDR_E = VIDEO1_ADDR_B + (640*480);
+  parameter VIDEO1_ADDR_B = `VIDEO1_ADDR_B;
+  parameter VIDEO1_ADDR_E = `VIDEO1_ADDR_E;
   
   
-parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
+  parameter RAM_TOTAL = `RAM_TOTAL; //524288 + INTERNAL_MEM_VALUE;
   
 
-  parameter RS232_DATA_ADDR = `ADDR_SIZE'h fffffff0;
+  parameter RS232_DATA_ADDR = `RS232_DATA_ADDR;//ADDR_SIZE'h fffffff0;
 
-  parameter Baud = 9600; //115200; //
+  parameter Baud = `RS232_BAUD_RATE;//9600; //115200; //
   
   
-  parameter UNMODIFICABLE_ADDR_B = VIDEO1_ADDR_B;
+  parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
 
-
-  
-		parameter ADDR_VGA_R = 999979;
-		parameter ADDR_VGA_G = 999978;
-		parameter ADDR_VGA_B = 999977;
-
-		
 
   
 	input wire clk;
 	input wire rst;
 	
+	wire clk_oe_pll;
+	wire clk_oe;// = clk_oe_pll;
+
 	wire clk_int = clk;
+	wire clk_25mhz;// = clk_oe;
 	
 	output wire prg_ba;// = 0;
 	output wire prg_bb;// = 0;
@@ -145,12 +145,12 @@ parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
 
 	output wire tst1_out;
   
-  wire read_dn; // = read_dn_r;
+//  wire read_dn; // = read_dn_r;
   
-  wire write_dn; // = write_dn_r;
+//  wire write_dn; // = write_dn_r;
   
-  trior [`DATA_SIZE0:0] data_in; // = data_wire_r;
-  wire [`DATA_SIZE0:0] data_out; // = data_wire_r;
+//  trior [`DATA_SIZE0:0] data_in; // = data_wire_r;
+//  wire [`DATA_SIZE0:0] data_out; // = data_wire_r;
   
   
   
@@ -230,16 +230,16 @@ parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
   
   
   
-  wire DOC_rw_halt_out;
+//  wire DOC_rw_halt_out;
   
-  wire DOC_ext_rw_halt_out;
+//  wire DOC_ext_rw_halt_out;
   wire DOC_ext_rw_halt_in = 
                             rw_halt_rs232
 									 ;
   
   
 
-  wire bus_busy; // = bus_busy_r;
+//  wire bus_busy; // = bus_busy_r;
   
   
  
@@ -264,13 +264,13 @@ parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
                     }*/
 //                    ;
 
-  wire [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
+//  wire [`DATA_SIZE0:0] ext_cpu_index; // = ext_cpu_index_r;
   
 //  reg cpu_q_r;
-  tri0 ext_cpu_q; // = cpu_q_r;
-  trior ext_cpu_e;
+//  tri0 ext_cpu_q; // = cpu_q_r;
+//  trior ext_cpu_e;
     
-  trior dispatcher_q;
+//  trior dispatcher_q;
    
  
   wire ext_read_q;
@@ -284,7 +284,14 @@ parameter RAM_TOTAL = VIDEO1_ADDR_E; //524288 + INTERNAL_MEM_VALUE;
   inout [`DATA_SIZE0:0] ext_mem_data; 
   tri [`DATA_SIZE0:0] ext_mem_data;
 	
-
+	
+	
+	
+	
+	
+	
+	
+/**
   wire ext_rst_b; // = rst;
   wire ext_rst_e; // = ext_rst_e_r;
   
@@ -324,7 +331,7 @@ wire [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
 									/** = 
 									addr_in_a[`DATA_SIZE0:0]
 									| addr_in_a[`DATA_SIZE0 + `DATA_SIZE:`DATA_SIZE]
-									/**/
+									/** /
 									;
 
 
@@ -339,7 +346,7 @@ wire [`DATA_SIZE*CPU_QUANTITY-1:0] data_in_a;
 
 
 wire [CPU_QUANTITY-1:0] rw_halt_a;
-wire rw_halt = (|rw_halt_a) | DOC_rw_halt_out;
+//wire rw_halt = (|rw_halt_a) | DOC_rw_halt_out;
 
 wire [CPU_QUANTITY-1:0] halt_q_a;
 wire halt_q = |halt_q_a;
@@ -348,16 +355,15 @@ wire ext_rw_halt;
 
 
 wire [CPU_QUANTITY-1:0] bus_busy_in_a;
-wire bus_busy_out = ( |bus_busy_in_a ) | bus_busy;
+//wire bus_busy_out = ( |bus_busy_in_a ) | bus_busy;
 
 
 wire [CPU_QUANTITY-1:0] want_write_out_a;
 wire want_write_in = |want_write_out_a;
 
 
-wire clk_oe;
 
-/**/
+/** /
 Cpu cpu1 [CPU_QUANTITY-1:0] (
             .clk(clk_int),
 				.clk_oe(clk_oe),
@@ -401,10 +407,10 @@ Cpu cpu1 [CPU_QUANTITY-1:0] (
             
             .dispatcher_q(dispatcher_q)
           );
-/**/
+/** /
 
 
-/**/
+/** /
 DispatcherOfCpus disp_1(
             .clk(clk_int),
 				.clk_oe(clk_oe),
@@ -474,6 +480,33 @@ defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;
 defparam disp_1.PROC_QUANTITY = PROC_QUANTITY;
 
 /**/
+
+wire halt_q;
+wire ext_rw_halt;
+
+
+CpuBlock block_of_cpus(
+    .clk(clk_int),
+    .clk_oe(clk_oe),
+
+    .addr_in(mem_addr_in),
+    .addr_out(mem_addr_out),
+  
+    .data_in(mem_data_in),
+    .data_out(mem_data_out),
+
+    .read_q(ext_read_q), //read_q),
+    .write_q(ext_write_q), //write_q),
+  
+    .read_dn(mem_read_dn),
+    .write_dn(mem_write_dn),
+	 
+	 .halt_q(halt_q),
+    .rw_halt_in(DOC_ext_rw_halt_in),
+	 .rw_halt_out(ext_rw_halt),
+
+    .rst(~rst)
+);
 
 
 
@@ -605,7 +638,10 @@ ExternalSRAMInterface ext_ram_itf(
 pll_core pll (
 //	.areset(~rst),
 	.inclk0(clk),
-	.c0(clk_int)
+	
+	.c0(clk_int),
+//	.c1(clk_oe_pll),
+//	.c2(clk_25mhz)
 	);
 /**/
 
@@ -658,15 +694,15 @@ pll_core pll (
   output wire vga2_oe_;
   output wire vga2_we_;
 
-  inout tri [3:0] g;
-  inout tri [3:0] r;
-  inout tri [3:0] b;
+//  inout tri [3:0] g;
+//  inout tri [3:0] r;
+//  inout tri [3:0] b;
 
   RGB_640x480 vga(
 		 .clk(clk_int),
 		 .clk_oe(clk_oe),
 		 
-		 .clk_video(clk),
+//		 .clk_video(0), //~clk_25mhz),
 		 
 		 .pix_clk(pix_clk),
 		 .de(de),
@@ -674,9 +710,9 @@ pll_core pll (
 		 .hs(hs),
 		 .vs(vs),
 		 
-		 .r(r),
-		 .g(g),
-		 .b(b),
+//		 .r(r),
+//		 .g(g),
+//		 .b(b),
 		
 		 .ttl_en_(ttl_en_),
 		 
@@ -713,9 +749,9 @@ pll_core pll (
 
 		 .rst(~rst)
 		);
-		defparam vga.ADDR_VGA_R = ADDR_VGA_R;
-		defparam vga.ADDR_VGA_G = ADDR_VGA_G;
-		defparam vga.ADDR_VGA_B = ADDR_VGA_B;
+//		defparam vga.ADDR_VGA_R = ADDR_VGA_R;
+//		defparam vga.ADDR_VGA_G = ADDR_VGA_G;
+//		defparam vga.ADDR_VGA_B = ADDR_VGA_B;
 		
 		defparam vga.VIDEO_MEM_B = VIDEO1_ADDR_B;
 		defparam vga.VIDEO_MEM_E = VIDEO1_ADDR_E;

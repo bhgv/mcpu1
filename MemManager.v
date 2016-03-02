@@ -318,6 +318,8 @@ module MemManager (
 				is_s0_read_ptr,
 				is_d_read
             ;
+				
+ wire is_mem1sz_read;
 
   
   

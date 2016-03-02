@@ -304,60 +304,16 @@ module RegisterManager (
 
   always @(posedge clk) begin
   
-//    clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
+	     
 	 
-//    addr_r = 32'h zzzzzzzz;
-//    data_r = 32'h zzzzzzzz;
-    
-//    is_bus_busy_r = 1'b z;
-    
-	 
-	 is_can_read <= ~(want_write_in ^ (want_write_r | want_write_ptr_r));
-	 
+	   is_can_read <= ~(want_write_in ^ (want_write_r | want_write_ptr_r));
 	 
     
-    next_state_r <= 1'b 0;
-//    next_state_r <= 1'b z;
-    
-    
-    //halt_q_r <= 0; //1'bz;
-    
-    rw_halt_r <= rw_halt_stim;
+      next_state_r <= 1'b 0;
+        
+      rw_halt_r <= rw_halt_stim;
 	 
-//    read_q_r <= 1'b 0; //z;
-//    write_q_r <= 1'b 0; //z;
-    
-//!!!        addr_r <= 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-    
-	 
-//    if(rw_halt_stim === 1)
-//    $display("%f) %m, regw_wt = %b, rw_hlt = %b", ($realtime/1000), registerw_waiting, rw_halt_stim);
-
-//    rw_halt_r <= 1'bz;
-
-
-/*
-  if(
-    is_bus_busy == 1 &&
-    write_dn == 1 && 
-    addr === addr_to_save
-  ) begin
-      registerw_waiting <= 0;
-  end
-*/
-  
-/*
-  if
-  (rw_halt === 1 && addr === 15)
-//  (halt_q === 1 && cpu_ind_rel == 2'b01) 
-  begin
-            catched <= catched & 1;
-  end
-*/
-
-//     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state_r,progress,isRegS0Ptr);
-
 
       if(disp_online == 0) begin single <= 1; end 
 
@@ -370,13 +326,10 @@ module RegisterManager (
     read_q_r <= 1'b 0; //z;
     write_q_r <= 1'b 0; //z;
 
-    //addr_r <= 32'h zzzzzzzz;
-
     next_state_r <= 1'b 0;
-//    next_state_r <= 1'b z;
     
     register_r <= 0; //32'h zzzzzzzz;
-          register_r_ptr <= 0;
+    register_r_ptr <= 0;
 
     data_r <= 0;
 

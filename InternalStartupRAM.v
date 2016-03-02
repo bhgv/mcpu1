@@ -97,12 +97,6 @@ always @(posedge clk) begin
 
   if(clk_oe == 0) begin
   
-//    ext_read_dn_r  = 0;
-//    ext_write_dn_r = 0;
-
-//    ext_mem_data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-//    ext_mem_addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
-
 		  if(rw_halt == 1) begin
           mem_wrk_state = `MEM_CTLR_WAIT;			 
           bus_director = 0;

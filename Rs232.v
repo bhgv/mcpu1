@@ -1,6 +1,8 @@
 
 `include "sizes.v"
 
+`include "defines.v"
+
 
 `define UART_WAIT_CMD  0
 `define UART_SEND_BYTE 1
@@ -34,10 +36,10 @@ module Rs232 (
   rst
 );
 
-  parameter RS232_DATA_ADDR = 999980;
+  parameter RS232_DATA_ADDR = `RS232_DATA_ADDR;
 
-  parameter ClkFrequency = 50000000;
-  parameter Baud = 9600; //115200;
+  parameter ClkFrequency = `MAIN_CLK_FREQ;//50000000;
+  parameter Baud = `RS232_BAUD_RATE; //115200;
 
   
   
@@ -242,8 +244,16 @@ async_receiver rx(
 /**/
 
 
+/**
+  always @(negedge clk) begin
+    if(rst == 1)
+	   rw_halt_r = 0;
+    else
+	   if(clk_oe == 1)
+        rw_halt_r = rw_halt_stim;
+  end
+/**/
 
-  
   
   always @(posedge clk) begin
 
@@ -263,90 +273,13 @@ async_receiver rx(
 
     if(clk_oe == 0) begin
 
-	   if(rst == 1) begin
-		  rst_uart = 1;
-//		  rw_halt_r = 0;
-		  
-//		  is_rx_buf = 0;
-		end else begin
-//		  rst_uart = 0;
-		  
-//		  else
-
-/**		  
-//		  if(halt_q == 1) begin
-        if(addr_in == RS232_DATA_ADDR) begin
-		    if(
-		       read_q == 1 
-//			    && addr_in == RX_ADDR 
-				 && (
-				      is_rs232_busy == 1
-						|| is_rx_buf == 0
-					 )
-//				 && (
-//				        is_receiving == 1
-//				     || is_transmitting == 1
-//				    )
-//			    && is_rx_buf == 0
-		    ) begin
-		    rw_halt_r = 1;
-		    end else
-		    if(
-		       write_q == 1 
-//			    && addr_in == TX_ADDR 
-				 && is_rs232_busy == 1
-//				 && (
-//				        is_receiving == 1
-//				     || is_transmitting == 1
-//				    )
-//			    && is_tx_busy == 1
-		    ) begin
-		      rw_halt_r = 1;
-//		    end else begin
-//		      rw_halt_r = 0;
-		    end
-		  end
-//		  else begin
-//		    rw_halt_r =0;
-//		  end
-/**/
-
-/**
-        if(is_rx_ready == 1) begin
-		    rx_buf = rx_data;
-			 is_rx_buf = 1;
-			 
-//			 rw_halt_r = 0;
-		  end
-/**/
-
-/**
-		  rw_halt_r = (
-		                  state == `UART_WAIT_CMD
-			               && addr_in == RS232_DATA_ADDR
-								&& (
-								     (
-									    read_q == 1
-										 && (
-//										      is_receiving == 1 //is_rs232_busy == 1
-//												|| 
-												is_rx_buf == 0
-										 )
-									  )
-									  || (
-									    write_q == 1
-										 && is_rs232_busy == 1
-									  )
-								)
-			             )
-							 ;
-/**/
+//	   if(rst == 1) begin
+//		  rst_uart = 1;
+//		end else begin
 
         rw_halt_r = rw_halt_stim;
 		  
-		  //tx_start = 0;
-
-      end // rst
+//      end // rst
 							 
     end else begin //clk_oe
 	 
@@ -367,11 +300,12 @@ async_receiver rx(
 		  
 		  rst_uart = 1;
 		  
-		  rw_halt_r = 0;
+//		  rw_halt_r = 0;
 		  
 		end else begin //rst
 		  //tx_start = 0;
 		  //rw_halt_r = 0;
+		  
 		  
 //		  read_dn_r = 0;
 //		  write_dn_r = 0;

@@ -133,17 +133,9 @@ module ThreadCtlr(
         
   always @(negedge clk) begin
    
-    //clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
 	 
-    next_state_r = 1'b 0;
-//    next_state_r = 1'b z;
-    
-//    is_bus_busy_r = 1'b z;
-    
-//    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
-    
-//    cpu_msg_in_r = 0;
+      next_state_r = 1'b 0;
 	 
 	 end else begin
 

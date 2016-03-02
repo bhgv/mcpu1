@@ -73,6 +73,7 @@ parameter PROC_QUANTITY = 8;
   input wire rst;
 
   output reg clk_oe;
+//  input wire clk_oe;
 
   input wire halt_q;
   
@@ -330,34 +331,17 @@ parameter PROC_QUANTITY = 8;
             
 
 
-always @(negedge clk) begin
+always @(/*pos*/negedge clk) begin
   
-    clk_oe = ~clk_oe;
-	 if(clk_oe == 0) begin
+  clk_oe = ~clk_oe;
+  if(clk_oe == 0) begin
 	 
-    
- //   ext_rst_b = 0;
-    
-//    read_dn_r = 1'b 0; //z;
-//    write_dn_r = 1'b 0; //z;
-//    bus_busy_r = 1'b z;
-    
-//    cpu_q_r = 0;
-    
-//    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz_zzzz;
-    
-    
-//    ext_read_q_r = 0;
-//    ext_write_q_r = 0;
-    
-//    halt_q = 0; //1'bz;
-
   end else begin
     
   if(rst == 1) begin 
     bus_busy_r = 1'b 1;
 	 
-	 clk_oe = 1;
+//	 clk_oe = 1;
     
 //    proc_num = 0;
 //    proc_num_t = 1;

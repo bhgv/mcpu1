@@ -23,7 +23,7 @@ module RGB_640x480(
 		 clk,
 		 clk_oe,
 		 
-		 clk_video,
+//		 clk_video,
 		 
 		 pix_clk,
 		 de,
@@ -31,9 +31,9 @@ module RGB_640x480(
 		 hs,
 		 vs,
 		 
-		 r,
-		 g,
-		 b,
+//		 r,
+//		 g,
+//		 b,
 		
 		 ttl_en_,
 		 vga1_oe_,
@@ -69,9 +69,9 @@ module RGB_640x480(
 		 rst
 		);
 		
-		parameter ADDR_VGA_R = 999979;
-		parameter ADDR_VGA_G = 999978;
-		parameter ADDR_VGA_B = 999977;
+//		parameter ADDR_VGA_R = 999979;
+//		parameter ADDR_VGA_G = 999978;
+//		parameter ADDR_VGA_B = 999977;
 		
 		parameter VIDEO_MEM_B = 1;
 		parameter VIDEO_MEM_E = 2;
@@ -94,9 +94,10 @@ module RGB_640x480(
 		
 		input wire clk;
 		
-		input clk_video;
+//		input wire clk_video;
 		
-		output reg pix_clk = 1;
+		output reg pix_clk;// = 1;
+//		output wire pix_clk = clk_video;
 		output wire de;
 		
 		output hs;//wire hs = dot > `Thp;
@@ -117,10 +118,11 @@ module RGB_640x480(
 //	assign vga2_we_ = 1;
 
 		
-  reg [9:0] dot = 0;
-  reg [9:0] row = 0;
+  reg [9:0] dot;
+  reg [9:0] row;
   
-  reg clk_int = 0;
+  reg clk_int; // = 0;
+//  wire clk_int = clk_video;
   
 //  wire hblank = (dot >= `Ths) && (dot < `Ths + `Thd);
 //  wire vblank = (row >= `Tvs) && (row < `Tvs + `Tvd);
@@ -225,7 +227,7 @@ module RGB_640x480(
 
   input wire [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
-  reg [`ADDR_SIZE0:0] addr_r;
+//  reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_out; /** = (
                                    read_dn_r == 1
 											  || write_dn_r == 1
@@ -237,7 +239,7 @@ module RGB_640x480(
   
   input wire [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
-  reg [`DATA_SIZE0:0] data_r;
+//  reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_out; /** = (
                                    read_dn_r == 1
 											  || write_dn_r == 1
@@ -298,12 +300,12 @@ ExternalSRAMInterface ext_vram_itf(
   defparam ext_vram_itf.MEM_BEGIN = VIDEO_MEM_B;
   defparam ext_vram_itf.MEM_END = VIDEO_MEM_E;
 
-  inout [3:0] r;
-  tri [3:0] r;// = video_mem_data[3:0];
-  inout [3:0] g;
-  tri [3:0] g;// = video_mem_data[11:8];
-  inout [3:0] b;
-  tri [3:0] b;// = video_mem_data[19:16];
+//  inout [3:0] r;
+//  tri [3:0] r;// = video_mem_data[3:0];
+//  inout [3:0] g;
+//  tri [3:0] g;// = video_mem_data[11:8];
+//  inout [3:0] b;
+//  tri [3:0] b;// = video_mem_data[19:16];
 
 /**/
   wire [`ADDR_SIZE0:0] video_mem_addr =
@@ -327,7 +329,22 @@ ExternalSRAMInterface ext_vram_itf(
 												  ? 1
 												  : video_mem_we
 												  ;
-		
+	
+	
+	
+  always @(negedge clk) begin
+//    if(rst == 1) begin
+//	   pix_clk = 0;
+//		clk_int = 0;
+//	 end else begin
+      pix_clk = /*hblank &*/ ~pix_clk;  //clk_video; // 
+end
+
+  always @(posedge clk) begin
+	   clk_int = ~clk_int; //clk_video;
+//	 end
+  end
+
 
   always @(posedge clk_int) begin
 
@@ -354,7 +371,8 @@ ExternalSRAMInterface ext_vram_itf(
   end
   
     // sync
-    always @(posedge clk_int) begin
+//	 always @(posedge clk_int) begin
+    always @(posedge pix_clk) begin
         if (rst == 1) begin
             r_vsync_x = 1'b1;
             r_hsync_x = 1'b1;
@@ -372,13 +390,15 @@ ExternalSRAMInterface ext_vram_itf(
 
   
   
-  always @(posedge clk_video) begin
-    pix_clk = /*hblank &*/ ~pix_clk;
 	 
+	 
+	 
+	 
+  always @(posedge clk_int) begin
 	 if(rst) 
 	   scanline_pt = 0;
     else
-	 if(pix_clk == 1) begin
+//	 if(pix_clk == 1) begin
 	   if( w_active ) begin //dot < `Th && row < `Tv) begin
 		  if(scanline_pt >= (`Thd * `Tvd) - 1) begin
 		    scanline_pt = 0;
@@ -386,12 +406,12 @@ ExternalSRAMInterface ext_vram_itf(
 		    scanline_pt = scanline_pt + 1;
 		  end
 		end
-	 end
+//	 end
   end
 	 
-  always @(posedge clk_video) begin
-    clk_int = ~clk_int;
-  end
+//  always @(posedge clk_video) begin
+//    clk_int = ~clk_int;
+//  end
 	 
 
 /**
