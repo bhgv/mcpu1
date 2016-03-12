@@ -6,6 +6,7 @@
 `include "inter_cpu_msgs.v"
 `include "misc_codes.v"
 
+`include "defines.v"
 
 
 
@@ -65,8 +66,8 @@ module DispatcherOfCpus(
             dispatcher_q
           );
           
-parameter CPU_QUANTITY = 2;
-parameter PROC_QUANTITY = 8;
+parameter CPU_QUANTITY = `CPU_QUANTITY;
+parameter PROC_QUANTITY = `PROC_QUANTITY;
 
 
   input wire clk;
@@ -588,7 +589,9 @@ always @(/*pos*/negedge clk) begin
 
           if(dispatcher_q == 1) begin
             state_ctl = `CTL_CPU_LOOP;
-          end else begin
+          end else
+			 //if(mem_rd == 1 || mem_wr == 1) 
+			 begin
             state_ctl = `CTL_MEM_WORK;
           
 //            bus_busy_r  = 1'bz;

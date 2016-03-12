@@ -105,10 +105,10 @@ module BridgeToOutside (
   
   
   input [`ADDR_SIZE0:0] addr_in;
-  output [`ADDR_SIZE0:0] addr_out;
+  input [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_in; // = addr_r;
-  tri [`ADDR_SIZE0:0] addr_out; // = addr_r;
+  /*tri*/ wire [`ADDR_SIZE0:0] addr_out; // = addr_r;
   
   input wire read_q;
   input wire  write_q;
@@ -117,7 +117,7 @@ module BridgeToOutside (
   reg bus_busy_r;
   wire bus_busy_out = bus_busy_r;
   
-  output tri [`DATA_SIZE0:0] data_out;
+  input /*tri*/ wire [`DATA_SIZE0:0] data_out;
   input [`DATA_SIZE0:0] data_in;
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_in; // = data_r;
@@ -416,7 +416,7 @@ module BridgeToOutside (
 //      rst_r = 0;
 
 /**/
-      if(ext_next_cpu_q === 1 && ext_cpu_index === cpu_index_r) begin
+      if(ext_next_cpu_q == 1 && ext_cpu_index == cpu_index_r) begin
         ext_next_cpu_e_r = 1'b 1;
 		  disp_online_r = 0;  //!!!
 	   end else begin

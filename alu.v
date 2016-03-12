@@ -77,6 +77,31 @@ module Alu(
   reg [3:0] mlt_state;
   
   
+  
+  reg [2:0] fpu_op;
+  wire [`DATA_SIZE0:0] fpu_out_int;
+  reg fpu_q;
+  wire fpu_dn;
+  
+  
+  FpuManager fpu_1(
+	.clk(clk),
+	.clk_oe(clk_oe),
+	
+	.op(fpu_op),
+	
+	.a(src0_in),
+	.b(src1_in),
+	.out(fpu_out_int),
+	
+	.q(fpu_q),
+	.dn(fpu_dn),
+	
+	.rst(rst)
+  );
+
+  
+  
   //reg clk_oe;
         
   always @(posedge clk) begin

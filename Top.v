@@ -78,6 +78,8 @@ module Top(
 	
 	tst1_out,
 	
+	stop_btn,
+	
 	rst
 );
 
@@ -109,6 +111,8 @@ module Top(
   
 	input wire clk;
 	input wire rst;
+
+	input wire stop_btn;
 	
 	wire clk_oe_pll;
 	wire clk_oe;// = clk_oe_pll;
@@ -276,8 +280,8 @@ module Top(
   wire ext_read_q;
   wire ext_write_q;
   
-  inout [`ADDR_SIZE0:0] ext_mem_addr; 
-  tri [`ADDR_SIZE0:0] ext_mem_addr;
+  output [`ADDR_SIZE0:0] ext_mem_addr; 
+  wire [`ADDR_SIZE0:0] ext_mem_addr;
 	
   
 

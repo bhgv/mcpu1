@@ -3,6 +3,8 @@
 `include "states.v"
 `include "inter_cpu_msgs.v"
 
+`include "defines.v"
+
 
 `define MEM_CTLR_WAIT  0
 `define MEM_CTLR_READ  1
@@ -32,8 +34,8 @@ module InternalStartupRAM(
 	rst
 );
 
-parameter INTERNAL_MEM_VALUE = 10; //200;
-parameter INTERNAL_MEM_FILE = ""; //"mem.txt";
+parameter INTERNAL_MEM_VALUE = `INTERNAL_MEM_VALUE; //200;
+parameter INTERNAL_MEM_FILE = `INTERNAL_MEM_FILE; //"mem.txt";
 
 
 
@@ -62,7 +64,12 @@ parameter INTERNAL_MEM_FILE = ""; //"mem.txt";
   reg [`ADDR_SIZE0:0] addr_r; 
   
   input wire [`ADDR_SIZE0:0] addr_in; 
-  output wire [`ADDR_SIZE0:0] addr_out = addr_r; 
+  output wire [`ADDR_SIZE0:0] addr_out = 
+                               read_dn_r == 1
+										 || write_dn_r == 1
+										 ? tmp_addr  //addr_r
+										 : 0
+										 ; 
   
 //  assign addr_out = addr_r;
 	
@@ -71,7 +78,13 @@ parameter INTERNAL_MEM_FILE = ""; //"mem.txt";
   
   input wire [`DATA_SIZE0:0] data_in; 
   output [`DATA_SIZE0:0] data_out; 
-  wire [`DATA_SIZE0:0] data_out = data_r; 
+  wire [`DATA_SIZE0:0] data_out =
+                              read_dn_r == 1
+										? data_r
+										: write_dn_r == 1
+										? tmp_data
+										: 0
+										;
 
 //  assign data_out = data_r;  
   
@@ -82,15 +95,59 @@ parameter INTERNAL_MEM_FILE = ""; //"mem.txt";
   reg [2:0] mem_wrk_state;
   
   
-	reg [`DATA_SIZE:0] mem [0:INTERNAL_MEM_VALUE]; 
-//   initial $readmemh(INTERNAL_MEM_FILE, mem); //("mem.txt", mem);
-   initial $readmemh("mem.txt", mem);
+  
+	reg [`DATA_SIZE:0] mem [0:INTERNAL_MEM_VALUE-1]; 
+   initial $readmemh(INTERNAL_MEM_FILE, mem); //("mem.txt", mem);
+//   initial $readmemh("mem.txt", mem);
+	
+	reg [`DATA_SIZE0:0] mem_out_tmp;
+
+
+
+
+/**
+//altera megafunc mem VVV
+  wire [`DATA_SIZE0:0] mem_data_out;
+  
+  MemMod mem_inst(
+	.clock(clk),
+	.address(tmp_addr),
+	.data(tmp_data),
+	.wren(mem_wrk_state == `MEM_CTLR_WRITE && clk_oe == 0 && clk == 1),
+	.q(mem_data_out)
+	);
+// ......  AAA
+/**/
+
+
 
 
    input wire rw_halt;
 
 
    input wire clk_oe;
+
+
+//	reg is_rw_hlt;
+
+  wire [`INTERNAL_MEM_ADDR_BITS-1:0] int_mem_addr = tmp_addr[`INTERNAL_MEM_ADDR_BITS-1:0];
+
+
+/**/
+always @(negedge clk_oe) begin
+  case(mem_wrk_state)
+    `MEM_CTLR_READ: begin
+      /*mem_out_tmp*/data_r = mem[int_mem_addr];
+	 end
+	 
+	 `MEM_CTLR_WRITE: begin
+      mem[int_mem_addr] = tmp_data;
+//		data_r = tmp_data;
+	 end
+	 
+  endcase
+end
+/**/
 
 
 always @(posedge clk) begin
@@ -104,8 +161,8 @@ always @(posedge clk) begin
           read_dn_r  = 0;
           write_dn_r = 0;
 
-          data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-          addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//          data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//          addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
         end
 
 
@@ -114,8 +171,6 @@ always @(posedge clk) begin
   if(rst == 1) begin
 //    data_wire_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
-    mem_wrk_state = `MEM_CTLR_WAIT;
-    
 //    ext_rw_busy = 0;
 	 
 	 bus_director = 0;
@@ -123,23 +178,30 @@ always @(posedge clk) begin
 	 read_dn_r = 0;
 	 write_dn_r = 0;
 	 
-	 data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-	 addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//	 data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//	 addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
-	 mem[2 + 15] = `DATA_SIZE'h 10;
+	 //mem[2 + 15] = `DATA_SIZE'h 10;
+	 
+	 tmp_addr = 2 + 15;
+	 tmp_data = 'h 10;
+
+    mem_wrk_state = `MEM_CTLR_WRITE; //`MEM_CTLR_WAIT;
   end else
   begin
 
 /**/
     case(mem_wrk_state)
     
-      `MEM_CTLR_WAIT: begin
+	   default:
+      //`MEM_CTLR_WAIT: 
+		begin
 		  
         read_dn_r  = 0;
         write_dn_r = 0;
 
-        data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
-        addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//        data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+//        addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 		
         if(/*ext_*/ read_q == 1 && rw_halt == 0) begin
           if(addr_in <= INTERNAL_MEM_VALUE) begin
@@ -170,37 +232,37 @@ always @(posedge clk) begin
       end
 
       `MEM_CTLR_READ: begin
-		  if(rw_halt == 1) begin
-           mem_wrk_state = `MEM_CTLR_WAIT;			 
-			 bus_director = 0;
-       end else
-       if(bus_director == 1) begin
-          data_r = mem[tmp_addr];
-          addr_r = tmp_addr;
+		 //if(rw_halt == 1) begin
+       //  mem_wrk_state = `MEM_CTLR_WAIT;			 
+       //  bus_director = 0;
+       //end else
+//       if(bus_director == 1) begin
+          //data_r = mem_out_tmp; //mem[tmp_addr[`INTERNAL_MEM_ADDR_BITS-1:0]];//mem_data_out;//
+//          addr_r = tmp_addr;
           read_dn_r = 1;
                     
           mem_wrk_state = `MEM_CTLR_WAIT;
 			 
 			 bus_director = 0;
-        end
+//        end
       end
           
       `MEM_CTLR_WRITE: begin
-		  if(rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;			 
-          bus_director = 0;
-        end else
-        if(bus_director == 1) begin
+		  //if(rw_halt == 1) begin
+        //  mem_wrk_state = `MEM_CTLR_WAIT;			 
+        //  bus_director = 0;
+        //end else
+//        if(bus_director == 1) begin
 		  
-          mem[tmp_addr] = tmp_data;
-          data_r = tmp_data;
-          addr_r = tmp_addr;
+          //mem[tmp_addr[`INTERNAL_MEM_ADDR_BITS-1:0]] = tmp_data;
+          //data_r = tmp_data;
+//          addr_r = tmp_addr;
           write_dn_r = 1;
           
           mem_wrk_state = `MEM_CTLR_WAIT;
 			 
 			 bus_director = 0;
-        end
+//        end
       end
           
     endcase
@@ -211,5 +273,5 @@ always @(posedge clk) begin
   end
           
 end
-       
+
 endmodule

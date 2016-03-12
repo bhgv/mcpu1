@@ -141,7 +141,8 @@ module Cpu(
   input wire ext_rst_b; // = RESET;
   output wire ext_rst_e; // = ext_rst_e_r;
   
-  inout tri [`DATA_SIZE0:0] ext_cpu_index;
+//  inout tri [`DATA_SIZE0:0] ext_cpu_index;
+  input wire [`DATA_SIZE0:0] ext_cpu_index;
   
   input wire ext_cpu_q;
   output wire ext_cpu_e;

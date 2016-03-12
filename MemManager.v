@@ -57,6 +57,7 @@ module MemManager (
             disp_online,
             
             next_state,
+				next_state_dn,
             
             isIpSaveAllowed,
             isDSaveAllowed,
@@ -86,6 +87,8 @@ module MemManager (
   input wire disp_online;
   
   input wire [`DATA_SIZE0:0] cmd_ptr;
+  
+  input wire next_state_dn;
   
   wire next_state_ip, next_state_s1, next_state_s0, next_state_d, next_state_c, next_state_mem1sz;
   output next_state;
@@ -1030,7 +1033,7 @@ module MemManager (
   
   
 
-  always @(posedge clk) begin
+  always @(negedge clk) begin //negedge next_state) begin //
 //.    addr_r = 32'h zzzzzzzz;
 //    data_r = 32'h zzzzzzzz;
     

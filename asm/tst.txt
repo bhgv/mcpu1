@@ -21,11 +21,11 @@ init{
 msg:
   [r4] = z + r10; // uart out "b7"
 
-  r0 = z +[ip++];
-  3000;
+//  r0 = z +[ip++];
+//  3000;
 lpoo:
-  r0-- = r0+z;
-  ip = z + [ip++] ? r0;
+//  r0-- = r0+z;
+  ip = z + [ip++];// ? r0;
   lpoo;
 
   ip = z + [ip];
@@ -53,9 +53,9 @@ init{
   r13 = h'cafff;//caf00; //h'CB000;
 }
 
-var{
-	tst;
-}
+//var{
+//	tst;
+//}
 
 //	[r4] = r8+z;
 begin:
@@ -143,23 +143,16 @@ vga_fill:
        ip = z + [ip++] ? r14;
        vga_fill;
 
-        [r4] = r11 >> [ip++]; // uart out (echo)
-        24;
-        [r4] = r11 >> [ip++]; // uart out (echo)
-        16;
-        [r4] = r11 >> [ip++]; // uart out (echo)
-        8;
+addr_out:
         [r4] = z + r11;
+        r11 = r11 >> [ip++]; // uart out (echo)
+        8;
+        ip = z + [ip++] ? r11;
+        addr_out;
 
 	r11 = z + r12;
 
-	[r4] = z + [r11];
-
-	r2 = z + z;
-
-	r2 = r2 << [ip++];
-	8;
-	r2 = r2 + [r4];
+	r2 = z + [r4];
 	[r4] = z + r2;
 
 	r2 = r2 << [ip++];

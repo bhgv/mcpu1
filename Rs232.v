@@ -181,7 +181,7 @@ async_receiver rx(
 //								)
 								;
 
-  output wire rx_received = is_rx_buf;
+//  output wire rx_received = is_rx_buf;
 	 
 /**
   always @(negedge clk) begin
@@ -244,6 +244,10 @@ async_receiver rx(
 /**/
 
 
+  output wire rx_received = rw_halt_stim;
+
+  
+  
 /**
   always @(negedge clk) begin
     if(rst == 1)

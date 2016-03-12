@@ -14,6 +14,7 @@ module StateManager(
             cond,
             
             next_state,
+				next_state_dn,
             
             isIpSaveAllowed,
             isDSaveAllowed,
@@ -88,6 +89,10 @@ module StateManager(
   input wire [`DATA_SIZE0:0] cond;
   
   input wire next_state;
+  
+  output next_state_dn;
+  reg next_state_dn_r;
+  wire next_state_dn = next_state_dn_r;
   
   input wire rst;
   
@@ -172,7 +177,7 @@ module StateManager(
   reg condIsReaden;
   reg ipIsWriten;
   
-  always @(negedge clk) begin
+  always @( posedge next_state or posedge rst ) begin //negedge clk) begin //
     if( rst == 1 ) begin
       state = `WAIT_FOR_START;
       
@@ -180,15 +185,20 @@ module StateManager(
       ipIsWriten = 0;
       
       anti_continuous = 1;
+		
+		next_state_dn_r = 0;
     end
-    else if(next_state != 1) begin
-      anti_continuous = 1;
-    end
-    else if(
-      next_state == 1 && 
+//    else if(next_state != 1) begin
+//      anti_continuous = 1;
+//    end
+    else 
+	 /**
+	 if(
+//      next_state == 1 && 
       (
-        anti_continuous == 1
-        || state == `WAIT_FOR_START
+//        anti_continuous == 1
+//        || 
+		  state == `WAIT_FOR_START
         || state == `PREEXECUTE
         || state == `START_BEGIN
         || state == `ALU_BEGIN
@@ -198,7 +208,9 @@ module StateManager(
         || state == `FILL_SRC1
         || state == `FILL_SRC0
       )
-    ) begin
+    ) 
+	 /**/
+	 begin
     
     
       /*
@@ -212,7 +224,7 @@ module StateManager(
         anti_continuous = 0;
       end
       */
-        anti_continuous = 0;
+//        anti_continuous = 0;
       
       case(state)
 /**
@@ -236,14 +248,20 @@ module StateManager(
 
         `START_BEGIN: begin
 		    state = `READ_MEM_SIZE_1;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
 		  end
 		  
 		  `READ_MEM_SIZE_1: begin
 		    state = `AFTER_MEM_SIZE_READ;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
 		  end
 		  
 		  `AFTER_MEM_SIZE_READ: begin
 		    state = `START_READ_CMD;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
 		  end
         
         `PREEXECUTE: begin
@@ -275,6 +293,8 @@ module StateManager(
           end else begin
             state = `WRITE_REG_IP;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
 /**/
@@ -303,6 +323,8 @@ module StateManager(
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 /**/
         
@@ -353,6 +375,8 @@ module StateManager(
 //              state = `ALU_BEGIN;
             end
 */
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
         `READ_COND_P: begin
@@ -387,6 +411,8 @@ module StateManager(
 //          end else begin
           end
 */
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
         `READ_SRC1, `FILL_SRC1: begin
@@ -412,6 +438,8 @@ module StateManager(
           ) begin
             state = `READ_SRC1_P;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         `READ_SRC1_P: begin
@@ -431,6 +459,8 @@ module StateManager(
           else begin
             state = `ALU_BEGIN;
 		    end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         `READ_SRC0, `FILL_SRC0: begin
@@ -450,6 +480,8 @@ module StateManager(
           end else begin
             state = `ALU_BEGIN;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         `READ_SRC0_P: begin
@@ -462,6 +494,8 @@ module StateManager(
 						  ) ? `FILL_DST_P : `READ_DST;
           else
             state = `ALU_BEGIN;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
         `FILL_DST_P, `READ_DST: begin
@@ -469,6 +503,8 @@ module StateManager(
 //            state = `READ_DST_P;
 //          else
             state = `ALU_BEGIN;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
 //        `READ_DST_P: begin
@@ -477,10 +513,14 @@ module StateManager(
 
         `ALU_BEGIN: begin
             state = `ALU_RESULTS;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
         `ALU_RESULTS: begin
             state = `WRITE_PREP;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         `WRITE_PREP: begin
@@ -523,6 +563,8 @@ module StateManager(
           begin
             state = `FINISH_BEGIN;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
         `WRITE_DST, `WRITE_DST_P: begin
@@ -552,6 +594,8 @@ module StateManager(
           begin
             state = `FINISH_BEGIN;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         `WRITE_COND: begin
@@ -568,6 +612,8 @@ module StateManager(
           begin
             state = `FINISH_BEGIN;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
         
         `WRITE_SRC1: begin
@@ -579,14 +625,20 @@ module StateManager(
           begin
             state = `FINISH_BEGIN;
           end
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         `WRITE_SRC0: begin
             state = `FINISH_BEGIN;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
         default: begin
           state = state + 1;
+			 
+			 next_state_dn_r = ~next_state_dn_r;
         end
 
       endcase
