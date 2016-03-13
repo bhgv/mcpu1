@@ -432,7 +432,7 @@ module RegisterManager (
                     want_write_r <= 1'b 0; //z;
                   end
               end
-              
+            
             end else begin // if(is_bus_busy === 1)
             
 /**/
@@ -442,7 +442,7 @@ module RegisterManager (
 
                 addr_r <= 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
                 read_q_r <= 1'b 0; //z;
-                
+
                 want_write_r <= 1'b 0; //z;
                 
                 // VV thinking if it possible to make read in time of write
@@ -466,7 +466,7 @@ module RegisterManager (
 //		want_write_r <= 0; //!!!
                 end else
 					 begin 
-                  if(disp_online == 1 && single == 1) begin
+                  if(disp_online == 1 /**/&& single == 1/**/) begin
                     addr_r <= register_r_adr;
                     read_q_r <= 1;
                     halt_q_r <= 1;
@@ -484,7 +484,7 @@ module RegisterManager (
               
             end
         end
-          
+        
         `REG_OP_READ_P: begin
           if(is_bus_busy == 1) begin
             if(
@@ -531,7 +531,7 @@ module RegisterManager (
               read_q_r <= 1'b 0; //z;
 //		want_write_r <= 0; //!!!
             end else
-            if(disp_online == 1 && single == 1) begin
+            if(disp_online == 1 /**/&& single == 1/**/) begin
 //              register_r_ptr <= register_r;
               addr_r <= register_r_ptr + base_addr_to_read_ptr; //register_r; //cond_r_aux;
 //              register_r_adr <= register_r;
