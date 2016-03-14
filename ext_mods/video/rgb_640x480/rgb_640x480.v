@@ -333,10 +333,11 @@ ExternalSRAMInterface ext_vram_itf(
 	
 	
   always @(negedge clk) begin
-    if(rst == 1 && clk_int == 1) begin
+//    if(rst == 1 && clk_int == 1) begin
 //	   pix_clk = 0;//1; //0;
 //		clk_int = 0;
-	 end else begin
+//	 end else 
+	 begin
       pix_clk = /*hblank &*/ ~pix_clk;  //clk_video; // 
     end
 end

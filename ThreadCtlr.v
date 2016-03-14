@@ -156,13 +156,21 @@ module ThreadCtlr(
 //		next_state_r = 1'b z;
     end else begin
 
-      cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
+//      cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
     
       case(state)
+		  default: begin
+		    cpu_msg_r = 0;
+        end
+		  
         `ALU_BEGIN: begin
           dst_h = 0;
           
           case(cmd_code)
+		      default: begin
+		        cpu_msg_r = 0;
+            end
+		  
             `CMD_FORK: begin
               if(disp_online == 1) begin
                 if(

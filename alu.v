@@ -85,7 +85,7 @@ module Alu(
   wire fpu_busy;
   
   
-  FpuManager fpu_1(
+  FpuManager2 fpu_1(
 	.clk(clk),
 	.clk_oe(clk_oe),
 	
@@ -134,10 +134,10 @@ module Alu(
     
       case(state)
         `ALU_BEGIN: begin
-          dst_h = 0;
+///          dst_h = 0;
           
-          src1_r = src1_in;
-          src0_r = src0_in;
+//          src1_r = src1_in;
+//          src0_r = src0_in;
           
           case(cmd_code)
             `CMD_MOV: begin
@@ -248,6 +248,7 @@ module Alu(
             end
             
 				// FPU
+/**/
             `CMD_FADD: begin
               if(fpu_busy == 0) begin
 				    fpu_op = 0;
@@ -303,7 +304,8 @@ module Alu(
 					 end
 				  end
             end
-            
+/**/
+
             default: begin
 //              next_state_r = 1;       
             end
