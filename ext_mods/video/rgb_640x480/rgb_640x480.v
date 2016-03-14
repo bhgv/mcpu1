@@ -333,11 +333,12 @@ ExternalSRAMInterface ext_vram_itf(
 	
 	
   always @(negedge clk) begin
-//    if(rst == 1) begin
-//	   pix_clk = 0;
+    if(rst == 1 && clk_int == 1) begin
+	   pix_clk = 0;//1; //0;
 //		clk_int = 0;
-//	 end else begin
+	 end else begin
       pix_clk = /*hblank &*/ ~pix_clk;  //clk_video; // 
+    end
 end
 
   always @(posedge clk) begin
@@ -371,8 +372,8 @@ end
   end
   
     // sync
-//	 always @(posedge clk_int) begin
-    always @(posedge pix_clk) begin
+	 always @(posedge clk_int) begin
+//    always @(posedge pix_clk) begin
         if (rst == 1) begin
             r_vsync_x = 1'b1;
             r_hsync_x = 1'b1;
@@ -395,9 +396,11 @@ end
 	 
 	 
   always @(posedge clk_int) begin
-	 if(rst) 
+	 if(rst) begin
 	   scanline_pt = 0;
-    else
+		
+//		pix_clk = 1;
+    end else
 //	 if(pix_clk == 1) begin
 	   if( w_active ) begin //dot < `Th && row < `Tv) begin
 		  if(scanline_pt >= (`Thd * `Tvd) - 1) begin
