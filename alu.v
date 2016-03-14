@@ -82,6 +82,7 @@ module Alu(
   wire [`DATA_SIZE0:0] fpu_out_int;
   reg fpu_q;
   wire fpu_dn;
+  wire fpu_busy;
   
   
   FpuManager fpu_1(
@@ -96,6 +97,7 @@ module Alu(
 	
 	.q(fpu_q),
 	.dn(fpu_dn),
+	.busy(fpu_busy),
 	
 	.rst(rst)
   );
@@ -213,6 +215,7 @@ module Alu(
               next_state_r = 1;
             end
             
+				// Shifts
             `CMD_SHR: begin
               dst_r = src0_in >> src1_in;
               
@@ -225,6 +228,7 @@ module Alu(
               next_state_r = 1;
             end
             
+				// Boolean
             `CMD_XOR: begin
               dst_r = src0_in ^ src1_in;
               
@@ -241,6 +245,63 @@ module Alu(
               dst_r = src0_in | src1_in;
               
               next_state_r = 1;
+            end
+            
+				// FPU
+            `CMD_FADD: begin
+              if(fpu_busy == 0) begin
+				    fpu_op = 0;
+					 fpu_q = 1;
+				  end else begin 
+				    fpu_q = 0;
+				    if(fpu_dn == 1) begin
+					   dst_r = fpu_out_int;
+						
+                  next_state_r = 1;
+					 end
+				  end
+            end
+            
+            `CMD_FSUB: begin
+              if(fpu_busy == 0) begin
+				    fpu_op = 1;
+					 fpu_q = 1;
+				  end else begin 
+				    fpu_q = 0;
+				    if(fpu_dn == 1) begin
+					   dst_r = fpu_out_int;
+						
+                  next_state_r = 1;
+					 end
+				  end
+            end
+            
+            `CMD_FMUL: begin
+              if(fpu_busy == 0) begin
+				    fpu_op = 2;
+					 fpu_q = 1;
+				  end else begin 
+				    fpu_q = 0;
+				    if(fpu_dn == 1) begin
+					   dst_r = fpu_out_int;
+						
+                  next_state_r = 1;
+					 end
+				  end
+            end
+            
+            `CMD_FDIV: begin
+              if(fpu_busy == 0) begin
+				    fpu_op = 3;
+					 fpu_q = 1;
+				  end else begin 
+				    fpu_q = 0;
+				    if(fpu_dn == 1) begin
+					   dst_r = fpu_out_int;
+						
+                  next_state_r = 1;
+					 end
+				  end
             end
             
             default: begin

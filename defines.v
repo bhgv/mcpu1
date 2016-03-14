@@ -1,6 +1,6 @@
 
 
-`define CPU_QUANTITY		4
+`define CPU_QUANTITY		2
 `define PROC_QUANTITY	7
 
 

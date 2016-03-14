@@ -96,7 +96,7 @@ module RGB_640x480(
 		
 //		input wire clk_video;
 		
-		output reg pix_clk;// = 1;
+		output reg pix_clk = 1;
 //		output wire pix_clk = clk_video;
 		output wire de;
 		
@@ -121,7 +121,7 @@ module RGB_640x480(
   reg [9:0] dot;
   reg [9:0] row;
   
-  reg clk_int; // = 0;
+  reg clk_int = 0;
 //  wire clk_int = clk_video;
   
 //  wire hblank = (dot >= `Ths) && (dot < `Ths + `Thd);
@@ -334,7 +334,7 @@ ExternalSRAMInterface ext_vram_itf(
 	
   always @(negedge clk) begin
     if(rst == 1 && clk_int == 1) begin
-	   pix_clk = 0;//1; //0;
+//	   pix_clk = 0;//1; //0;
 //		clk_int = 0;
 	 end else begin
       pix_clk = /*hblank &*/ ~pix_clk;  //clk_video; // 
