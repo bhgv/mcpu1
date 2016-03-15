@@ -272,14 +272,8 @@ module ThreadCtlr(
           
           endcase
           
-//          next_state_r = 1;
         end
-        
-/**
-        `FINISH_BEGIN: begin
-        end
-/**/
-
+ 
       endcase
     
     

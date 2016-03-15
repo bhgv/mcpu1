@@ -248,8 +248,8 @@ always @(posedge clk) begin
         read_dn_r  = 0;
         write_dn_r = 0;
 
-        tmp_addr = 0;
-	     tmp_data = 0;
+//        tmp_addr = 0;
+//	     tmp_data = 0;
 //		  tmp_video_data = 0;
 		  
 		  prg_ce_r = 1;
@@ -258,6 +258,7 @@ always @(posedge clk) begin
           if(addr_in >= MEM_BEGIN && addr_in < MEM_END) begin
 			 
           tmp_addr = addr_in;// - INTERNAL_MEM_VALUE;
+	       //tmp_data = 0;
           mem_wrk_state = `MEM_CTLR_READ_SET_ADDRESS;
 
           bus_director = 0;
@@ -277,6 +278,10 @@ always @(posedge clk) begin
 			 
 			 end
         end
+		  else begin
+          tmp_addr = 0;
+	       tmp_data = 0;
+		  end
       end
 
 		// read states
@@ -386,6 +391,11 @@ always @(posedge clk) begin
 			 bus_director = 0;
         end
       end
+		
+		default: begin
+        tmp_addr = 0;
+	     tmp_data = 0;
+		end
     
     endcase
 	 

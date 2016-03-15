@@ -1034,32 +1034,8 @@ module MemManager (
   
 
   always @(negedge clk) begin //negedge next_state) begin //
-//.    addr_r = 32'h zzzzzzzz;
-//    data_r = 32'h zzzzzzzz;
-    
-//    is_bus_busy_r = 1'b z;
-    
-    /*src0_op = `REG_OP_NULL; src1_op = `REG_OP_NULL; dst_op = `REG_OP_NULL; cond_op = `REG_OP_NULL;* / cmd_op = `REG_OP_NULL; */
-    
-    
-//    if(rw_halt == 1) begin
-//      ip_addr_to_read = 0;
-//    end
-     
-    
-
-//     $monitor("state=%b  nxt=%b  progr=%b S0ptr=%b",state,next_state,progress,isRegS0Ptr);
 
   if(rst == 1) begin
-//    read_q = 1'b z;
-//    write_q = 1'b z;
-
-//    addr_r = 32'h zzzzzzzz;
-
-//    next_state = 1'b z;
-        
-//    single = 0;
-
 //!!!    cmd_op = `REG_OP_NULL;
   end
   else begin

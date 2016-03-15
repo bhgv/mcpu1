@@ -194,7 +194,7 @@ parameter PROC_QUANTITY = 8;
                 if(aproc_i == aproc_e) begin
                   aproc_i = aproc_b;
                 end else begin
-/**  only for test!
+/**  only for test! */
                   aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
 /**/
                 end
@@ -240,15 +240,15 @@ parameter PROC_QUANTITY = 8;
               
 //              for(i = aproc_b; i != aproc_e; i = (i < (PROC_QUANTITY - 1)) ? i+1 : 0 ) begin
 
-/**  only for test!
+/**  only for test! */
               for(i = 0; i < PROC_QUANTITY; i = i+1 ) begin
                 if( aproc_tbl[i][`ADDR_SIZE0:0] == addr_in ) begin
                   aproc_tbl[i][(`DATA_SIZE0 + `ADDR_SIZE + 1)] = 1'b 1;
-                end
-              end
 
                   data_r = -1;
                   thrd_rslt_r = 1;
+                end
+              end
 						
 /**/
 
