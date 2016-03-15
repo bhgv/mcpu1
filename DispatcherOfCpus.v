@@ -89,11 +89,6 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   input wire [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_out_r;
-//  tri [`ADDR_SIZE0:0] addr_out = 
-//                                (ext_cpu_q === 1)
-//                                ? addr_out_r
-//                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
-//                                ;
   
   input wire read_q;
   input wire write_q;
@@ -152,11 +147,7 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   reg [31:0] mem_addr_tmp;
   reg [31:0] mem_data_tmp;
   reg mem_rd;
-  reg mem_wr;
-  
-//	reg [31:0] mem [0:400]; 
-//  initial $readmemh("mem.txt", mem);
-  
+  reg mem_wr;  
 
 
 
@@ -164,13 +155,10 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   
 
 
-
-
   reg [3:0] thrd_cmd_r;
   wire [1:0] thrd_rslt;
   
   wire [`DATA_SIZE0:0] next_proc;
-  wire [`DATA_SIZE0:0] proc;
   
   wire [`DATA_SIZE0:0] addr_chan_to_op_out;
 
@@ -247,8 +235,6 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                     
                     .cpu_msg_in(cpu_msg_in),
                     
-                    .proc(proc),
-
                     .next_proc(next_proc),
                     
                     .thrd_cmd(thrd_cmd_r),
@@ -259,16 +245,9 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                     .data_in(addr_chan_to_op),
                     
                     .rst(rst)
-                      );
+                    );
 
 
-//  reg [`DATA_SIZE0:0] proc_num;
-//  reg [`DATA_SIZE0:0] proc_num_t;
-//
-//  reg [`DATA_SIZE0:0] proc_tbl [0:PROC_QUANTITY];
-
-//  reg [`ADDR_SIZE0:0] cpu_tbl [0:CPU_QUANTITY + 1];
-//  reg [7:0] cpu_tbl_i;
 
   reg [`DATA_SIZE0:0] cpu_num_a;
   reg [`DATA_SIZE0:0] cpu_num_na;
@@ -343,17 +322,12 @@ always @(/*pos*/negedge clk) begin
     bus_busy_r = 1'b 1;
 	 
 //	 clk_oe = 1;
-    
-//    proc_num = 0;
-//    proc_num_t = 1;
-//    proc_tbl[0] = 0;
-    
+
     cpu_num = 0;
     cpu_num_a = 0;
     cpu_num_na = CPU_QUANTITY;
     
-    data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz; //cpu_num; //Q;
-//    bus_busy_r  = 1'bz;
+    data_r = 0; 
     
     state_ctl = `CTL_RESET_WAIT;
     
@@ -370,19 +344,15 @@ always @(/*pos*/negedge clk) begin
     
     new_cpu_restarted = 0;
     
-    cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz_zzzz;
+    cpu_msg_r = 0; 
     
     thrd_cmd_r = `THREAD_CMD_NULL;
 //    thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
 
-    addr_chan_to_op_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
+    addr_chan_to_op_r = 0; 
 	 
 	 ext_rw_halt_r = 0;
 	 rw_halt_r = 0;
-    
-//    cpu_tbl[0] = 0;
-//    cpu_tbl_i = 0;
-    
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
