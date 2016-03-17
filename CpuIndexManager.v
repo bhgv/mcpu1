@@ -80,7 +80,7 @@ module CpuIndexManager (
             cpu_index_r == 0 
             && state == `START_BEGIN 
         ) begin
-          cpu_index_r = `CPU_ACTIVE;
+          cpu_index_r <= `CPU_ACTIVE;
         end
         
       end 
@@ -113,7 +113,7 @@ module CpuIndexManager (
 //						&& cpu_ind_rel == 2'b01
 //						&& is_ext_cpu_index_lt
                 ) begin
-                  cpu_index_r[30:0] = cpu_index_r[30:0] - 1;
+                  cpu_index_r[30:0] <= cpu_index_r[30:0] - 1;
                 end
             
 				 end else begin // (ext_cpu_index & `CPU_ACTIVE) !== `CPU_ACTIVE
@@ -129,9 +129,9 @@ module CpuIndexManager (
 //                    cpu_index_r[31] == 1
 	//					  is_cpu_index_active
 					  ) begin
-						 cpu_index_r[30:0] = cpu_index_r[30:0] + 1;
+						 cpu_index_r[30:0] <= cpu_index_r[30:0] + 1;
 					  end else begin
-						 cpu_index_r[30:0] = cpu_index_r[30:0] - 1;
+						 cpu_index_r[30:0] <= cpu_index_r[30:0] - 1;
 					  end
 					  
 					end
@@ -147,7 +147,7 @@ module CpuIndexManager (
     else begin
 	 
 	   if(cpu_index_set == 1) begin  //(rst == 1) begin
-		  cpu_index_r = cpu_index_in; //0;
+		  cpu_index_r <= cpu_index_in; //0;
 		end else begin
 		
 //		  if(cpu_index_set == 1) begin
@@ -165,11 +165,11 @@ module CpuIndexManager (
 			 
 			   case(state)
               `START_BEGIN: begin
-                cpu_index_r = cpu_index_r | `CPU_ACTIVE;
+                cpu_index_r <= cpu_index_r | `CPU_ACTIVE;
               end
             
               `FINISH_END: begin
-                cpu_index_r = `CPU_NONACTIVE;
+                cpu_index_r <= `CPU_NONACTIVE;
               end
             
 				endcase

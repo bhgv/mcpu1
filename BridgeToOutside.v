@@ -380,7 +380,7 @@ module BridgeToOutside (
 
           bus_busy_r = 1'b 1;
           
-          if(state !== `FINISH_END) begin
+          if(state != `FINISH_END) begin
 //          end else begin
             ext_rst_e_r = 1;
           end

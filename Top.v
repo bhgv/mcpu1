@@ -706,7 +706,7 @@ pll_core pll (
 		 .clk(clk_int),
 		 .clk_oe(clk_oe),
 		 
-//		 .clk_video(0), //~clk_25mhz),
+		 .clk_video(clk), //~clk_25mhz),
 		 
 		 .pix_clk(pix_clk),
 		 .de(de),
