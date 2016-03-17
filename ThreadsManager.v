@@ -64,6 +64,7 @@ parameter PROC_QUANTITY = 8;
   
   input wire cpu_q;
   
+  reg cpu_msg_pulse;
   
   input wire [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
@@ -75,10 +76,10 @@ parameter PROC_QUANTITY = 8;
                                || (ctl_state == `CTL_CPU_CMD && cpu_msg_in == `CPU_R_STOP_DONE)
 //                               || (ctl_state == `CTL_CPU_LOOP)
                              )
-                             || cpu_q === 1
+                             || cpu_q == 1
+/**/
                              ? data_r
                              : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
-/**/
                              ;
   
   input wire [`ADDR_SIZE0:0] addr_in;

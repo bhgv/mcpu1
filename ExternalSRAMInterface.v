@@ -144,7 +144,7 @@ parameter MEM_END = 10;
 												 
   reg [`DATA_SIZE0:0] prg_data_r;
   tri [`DATA_SIZE0:0] prg_data = 
-											is_addr_prg
+											is_addr_prg == 1
 										   && bus_director == 1
 										 ? prg_data_r 
                                : `DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
@@ -175,8 +175,8 @@ parameter MEM_END = 10;
 //  wire video1_we = is_addr_video1 ? prg_we_r : 1;
 
 
-	wire prg_oe = is_addr_prg ? prg_oe_r : 1;
-	wire prg_we = is_addr_prg ? prg_we_r : 1;
+	wire prg_oe = is_addr_prg == 1 ? prg_oe_r : 1;
+	wire prg_we = is_addr_prg == 1 ? prg_we_r : 1;
 
 /**
   wire [`DATA_SIZE0:0] int_prg_data = (
@@ -197,6 +197,8 @@ parameter MEM_END = 10;
   
   input wire clk_oe;
 
+  
+  
  
 /**/
 always @(posedge clk) begin

@@ -55,7 +55,7 @@ module BridgeToOutside (
             
             ext_next_cpu_q,
             ext_next_cpu_e,
-                        
+
             ext_dispatcher_q,
             
 //            ext_rw_halt,
@@ -156,7 +156,12 @@ module BridgeToOutside (
 //                              cpu_index_r :
                               //!!! cpu_index_itf
 										;
+
+  wire [`DATA_SIZE0:0] cpu_index_int;
+  
   reg [`DATA_SIZE0:0] cpu_index_r;
+  wire [`DATA_SIZE0:0] cpu_index = cpu_index_r;
+  reg cpu_index_set_r;
   
   input wire ext_next_cpu_q;
   output ext_next_cpu_e;
@@ -173,14 +178,14 @@ module BridgeToOutside (
   wire ext_dispatcher_q = ext_dispatcher_q_r;
   
   
-  input  [`CPU_MSG_SIZE0:0] int_cpu_msg_in;
+  input [`CPU_MSG_SIZE0:0] int_cpu_msg_in;
   output [`CPU_MSG_SIZE0:0] int_cpu_msg_out;
 //  reg [`CPU_MSG_SIZE0:0] int_cpu_msg_r;
 //  wire [`CPU_MSG_SIZE0:0] int_cpu_msg_out = int_cpu_msg_r;
   
   reg [`CPU_MSG_SIZE0:0] cpu_msg_tmp;
   
-  input [`CPU_MSG_SIZE0:0] ext_cpu_msg_in;
+  input wire [`CPU_MSG_SIZE0:0] ext_cpu_msg_in;
 
   output [`CPU_MSG_SIZE0:0] ext_cpu_msg;
   reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
@@ -188,12 +193,12 @@ module BridgeToOutside (
   wire [`CPU_MSG_SIZE0:0] ext_cpu_msg = //cpu_msg_r;
 /**/
                     ( int_cpu_msg_in == `CPU_R_FORK_THRD
-								      ? `CPU_R_FORK_THRD
-  								    : ( int_cpu_msg_in == `CPU_R_STOP_THRD
-							            ? `CPU_R_STOP_THRD
-			     								: cpu_msg_r
-									   	  )
-									 )
+                      ? `CPU_R_FORK_THRD
+                      : ( int_cpu_msg_in == `CPU_R_STOP_THRD
+                          ? `CPU_R_STOP_THRD
+                          : cpu_msg_r
+                        )
+                    )
                     ;
 
 
@@ -247,15 +252,44 @@ module BridgeToOutside (
   input wire clk_oe;
   
   
-  wire is_ext_cpu_index_active = (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE;
-  wire is_cpu_index_active = (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE;
-  wire is_ext_cpu_index_lt = ext_cpu_index[30:0] < cpu_index_r[30:0];
+//  wire is_ext_cpu_index_active = (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE;
+//  wire is_cpu_index_active = (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE;
+//  wire is_ext_cpu_index_lt = ext_cpu_index[30:0] < cpu_index_r[30:0];
   
 //  reg init_int;
+  
+  
+
+  
+/**/
+  CpuIndexManager cpu_idx_mngr(
+    .clk(clk),
+    .clk_oe(clk_oe),
+  
+    .cpu_index_in(ext_cpu_index), //cpu_index_r), //
+    .cpu_index_out(cpu_index_int),
+  
+    .bus_busy_in(bus_busy_in),
+    .ext_next_cpu_q(ext_next_cpu_q),
+    .ext_cpu_msg_in(ext_cpu_msg_in),
+    .ext_cpu_index(ext_cpu_index),
+    .state(state),
+  
+    .cpu_index_set(cpu_index_set_r),
+  
+    .rst(cpu_index_set_r) //ext_rst_b)
+  );
+/**/
+  
+  
+  
   
 
   always @(posedge clk) begin
   
+    if(rst_state >= 7)
+	   cpu_index_r = cpu_index_int;
+
 //    clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
 	 
@@ -289,13 +323,15 @@ module BridgeToOutside (
 		
 		rst_r = 0;
 		ext_rst_e_r = 0;
+		
+		cpu_index_set_r = 0;
 
 //      init_int = 1;
       
     end else if(rst_state < 7 /*&& init === 1 /*&& init_int == 1*/) begin // == 1) begin
 
 /**/
-      if(ext_next_cpu_q == 1 && ext_cpu_index == cpu_index_r) begin
+      if(ext_next_cpu_q == 1 && ext_cpu_index == cpu_index_int/*_r*/) begin
         ext_next_cpu_e_r = 1'b 1;
 		  disp_online_r = 0;  //!!!
 	   end else begin
@@ -308,6 +344,8 @@ module BridgeToOutside (
           ext_dispatcher_q_r = 1'b 0; //z;
           
           disp_online_r = 0;
+			 
+			 cpu_index_set_r = 0;
           
           rst_state = 2;
         end
@@ -317,11 +355,15 @@ module BridgeToOutside (
             rst_state = 4;
           end else begin
             rst_state = 3;
+			   cpu_index_set_r = 1;
           end
+			 
         end
         
         3: begin
           cpu_index_r = ext_cpu_index; //data;
+//			 cpu_index_set_r = 1;
+			 cpu_index_set_r = 0;
           //read_dn_r = 1;
           cpu_msg_r = `CPU_R_RESET;
           
@@ -330,8 +372,9 @@ module BridgeToOutside (
         
         4: begin
           //read_dn_r = 1'b z;
+//			 cpu_index_set_r = 0;
 			 
-			 cpu_msg_r = 0; //8'h zzzz;
+			 cpu_msg_r = 0; 
           
           rst_r = 1;
 
@@ -353,10 +396,10 @@ module BridgeToOutside (
           //if(state !== `FINISH_END) begin
           //  ext_rst_e_r = 1;
           //end
-
- 
-          rst_state = 7;
 			 
+//			 cpu_index_r = cpu_index_int;
+
+          rst_state = 7;
         end
         
       endcase
@@ -367,16 +410,17 @@ module BridgeToOutside (
 //	 if(init !== 1 && init_int == 0) begin      // end of RESET
     
       //cpu_msg_r = 0; 
+		
 
         if(ext_next_cpu_q == 1) begin
         
-          if(ext_cpu_index[30:0] < cpu_index_r[30:0]) begin
+          if(ext_cpu_index[30:0] < cpu_index/*_r*/[30:0]) begin
             cpu_ind_rel = 2'b01;
           end else
-          if(ext_cpu_index[30:0] > cpu_index_r[30:0]) begin
+          if(ext_cpu_index[30:0] > cpu_index/*_r*/[30:0]) begin
             cpu_ind_rel = 2'b10;
           end else
-          if(ext_cpu_index == cpu_index_r) begin
+          if(ext_cpu_index == cpu_index/*_r*/) begin
             cpu_ind_rel = 2'b11;
 //          end else begin
 //            cpu_ind_rel = 0;
@@ -445,11 +489,6 @@ module BridgeToOutside (
               //data_r
  //             if( ext_next_cpu_q === 1 ) begin
               cpu_msg_r = `CPU_R_START;
-					 
-//					 if(cpu_index_r == 0) begin
-//                  cpu_index_r = `CPU_ACTIVE;
-//                  cpu_index_itf = `CPU_ACTIVE;
-//					 end else begin
 
 //           end
                 
@@ -545,13 +584,15 @@ module BridgeToOutside (
 		    cpu_msg_r = 0; 
 			 
           case(state)
+/**
             `START_BEGIN: begin
               cpu_index_r = cpu_index_r | `CPU_ACTIVE;
             
 //              data_r = base_addr_r - 1;
               //read_dn_r = 1;
             end
-            
+/**/
+
 				`READ_MEM_SIZE_1,
 				`READ_DST,
 				`READ_DST_P,
@@ -605,9 +646,11 @@ module BridgeToOutside (
             
             `FINISH_END: begin
               rst_state = 1; //0; // = 1;
+/**
               cpu_index_r = `CPU_NONACTIVE;
+/**/
             end
-            
+
             default: begin
               ext_dispatcher_q_r = 1'b 0; //z;
             end
@@ -620,11 +663,15 @@ module BridgeToOutside (
     
    
     end //clk_oe
+	 
+	 
+//	 cpu_index_r = cpu_index_int;
 
 
-	
+	 
+/**
 	 if(clk_oe == 0) begin
-/**/
+/** /
 //    if(ext_next_cpu_e === 1) begin 
       if(
 		   ext_cpu_index == cpu_index_r
@@ -647,7 +694,7 @@ module BridgeToOutside (
 //      )
       begin // ext_cpu_index !== cpu_index_r
 
-/**/
+/** /
               if(
                  (ext_cpu_index & `CPU_ACTIVE) !== 0 //=== `CPU_ACTIVE
 //					  is_ext_cpu_index_active
@@ -689,13 +736,15 @@ module BridgeToOutside (
 					  
 					end
 				 end // (ext_cpu_index & `CPU_ACTIVE) ==/!= `CPU_ACTIVE
-/**/
+/** /
 
 //        end //if(ext_next_cpu_e_r === 1)
 
 			end // ext_cpu_index ==/!= cpu_index_r
 
     end //clk_oe
+	 
+/**/
 
   end //always
 /**/

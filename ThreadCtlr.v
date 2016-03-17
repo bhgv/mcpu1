@@ -32,6 +32,8 @@ module ThreadCtlr(
         
         cpu_msg_in,
         cpu_msg_out,
+		  
+		  cpu_msg_pulse,
         
         next_state,
         
@@ -71,6 +73,8 @@ module ThreadCtlr(
   input wire disp_online;
   
   
+  output reg cpu_msg_pulse;
+  
 //  reg cpu_msg_in_r;
   
   input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
@@ -88,32 +92,35 @@ module ThreadCtlr(
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_in;
   wire [`DATA_SIZE0:0] data_out = 
-                           (
-                              disp_online == 1 
-                              && state == `ALU_BEGIN 
-                              && (
-                                cpu_msg_r == `CPU_R_FORK_THRD
-                                || cpu_msg_r == `CPU_R_STOP_THRD
-                                )
-                             )
+//                           (
+//                              disp_online == 1 
+//                              && state == `ALU_BEGIN 
+//                              && (
+//                                cpu_msg_r == `CPU_R_FORK_THRD
+//                                || cpu_msg_r == `CPU_R_STOP_THRD
+//                                )
+//                             )
+									  cpu_msg_pulse == 1
                              ? data_r 
-                             : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             : 0 
                              ;
   
   input [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_in;
-  wire [`ADDR_SIZE0:0] addr_out = (
-                              disp_online == 1
-                              && state == `ALU_BEGIN 
-                              && (
-                                cpu_msg_r == `CPU_R_FORK_THRD
-                                || cpu_msg_r == `CPU_R_STOP_THRD
-                                )
-                             )
+  wire [`ADDR_SIZE0:0] addr_out = 
+//                             (
+//                              disp_online == 1
+//                              && state == `ALU_BEGIN 
+//                              && (
+//                                cpu_msg_r == `CPU_R_FORK_THRD
+//                                || cpu_msg_r == `CPU_R_STOP_THRD
+//                                )
+//                             )
+									  cpu_msg_pulse == 1
                              ? addr_r 
-                             : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+                             : 0 
                              ;
   
 
@@ -152,6 +159,8 @@ module ThreadCtlr(
  //     cpu_msg_in_r = 0;
 //      is_bus_busy_r = 1'b z;
 
+      cpu_msg_pulse = 0;
+		
 		next_state_r = 1'b 0;
 //		next_state_r = 1'b z;
     end else begin
@@ -186,6 +195,8 @@ module ThreadCtlr(
                 
                   cpu_msg_r = `CPU_R_FORK_THRD;
                   
+						cpu_msg_pulse = 1;
+						
                   signal_sent = 1;
                 end
                 else begin
@@ -193,6 +204,8 @@ module ThreadCtlr(
 //                    signal_sent = 1;
 //                  end
 //                  else begin
+                    cpu_msg_pulse = 0;
+						  
                     cpu_msg_r = 0; //8'h 00;
  //                   cpu_msg_in_r = 1;
                   
@@ -220,11 +233,13 @@ module ThreadCtlr(
                   addr_r = src0 + base_addr - `THREAD_HEADER_SPACE;
                   data_r = 
 						        src1 == 0 
-								  ? base_addr_data - `THREAD_HEADER_SPACE 
+								  ? 0 //base_addr_data - `THREAD_HEADER_SPACE 
 								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
 								  ;
                 
                   cpu_msg_r = `CPU_R_STOP_THRD;
+						
+						cpu_msg_pulse = 1;
                   
                   signal_sent = 1;
                 end
@@ -233,6 +248,8 @@ module ThreadCtlr(
 //                    signal_sent = 1;
 //                  end
 //                  else begin
+                    cpu_msg_pulse = 0;
+						  
                     cpu_msg_r = 0; //8'h 00;
      //               cpu_msg_in_r = 1;
                   
