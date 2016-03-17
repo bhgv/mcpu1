@@ -135,7 +135,16 @@ module ThreadCtlr(
   
   reg signal_sent;
   
+  
+  wire [`DATA_SIZE0:0] data_for_stop_msg =
+						        src1 == 0 
+								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
+								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
+								  ;
+  
   //reg clk_oe;
+  
+  
   
         
   always @(negedge clk) begin
@@ -232,9 +241,10 @@ module ThreadCtlr(
                 ) begin
                   addr_r = src0 + base_addr - `THREAD_HEADER_SPACE;
                   data_r = 
-						        src1 == 0 
-								  ? 0 //base_addr_data - `THREAD_HEADER_SPACE 
-								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
+						        data_for_stop_msg
+//						        src1 == 0 
+//								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
+//								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
 								  ;
                 
                   cpu_msg_r = `CPU_R_STOP_THRD;
@@ -244,21 +254,23 @@ module ThreadCtlr(
                   signal_sent = 1;
                 end
                 else begin
+					   addr_r = 0;
+						data_r = 0;
+						
 //                  if(signal_sent == 0) begin
 //                    signal_sent = 1;
 //                  end
 //                  else begin
-                    cpu_msg_pulse = 0;
-						  
-                    cpu_msg_r = 0; //8'h 00;
+                  cpu_msg_pulse = 0;
+						
+                  cpu_msg_r = 0; //8'h 00;
      //               cpu_msg_in_r = 1;
                   
-                    if(cpu_msg_in == `CPU_R_STOP_DONE) begin
-                    
-                      signal_sent = 0;
-                      next_state_r = 1;
-                    end
-//                  end
+                  if(cpu_msg_in == `CPU_R_STOP_DONE) begin
+                    signal_sent = 0;
+                    next_state_r = 1;
+                  end
+//                end
                 end
               end
               else begin
