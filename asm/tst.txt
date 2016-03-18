@@ -8,6 +8,7 @@ init{
   r4 = h'FFFFFFf0;//FFFFFFEE;
 
   r10 = h'b9;
+  r11 = h'9b;
 
   r15 =h'10;
 }
@@ -19,14 +20,21 @@ init{
   man;
 
 msg:
-  [r4] = z + r10; // uart out "b7"
+  [r4] = z + r10; // uart out "b9"
+
+stop_self:
+  r3 = stop r2 (r2);
+
+  [r4] = z + r11; // uart out "9b"
 
 //  r0 = z +[ip++];
 //  3000;
 lpoo:
 //  r0-- = r0+z;
   ip = z + [ip++];// ? r0;
-  lpoo;
+  stop_self;
+
+//  lpoo;
 
   ip = z + [ip];
   msg;
