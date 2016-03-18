@@ -104,6 +104,9 @@ parameter PROC_QUANTITY = 8;
   reg [`DATA_SIZE0:0] aproc_e;
   reg [`DATA_SIZE0:0] aproc_i;
   
+  wire [`DATA_SIZE:0] aproc_e_minus_1 = aproc_e - 1;
+  
+  
 //  reg [`DATA_SIZE0:0] pproc_b;
 //  reg [`DATA_SIZE0:0] pproc_e;
   
@@ -127,7 +130,6 @@ parameter PROC_QUANTITY = 8;
   
   reg is_need_stop_thrd;
 
-  
   
   
   always @(posedge clk) begin
@@ -171,10 +173,9 @@ parameter PROC_QUANTITY = 8;
       case(ctl_state)
         `CTL_CPU_LOOP: begin
 		  
-		    if(ctl_state_int != `CTL_CPU_REMOVE_THREAD) begin
-			 
-			 
-          if(ready_to_fork_thread) begin
+		    case(ctl_state_int)
+			   default: begin
+              if(ready_to_fork_thread == 1) begin
 /**
             if(
                 pproc_b != pproc_e
@@ -187,41 +188,40 @@ parameter PROC_QUANTITY = 8;
                 pproc_b = 0;
               end
 /**/
-            if(is_pproc == 1) begin
-				  {data_r, next_proc} = pproc_r;
-				  is_pproc = 0;
+                if(is_pproc == 1) begin
+				      {data_r, next_proc} = pproc_r;
+				      is_pproc = 0;
 				  
-              aproc_tbl[aproc_e] = {/*1'b 0,*/ data_r, next_proc};
-//              aproc_e = aproc_e + 1;
-              if(aproc_e >= PROC_QUANTITY-1) begin
-                aproc_e = 0;
-              end else begin
-				    aproc_e = aproc_e + 1;
-				  end
+                  aproc_tbl[aproc_e] = {/*1'b 0,*/ data_r, next_proc};
+//                  aproc_e = aproc_e + 1;
+                  if(aproc_e >= PROC_QUANTITY-1) begin
+                    aproc_e = 0;
+                  end else begin
+				        aproc_e = aproc_e + 1;
+				      end
+                  ready_to_fork_thread = 0;
+                end else begin
+  //                ready_to_fork_thread = 0;
               
-              ready_to_fork_thread = 0;
+                  {/*is_need_stop_thrd,*/ data_r, next_proc} = aproc_tbl[aproc_i];
               
-            end else begin
-  //            ready_to_fork_thread = 0;
-              
-              {/*is_need_stop_thrd,*/ data_r, next_proc} = aproc_tbl[aproc_i];
-              
-//              if(is_need_stop_thrd) begin
-				  if(is_sproc == 1 && {data_r, next_proc} == sproc_r) begin
-				    ctl_state_int = `CTL_CPU_REMOVE_THREAD;
-//                aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
-/**
-                is_sproc = 0;
+//                  if(is_need_stop_thrd) begin
+				      if(is_sproc == 1 && {data_r, next_proc} == sproc_r) begin
+//                    aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
+//                    is_sproc = 0;
 					 
-                if(aproc_e != aproc_b) begin
-                  if(aproc_e == 0) begin
-                    aproc_e = PROC_QUANTITY - 1;
-                  end 
-                  else begin
-                    aproc_e = aproc_e - 1;
-                  end
-                end
+                    if(aproc_e != aproc_b) begin
+                      if(aproc_e == 0) begin
+                        aproc_e = PROC_QUANTITY - 1;
+                      end 
+                      else begin
+                        aproc_e = aproc_e - 1;
+                      end
+                    end
+					 
+				        ctl_state_int = `CTL_CPU_REMOVE_THREAD_ph1;
 
+/**
                 if(aproc_i == aproc_e) begin
                   aproc_i = aproc_b;
                 end else begin
@@ -231,35 +231,45 @@ parameter PROC_QUANTITY = 8;
                   aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r, next_proc};
                 end
 /**/
-              end
-              else begin
-				    if(is_sproc == 1 && sproc_finish_i_r == aproc_i) begin
-					   is_sproc = 0;
-                end
+                  end
+                  else begin
+				        if(is_sproc == 1 && sproc_finish_i_r == aproc_i) begin
+					       is_sproc = 0;
+                    end
 					 
-                //aproc_i = aproc_i + 1;
-                if(aproc_i >= PROC_QUANTITY-1) begin
-                  aproc_i = 0;
-                end else begin
-					   aproc_i = aproc_i + 1;
-					 end
+                    //aproc_i = aproc_i + 1;
+                    if(aproc_i >= PROC_QUANTITY-1) begin
+						    if(aproc_e == 0) begin
+                        aproc_i = aproc_b;
+							 end else begin
+                        aproc_i = 0;
+                      end
+                    end else begin
+						    if(aproc_e_minus_1 == aproc_i) begin
+                        aproc_i = aproc_b;
+                      end else begin
+					         aproc_i = aproc_i + 1;
+                      end
+					     end
                 
-                if(aproc_i == aproc_e) begin
-                  aproc_i = aproc_b;
-                end
+//                    if(aproc_i == aproc_e) begin
+//                      aproc_i = aproc_b;
+//                    end
               
-                ready_to_fork_thread = 0;
+                    ready_to_fork_thread = 0;
+                  end
+                end
+          
               end
             end
-          
-          end
-        
-        end
-		  else 
 		  
-		  /*`CTL_CPU_REMOVE_THREAD:*/ begin
-          is_sproc = 0;
+		      `CTL_CPU_REMOVE_THREAD_ph1:
+//		  else if(ctl_state_int == `CTL_CPU_REMOVE_THREAD_ph1) 
+		  
+		      /*`CTL_CPU_REMOVE_THREAD:*/ begin
+              is_sproc = 0;
 
+/**
           if(aproc_e != aproc_b) begin
             if(aproc_e == 0) begin
               aproc_e = PROC_QUANTITY - 1;
@@ -268,18 +278,29 @@ parameter PROC_QUANTITY = 8;
               aproc_e = aproc_e - 1;
             end
           end
+/**/
 
-          if(aproc_i == aproc_e) begin
-            aproc_i = aproc_b;
-          end else begin
+              if(aproc_i == aproc_e) begin
+                aproc_i = aproc_b;
+			       ctl_state_int = 0;
+              end else begin
 /**  only for test! */
 //                  aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
-            {/*is_need_stop_thrd,*/ data_r, next_proc} = aproc_tbl[aproc_e];
-            aproc_tbl[aproc_i] = {/*is_need_stop_thrd,*/ data_r, next_proc};
-          end
+                {/*is_need_stop_thrd,*/ data_r, next_proc} = aproc_tbl[aproc_e];
+//                aproc_tbl[aproc_i] = {/*is_need_stop_thrd,*/ data_r, next_proc};
+			       ctl_state_int = `CTL_CPU_REMOVE_THREAD_ph2;
+              end
 			 
-			 ctl_state_int = 0;
-		  end
+		      end 
+		  
+		      `CTL_CPU_REMOVE_THREAD_ph2:
+//		   else if(ctl_state_int == `CTL_CPU_REMOVE_THREAD_ph2)
+		      begin
+              aproc_tbl[aproc_i] = {/*is_need_stop_thrd,*/ data_r, next_proc};
+			     ctl_state_int = 0;
+		      end
+		  
+		    endcase
 		  
 		  end
 		  

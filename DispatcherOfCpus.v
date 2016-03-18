@@ -465,9 +465,7 @@ always @(/*pos*/negedge clk) begin
 //          end
                   
           cpu_q_r = 1;
-          
-//          $display("cpu_ind= %x, proc = %x", ext_cpu_index_r, addr_out_r);
-        
+                  
           state_ctl = `CTL_CPU_CMD;
         end else begin
 		    bus_busy_r = 1'b 0;
