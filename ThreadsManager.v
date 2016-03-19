@@ -139,6 +139,26 @@ parameter PROC_QUANTITY = 8;
 
   
   always @(posedge clk) begin
+
+  
+/**
+case(ctl_state_int)
+		      `CTL_CPU_REMOVE_THREAD_ph2: begin
+              aproc_tbl[aproc_i] = {data_r, next_proc};
+				  
+              if(aproc_e > 0) begin 
+                aproc_e = aproc_e - 1;
+              end
+				  
+			     ctl_state_int = 0;
+				  
+				  is_sproc = 0;
+				  
+				  ready_to_fork_thread = 0;
+		      end
+endcase
+/**/
+
     if(clk_oe == 0) begin
 
 //      case(ctl_state)
@@ -167,22 +187,22 @@ parameter PROC_QUANTITY = 8;
 
 
               if(aproc_i == aproc_e_minus_1) begin
-                aproc_i = 0; //aproc_b;
+                aproc_i <= 0; //aproc_b;
 					 
-					 {data_r, next_proc} = aproc_tbl[0]; //aproc_b];
+					 {data_r, next_proc} <= aproc_tbl[0]; //aproc_b];
 		
                 if(aproc_e > 0) begin 
-                  aproc_e = aproc_e - 1;
+                  aproc_e <= aproc_e - 1;
                 end
 					 
-			       ctl_state_int = 0;
+			       ctl_state_int <= 0;
 					 
-                is_sproc = 0;
+                is_sproc <= 0;
 					 
-					 ready_to_fork_thread = 0;
+					 ready_to_fork_thread <= 0;
               end else begin
-                {data_r, next_proc} = aproc_tbl[aproc_e_minus_1];
-			       ctl_state_int = `CTL_CPU_REMOVE_THREAD_ph2;
+                {data_r, next_proc} <= aproc_tbl[aproc_e_minus_1];
+			       ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph2;
               end
 
 
@@ -205,7 +225,7 @@ parameter PROC_QUANTITY = 8;
                   end
                   else begin
 				        if(is_sproc == 1 && sproc_finish_i_r == aproc_i) begin
-					       is_sproc = 0;
+					       is_sproc <= 0;
                     end
 					 
                     //aproc_i = aproc_i + 1;
@@ -217,9 +237,9 @@ parameter PROC_QUANTITY = 8;
 //                      end
 //                    end else begin
 						    if(aproc_e_minus_1 == aproc_i) begin
-                        aproc_i = 0; //aproc_b;
+                        aproc_i <= 0; //aproc_b;
                       end else begin
-					         aproc_i = aproc_i + 1;
+					         aproc_i <= aproc_i + 1;
                       end
 //					     end
                 
@@ -227,7 +247,7 @@ parameter PROC_QUANTITY = 8;
 //                      aproc_i = aproc_b;
 //                    end
               
-                    ctl_state_int = 0;
+                    ctl_state_int <= 0;
 						  
 //                    ready_to_fork_thread = 0;
                   end
@@ -238,17 +258,17 @@ parameter PROC_QUANTITY = 8;
 
 /**/
 		      `CTL_CPU_REMOVE_THREAD_ph2: begin
-              aproc_tbl[aproc_i] = {data_r, next_proc};
+              aproc_tbl[aproc_i] <= {data_r, next_proc};
 				  
               if(aproc_e > 0) begin 
-                aproc_e = aproc_e - 1;
+                aproc_e <= aproc_e - 1;
               end
 				  
-			     ctl_state_int = 0;
+			     ctl_state_int <= 0;
 				  
-				  is_sproc = 0;
+				  is_sproc <= 0;
 				  
-				  ready_to_fork_thread = 0;
+//				  ready_to_fork_thread = 0;
 		      end
 /**/
 
@@ -276,54 +296,73 @@ parameter PROC_QUANTITY = 8;
 		      end 
 /**/
 
+
+/**/
+            `CTL_CPU_START_THREAD_ph1: begin
+////            aproc_e = aproc_e + 1;
+//              if(aproc_e >= PROC_QUANTITY-1) begin
+////              aproc_e = 0;
+//              end else begin
+              if(aproc_e < PROC_QUANTITY-1) begin
+				    aproc_e <= aproc_e + 1;
+				  end
+				  
+				  ctl_state_int <= 0;
+				end
+/**/
+
 				
           endcase
 //        end
 		  
 //      endcase
+
+//    if(clk_oe == 0) begin
 	 
 	 end else begin
 	 
     if(rst == 1) begin
 //      proc_r = 0; //32'h zzzzzzzz;
-      next_proc = 0; 
+      next_proc <= 0; 
       
-      aproc_b = 0;
-      aproc_e = 0;
-      aproc_i = 0;
+      aproc_b <= 0;
+      aproc_e <= 0;
+      aproc_i <= 0;
       
 //      pproc_b = 0;
 //      pproc_e = 1;
       
 //      pproc_tbl[0] = 0;
-      pproc_r = 0;
-		is_pproc = 1;
+      pproc_r <= 0;
+		is_pproc <= 1;
       
-      new_proc_cntr = 1;
+      new_proc_cntr <= 1;
       
-      thrd_rslt_r = 0;
+      thrd_rslt_r <= 0;
       
-      ready_to_fork_thread = 1;
+      ready_to_fork_thread <= 1;
       
-		is_sproc = 0;
+		is_sproc <= 0;
 //      sproc_e = 0;
 
-      ctl_state_int = 0;
+      ctl_state_int <= 0;
     end else begin
 
 
       if(next_thread == 1) begin //thrd_cmd == `THREAD_CMD_GET_NEXT_STATE) begin
-        ready_to_fork_thread = 1;
+        ready_to_fork_thread <= 1;
       end //else 
 		
 		begin
       
+		
+
       
       case(ctl_state)
         `CTL_CPU_LOOP: begin
 		  
 		    case(ctl_state_int)
-			   /*default*/ 0: begin
+			   0: begin
               if(ready_to_fork_thread == 1 || next_thread == 1) begin
 /**
             if(
@@ -338,23 +377,27 @@ parameter PROC_QUANTITY = 8;
               end
 /**/
                 if(is_pproc == 1) begin
-				      {data_r, next_proc} = pproc_r;
-				      is_pproc = 0;
+				      {data_r, next_proc} <= pproc_r;
 				  
-                  aproc_tbl[aproc_e] = {data_r, next_proc};
+                  aproc_tbl[aproc_e] <= pproc_r; //{data_r, next_proc};
+						
+				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
+						/**
 ////                  aproc_e = aproc_e + 1;
                   if(aproc_e >= PROC_QUANTITY-1) begin
 //                    aproc_e = 0;
                   end else begin
 				        aproc_e = aproc_e + 1;
 				      end
-                  ready_to_fork_thread = 0;
+						/**/
+				      is_pproc <= 0;
+                  ready_to_fork_thread <= 0;
                 end else begin
-                  ready_to_fork_thread = 0;
+                  ready_to_fork_thread <= 0;
               
-                  {data_r, next_proc} = aproc_tbl[aproc_i];
+                  {data_r, next_proc} <= aproc_tbl[aproc_i];
 
-				      ctl_state_int = `CTL_CPU_REMOVE_THREAD_ph0;
+				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
                 end
               end
             end
@@ -502,30 +545,30 @@ parameter PROC_QUANTITY = 8;
                 pproc_e = pproc_e + 1;
 /**/
               if(is_pproc == 0) begin
-				    pproc_r = {data_in, addr_in};
-					 is_pproc = 1;
+				    pproc_r <= {data_in, addr_in};
+					 is_pproc <= 1;
                 
-                data_r = -1;
-                thrd_rslt_r = 1;
+                data_r <= -1;
+                thrd_rslt_r <= 1;
               end else
               begin
-                data_r = 0;
-                thrd_rslt_r = 0;
+                data_r <= 0;
+                thrd_rslt_r <= 0;
               end
             end
             
             `THREAD_CMD_STOP: begin
 				
 				  if(is_sproc == 1) begin
-                data_r = 0;
-                thrd_rslt_r = 0;
+                data_r <= 0;
+                thrd_rslt_r <= 0;
 				  end else begin
-				    sproc_r = {data_in, addr_in};
-					 sproc_finish_i_r = aproc_i;
-					 is_sproc = 1;
+				    sproc_r <= {data_in, addr_in};
+					 sproc_finish_i_r <= aproc_i;
+					 is_sproc <= 1;
 					 
-                data_r = -1;
-                thrd_rslt_r = 1;
+                data_r <= -1;
+                thrd_rslt_r <= 1;
               end
               
 //              for(i = aproc_b; i != aproc_e; i = (i < (PROC_QUANTITY - 1)) ? i+1 : 0 ) begin

@@ -1,9 +1,11 @@
 
 
-`define CPU_QUANTITY		3
+`define CPU_QUANTITY		2
 `define PROC_QUANTITY	7
 
+`define MAIN_CLK_FREQ		1 * 50000000
 
+//`define IS_USE_PLL	
 
 
 
@@ -29,5 +31,4 @@
 
   `define RS232_DATA_ADDR		'h fffffff0
 
-  `define MAIN_CLK_FREQ		50000000
   `define RS232_BAUD_RATE	9600

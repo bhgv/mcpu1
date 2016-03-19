@@ -117,7 +117,12 @@ module Top(
 	wire clk_oe_pll;
 	wire clk_oe;// = clk_oe_pll;
 
+`ifdef IS_USE_PLL
+	wire clk_int;// = clk;
+`else
 	wire clk_int = clk;
+`endif
+
 	wire clk_25mhz;// = clk_oe;
 	
 	output wire prg_ba;// = 0;
@@ -638,8 +643,10 @@ ExternalSRAMInterface ext_ram_itf(
 /**/
 
 
-/**
-pll_core pll (
+/**/
+`ifdef IS_USE_PLL
+
+  pll_core pll (
 //	.areset(~rst),
 	.inclk0(clk),
 	
@@ -647,6 +654,8 @@ pll_core pll (
 //	.c1(clk_oe_pll),
 //	.c2(clk_25mhz)
 	);
+	
+`endif
 /**/
 
 
