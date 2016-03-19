@@ -223,12 +223,15 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 //                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                 ;
 
-
+  
+  reg next_thread_r;
 
   ThreadsManager trds_mngr (
                     .clk(clk),
 						  .clk_oe(clk_oe),
                     
+						  .next_thread(next_thread_r),
+						  
                     .cpu_q(ext_cpu_q),
                     
                     .ctl_state(state_ctl),
@@ -353,6 +356,8 @@ always @(/*pos*/negedge clk) begin
 	 
 	 ext_rw_halt_r = 0;
 	 rw_halt_r = 0;
+	 
+	 next_thread_r = 0;
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
@@ -398,9 +403,12 @@ always @(/*pos*/negedge clk) begin
 //          end
 
 
-          if(thrd_cmd_r == `THREAD_CMD_GET_NEXT_STATE) begin
-            thrd_cmd_r = `THREAD_CMD_NULL;
+/**
+          if(next_thread_r == 1) begin //thrd_cmd_r == `THREAD_CMD_GET_NEXT_STATE) begin
+			   next_thread_r = 0;
+            //thrd_cmd_r = `THREAD_CMD_NULL;
           end
+/**/
 
 
     case(state_ctl)
@@ -416,6 +424,8 @@ always @(/*pos*/negedge clk) begin
 
           cpu_msg_r = 0; 
 			 // AA test!
+			 
+			 next_thread_r = 0;
 			 
         if(cpu_msg_in == `CPU_R_RESET) begin 
           ext_cpu_index_r = ext_cpu_index_r + 1;
@@ -445,6 +455,8 @@ always @(/*pos*/negedge clk) begin
 
           cpu_msg_r = 0; 
 			 // AA test!
+			 
+			 next_thread_r = 0;
 			 
         if(bus_busy_r != 1) begin
           if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
@@ -504,6 +516,8 @@ always @(/*pos*/negedge clk) begin
 			 
 			 cpu_msg_r = 0; 
 			 
+			 next_thread_r = 0;
+			 
 			 state_ctl = `CTL_MEM_WORK;
         end else 
         if(
@@ -524,6 +538,8 @@ always @(/*pos*/negedge clk) begin
 			 
 			 cpu_msg_r = 0; 
 			 
+			 next_thread_r = 0;
+			 
 			 state_ctl = `CTL_MEM_WORK;
         end else 
         if(ext_cpu_e == 1) begin
@@ -542,19 +558,25 @@ always @(/*pos*/negedge clk) begin
 
                 new_cpu_restarted = 0;
 
-                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;                
+					 next_thread_r = 1;
+//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;                
               end
             
               `CPU_R_END: begin
                 cpu_num_a = cpu_num_a - 1;
                 cpu_num_na = cpu_num_na + 1;
+					 
+					 next_thread_r = 0;
               end
             
               `CPU_R_FORK_DONE: begin
-                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+				    next_thread_r = 1;
+//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
                 
                 cpu_msg_r = 0;
               end
+				  
+				  default: next_thread_r = 0;
             
             endcase
 //          if(mem_rd == 1 || mem_wr == 1) begin
@@ -574,6 +596,8 @@ always @(/*pos*/negedge clk) begin
 		  
 		    ext_read_q_r = 0;
 			 ext_write_q_r = 0;
+			 
+			 next_thread_r = 0;
 
             if(thrd_cmd_r == `THREAD_CMD_NULL) begin
 				  cpu_msg_r = 0; 
@@ -620,6 +644,8 @@ always @(/*pos*/negedge clk) begin
 
           cpu_msg_r = 0; 
 			 // AA test!
+			 
+			 next_thread_r = 0;
 			 
 /**/
 		  if(rw_halt_in == 1) begin

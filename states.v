@@ -4,6 +4,7 @@
 `define CTL_RESET_WAIT  1
 `define CTL_CPU_LOOP    2
 
+`define CTL_CPU_REMOVE_THREAD_ph0	7
 `define CTL_CPU_REMOVE_THREAD_ph1	5
 `define CTL_CPU_REMOVE_THREAD_ph2	6
 
