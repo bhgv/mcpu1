@@ -138,7 +138,10 @@ parameter PROC_QUANTITY = 8;
   reg [`DATA_SIZE0:0] tmp_data_r;
 
   
-  always @(posedge clk) begin
+  
+  
+  
+  always @(negedge clk) begin
 
   
 /**
@@ -191,7 +194,7 @@ endcase
 					 
 					 {data_r, next_proc} <= aproc_tbl[0]; //aproc_b];
 		
-                if(aproc_e > 0) begin 
+                if(aproc_e > 1) begin 
                   aproc_e <= aproc_e - 1;
                 end
 					 
@@ -260,7 +263,7 @@ endcase
 		      `CTL_CPU_REMOVE_THREAD_ph2: begin
               aproc_tbl[aproc_i] <= {data_r, next_proc};
 				  
-              if(aproc_e > 0) begin 
+              if(aproc_e > 1) begin 
                 aproc_e <= aproc_e - 1;
               end
 				  
@@ -303,6 +306,7 @@ endcase
 //              if(aproc_e >= PROC_QUANTITY-1) begin
 ////              aproc_e = 0;
 //              end else begin
+
               if(aproc_e < PROC_QUANTITY-1) begin
 				    aproc_e <= aproc_e + 1;
 				  end
@@ -381,7 +385,10 @@ endcase
 				  
                   aproc_tbl[aproc_e] <= pproc_r; //{data_r, next_proc};
 						
-				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
+//                  if(aproc_e < PROC_QUANTITY-1) begin
+//				        aproc_e <= aproc_e + 1;
+//				      end
+						
 						/**
 ////                  aproc_e = aproc_e + 1;
                   if(aproc_e >= PROC_QUANTITY-1) begin
@@ -392,6 +399,8 @@ endcase
 						/**/
 				      is_pproc <= 0;
                   ready_to_fork_thread <= 0;
+
+				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
                 end else begin
                   ready_to_fork_thread <= 0;
               
