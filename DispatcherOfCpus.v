@@ -225,12 +225,16 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 
   
   reg next_thread_r;
+  wire next_thread =
+                   cpu_msg_in == `CPU_R_START
+						 || cpu_msg_in == `CPU_R_FORK_DONE
+                   ;
 
   ThreadsManager trds_mngr (
                     .clk(clk),
 						  .clk_oe(clk_oe),
                     
-						  .next_thread(next_thread_r),
+						  .next_thread(next_thread),
 						  
                     .cpu_q(ext_cpu_q),
                     
@@ -297,7 +301,7 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                                     )
                                     ? 
 												mem_addr_tmp
-                                    : 0 //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
+                                    : 0 
                                     ;
 
   input wire [`DATA_SIZE0:0] ext_mem_data_in;

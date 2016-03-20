@@ -143,25 +143,6 @@ parameter PROC_QUANTITY = 8;
   
   always @(negedge clk) begin
 
-  
-/**
-case(ctl_state_int)
-		      `CTL_CPU_REMOVE_THREAD_ph2: begin
-              aproc_tbl[aproc_i] = {data_r, next_proc};
-				  
-              if(aproc_e > 0) begin 
-                aproc_e = aproc_e - 1;
-              end
-				  
-			     ctl_state_int = 0;
-				  
-				  is_sproc = 0;
-				  
-				  ready_to_fork_thread = 0;
-		      end
-endcase
-/**/
-
     if(clk_oe == 0) begin
 
 //      case(ctl_state)
@@ -170,8 +151,7 @@ endcase
 		    case(ctl_state_int)
 /**/
             `CTL_CPU_REMOVE_THREAD_ph0: begin
-//                  if(is_need_stop_thrd) begin
-				      if(is_sproc == 1 && {data_r, next_proc} == sproc_r) begin
+              if(is_sproc == 1 && {data_r, next_proc} == sproc_r) begin
 //                    aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
 //                    is_sproc = 0;
 		
@@ -185,8 +165,6 @@ endcase
 //                      end
                     end
 /**/
-
-
 
 
               if(aproc_i == aproc_e_minus_1) begin
@@ -380,6 +358,10 @@ endcase
                 pproc_b = 0;
               end
 /**/
+
+
+                ready_to_fork_thread <= 0;
+
                 if(is_pproc == 1) begin
 				      {data_r, next_proc} <= pproc_r;
 				  
@@ -398,11 +380,10 @@ endcase
 				      end
 						/**/
 				      is_pproc <= 0;
-                  ready_to_fork_thread <= 0;
+//                  ready_to_fork_thread <= 0;
 
 				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
                 end else begin
-                  ready_to_fork_thread <= 0;
               
                   {data_r, next_proc} <= aproc_tbl[aproc_i];
 
