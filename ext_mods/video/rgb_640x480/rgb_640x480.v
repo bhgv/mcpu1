@@ -69,9 +69,6 @@ module RGB_640x480(
 		 rst
 		);
 		
-//		parameter ADDR_VGA_R = 999979;
-//		parameter ADDR_VGA_G = 999978;
-//		parameter ADDR_VGA_B = 999977;
 		
 		parameter VIDEO_MEM_B = 1;
 		parameter VIDEO_MEM_E = 2;
@@ -338,12 +335,12 @@ ExternalSRAMInterface ext_vram_itf(
 //		clk_int = 0;
 //	 end else 
 	 begin
-      pix_clk = /*hblank &*/ ~pix_clk;  //clk_video; // 
+      pix_clk <= /*hblank &*/ ~pix_clk;  //clk_video; // 
     end
 end
 
   always @(posedge clk_video) begin
-	   clk_int = ~clk_int; //clk_video;
+	   clk_int <= ~clk_int; //clk_video;
 //	 end
   end
 
@@ -351,22 +348,22 @@ end
   always @(posedge clk_int) begin
 
     if(rst == 1) begin
-	   dot = 0;
-		row = 9;
+	   dot <= 0;
+		row <= 9;
     end else begin 	 
       //dot = dot + 1;
 
 	   if( w_h_end ) begin //dot >= `Th ) begin
-	     dot = 0;
+	     dot <= 0;
 		  
 		  if( w_v_end )
-		    row = 0;
+		    row <= 0;
         else
-		    row = row + 1;
+		    row <= row + 1;
 //      if( row >= `Tv )
 //        row = 0;
       end else begin
-		  dot = dot + 1;
+		  dot <= dot + 1;
 		end
     end
 
@@ -376,16 +373,16 @@ end
 	 always @(posedge clk_int) begin
 //    always @(posedge pix_clk) begin
         if (rst == 1) begin
-            r_vsync_x = 1'b1;
-            r_hsync_x = 1'b1;
-            r_blank_x = 1'b1;
-            r_de = 1'b0;
+            r_vsync_x <= 1'b1;
+            r_hsync_x <= 1'b1;
+            r_blank_x <= 1'b1;
+            r_de <= 1'b0;
         end else begin
-            r_vsync_x = w_vsync;
-            r_hsync_x = w_hsync;
-            r_hsync_x_i = w_hsync_x_i;
-            r_blank_x = w_active;
-            r_de = w_active;
+            r_vsync_x <= w_vsync;
+            r_hsync_x <= w_hsync;
+            r_hsync_x_i <= w_hsync_x_i;
+            r_blank_x <= w_active;
+            r_de <= w_active;
         end
     end
 
@@ -398,16 +395,16 @@ end
 	 
   always @(posedge clk_int) begin
 	 if(rst) begin
-	   scanline_pt = 0;
+	   scanline_pt <= 0;
 		
 //		pix_clk = 1;
     end else
 //	 if(pix_clk == 1) begin
 	   if( w_active ) begin //dot < `Th && row < `Tv) begin
 		  if(scanline_pt >= (`Thd * `Tvd) - 1) begin
-		    scanline_pt = 0;
+		    scanline_pt <= 0;
 		  end else begin
-		    scanline_pt = scanline_pt + 1;
+		    scanline_pt <= scanline_pt + 1;
 		  end
 		end
 //	 end

@@ -39,7 +39,8 @@ module CpuBlock(
     rw_halt_in,
 	 rw_halt_out,
 
-    rst
+    rst_in,
+	 rst_out
 );
 
 parameter CPU_QUANTITY = `CPU_QUANTITY;
@@ -49,7 +50,8 @@ parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
 
   
 	input wire clk;
-	input wire rst;
+	input wire rst_in;
+	output wire rst_out;
 	
 	output wire clk_oe;
 
@@ -348,7 +350,8 @@ DispatcherOfCpus disp_1(
             .clk(clk),
 				.clk_oe(clk_oe),
 				
-            .rst(rst),
+            .rst_in(rst_in),
+				.rst_out(rst_out),
             
             .halt_q(cpu_cell_halt_q_in),
             .rw_halt_in(cpu_cell_rw_halt_in),

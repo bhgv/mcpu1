@@ -260,7 +260,6 @@ async_receiver rx(
 
   
   always @(posedge clk) begin
-
 /**/
         if(
 		    is_rx_ready == 1
@@ -273,7 +272,10 @@ async_receiver rx(
 //			 rw_halt_r = 0;
 		  end
 /**/
+//  end
 
+  
+//  always @(posedge clk) begin
 
     if(clk_oe == 0) begin
 
@@ -281,28 +283,42 @@ async_receiver rx(
 //		  rst_uart = 1;
 //		end else begin
 
-        rw_halt_r = rw_halt_stim;
+/**
+        if(
+		    is_rx_ready == 1
+			 //&& is_rs232_busy == 0
+//			 && state == `UART_WAIT_CMD
+		  ) begin
+		    rx_buf = rx_data;
+			 is_rx_buf = 1;
+			 
+//			 rw_halt_r = 0;
+		  end
+/**/
+
+
+        rw_halt_r <= rw_halt_stim;
 		  
 //      end // rst
 							 
     end else begin //clk_oe
 	 
 	   if(rst == 1) begin
-		  tx_start = 0;
-		  tx_data = 0;
-//		  tmp_data = 0;
+		  tx_start <= 0;
+		  tx_data <= 0;
+//		  tmp_data <= 0;
 		  
-		  addr_r = 0;
-		  data_r = 0;
+		  addr_r <= 0;
+		  data_r <= 0;
 		  
-		  read_dn_r = 0;
-		  write_dn_r = 0;
+		  read_dn_r <= 0;
+		  write_dn_r <= 0;
 		  
-		  state = `UART_WAIT_CMD;
+		  state <= `UART_WAIT_CMD;
 		  
-		  is_rx_buf = 0;
+		  is_rx_buf <= 0;
 		  
-		  rst_uart = 1;
+		  rst_uart <= 1;
 		  
 //		  rw_halt_r = 0;
 		  
@@ -316,45 +332,47 @@ async_receiver rx(
 
 		  case(state)
 		    `UART_WAIT_CMD: begin
-			   rst_uart = 0;
+			   rst_uart <= 0;
 				
-		      read_dn_r = 0;
-		      write_dn_r = 0;
+		      read_dn_r <= 0;
+		      write_dn_r <= 0;
 
 		      if(
 				  addr_in == RS232_DATA_ADDR 
 //				  && rw_halt_r != 1
 				  && (read_q == 1 || write_q == 1)
 				) begin
-			     data_r = data_in;
-				  addr_r = addr_in;
+			     //data_r = data_in;
+				  addr_r <= addr_in;
 		        
 				  if(write_q == 1) begin  
 					 if(/*is_tx_busy == 0*/ is_tx_busy == 0 /*rw_halt_stim == 0*/) begin
-					   tx_data = data_r[7:0];
-			         tx_start = 1;
+					   tx_data <= /*data_r*/data_in[7:0];
+			         tx_start <= 1;
+						
+						data_r <= data_in;
 
 //			         write_dn_r = 1;
 
-				      state = `UART_SEND_BYTE;
+				      state <= `UART_SEND_BYTE;
 				    end
 				  end else if(read_q == 1) begin
 				    if(is_rx_buf == 1) begin
 //			         data_r = data_in;
 			         
-						data_r = {`DATA_SIZE'h0000000000000000, rx_buf};
+						data_r <= {`DATA_SIZE'h 0000000000000000, rx_buf};
 			 
-                  is_rx_buf = 0;
+                  is_rx_buf <= 0;
 						
 						//read_dn_r = 1;
 
-				      state = `UART_RECEIVE_BYTE;
+				      state <= `UART_RECEIVE_BYTE;
 				    end
 				  end
 				  
 				end else begin
-		        addr_r = 0;
-		        data_r = 0;
+		        addr_r <= 0;
+		        data_r <= 0;
 				end
 
           end
@@ -370,12 +388,12 @@ async_receiver rx(
 
 //              tx_data = data_r[7:0];
 
-		        tx_start = 0;
-				  tx_data = 0;
+		        tx_start <= 0;
+//				  tx_data = 0;
 			 
-			     /*if(rw_halt_r == 0)*/ write_dn_r = 1;
+			     /*if(rw_halt_r == 0)*/ write_dn_r <= 1;
 				  
-				  state = `UART_WAIT_CMD;
+				  state <= `UART_WAIT_CMD;
 //				end else begin
 //				  //rw_halt_r = 1;
 //				  state = `UART_WAIT_CMD;
@@ -388,9 +406,9 @@ async_receiver rx(
 			  //   data_r = {`DATA_SIZE'h0000000000000000, rx_buf};
            //   is_rx_buf = 0;
 				  
-			     /*if(rw_halt_r == 0)*/ read_dn_r = 1;
+			     /*if(rw_halt_r == 0)*/ read_dn_r <= 1;
 				  
-				  state = `UART_WAIT_CMD;
+				  state <= `UART_WAIT_CMD;
 //				end else begin
 //				  rw_halt_r = 1;
 //				  state = `UART_WAIT_CMD;

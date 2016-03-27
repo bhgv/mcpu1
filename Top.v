@@ -112,6 +112,8 @@ module Top(
 	input wire clk;
 	input wire rst;
 
+	wire rst_int;
+	
 	input wire stop_btn;
 	
 	wire clk_oe_pll;
@@ -119,11 +121,11 @@ module Top(
 
 `ifdef IS_USE_PLL
 	wire clk_int;// = clk;
+	wire clk_50mhz;// = clk_oe;
 `else
 	wire clk_int = clk;
+	wire clk_50mhz = clk;
 `endif
-
-	wire clk_25mhz;// = clk_oe;
 	
 	output wire prg_ba;// = 0;
 	output wire prg_bb;// = 0;
@@ -514,7 +516,8 @@ CpuBlock block_of_cpus(
     .rw_halt_in(DOC_ext_rw_halt_in),
 	 .rw_halt_out(ext_rw_halt),
 
-    .rst(~rst)
+    .rst_in(~rst),
+	 .rst_out(rst_int)
 );
 
 
@@ -547,7 +550,7 @@ InternalStartupRAM int_ram(
 	
    .rw_halt(ext_rw_halt),
 	
-	.rst(~rst)
+	.rst(rst_int)
 );
 defparam int_ram.INTERNAL_MEM_VALUE = INTERNAL_MEM_VALUE;
 defparam int_ram.INTERNAL_MEM_FILE = INTERNAL_MEM_FILE;
@@ -598,7 +601,7 @@ ExternalSRAMInterface ext_ram_itf(
 //	.video1_we(video1_we),
 
 	
-	.rst(~rst)
+	.rst(rst_int)
 );
   defparam ext_ram_itf.MEM_BEGIN = INTERNAL_MEM_VALUE;
   defparam ext_ram_itf.MEM_END = EXTERNAL_PRG_ADDR_E;
@@ -634,7 +637,7 @@ ExternalSRAMInterface ext_ram_itf(
 	 
 	 .rx_received(tst1_out),
 
-    .rst(~rst)
+    .rst(rst_int)
   );
   defparam com_itf.RS232_DATA_ADDR = RS232_DATA_ADDR; //1_000_000;
 
@@ -651,7 +654,7 @@ ExternalSRAMInterface ext_ram_itf(
 	.inclk0(clk),
 	
 	.c0(clk_int),
-//	.c1(clk_oe_pll),
+	.c1(clk_50mhz)
 //	.c2(clk_25mhz)
 	);
 	
@@ -715,7 +718,7 @@ ExternalSRAMInterface ext_ram_itf(
 		 .clk(clk_int),
 		 .clk_oe(clk_oe),
 		 
-		 .clk_video(clk), //~clk_25mhz),
+		 .clk_video(clk_50mhz), //~clk_25mhz),
 		 
 		 .pix_clk(pix_clk),
 		 .de(de),
@@ -760,7 +763,7 @@ ExternalSRAMInterface ext_ram_itf(
 		.video_mem_ce3(vga1_ce3),
 
 
-		 .rst(~rst)
+		 .rst(rst_int)
 		);
 //		defparam vga.ADDR_VGA_R = ADDR_VGA_R;
 //		defparam vga.ADDR_VGA_G = ADDR_VGA_G;

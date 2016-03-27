@@ -1,6 +1,7 @@
 
 `include "sizes.v"
 
+`include "defines.v"
 
 
 
@@ -77,6 +78,10 @@ Rounding Modes (rmode):
 3 = round_down
 
 */
+
+
+`ifdef IS_USE_FPU
+
 
 /**/
 	fpu fpu_1( 
@@ -157,6 +162,8 @@ output		div_by_zero;
      end
 	end
 	
+`endif
+
 endmodule
 
 

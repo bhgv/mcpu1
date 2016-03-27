@@ -1,4 +1,6 @@
 
+`include "defines.v"
+
 `include "sizes.v"
 
 
@@ -59,7 +61,11 @@ module FpuManager2 (
 	
 	
 	reg [1:0] state;
+
+
 	
+`ifdef IS_USE_FPU
+
 	
 /*
 
@@ -163,9 +169,8 @@ divider div_1(
         .input_b_ack(ack_b_div)
 		  );
 	
-	
-	
-	
+`endif	
+
 	
 	
 	
@@ -182,7 +187,8 @@ divider div_1(
 			dn = 0;
 			
 			busy_r = 0;
-			
+
+`ifdef IS_USE_FPU
 			stb_a_add = 0;
 			stb_b_add = 0;
 			ack_z_add = 0;
@@ -194,10 +200,12 @@ divider div_1(
 			stb_a_div = 0;
 			stb_b_div = 0;
 			ack_z_div = 0;
-			
+`endif
+
 			state = 0;
        end else begin
-		 
+
+`ifdef IS_USE_FPU
          if(q == 1 && busy_r == 0) begin
            op_r = op;
 			  
@@ -375,11 +383,13 @@ divider div_1(
 			  endcase
 
 			end
+`endif
 			
 		 end
      end
 	end
 	
+
 endmodule
 
 

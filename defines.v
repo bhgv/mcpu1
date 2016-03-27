@@ -7,6 +7,8 @@
 
 //`define IS_USE_PLL	
 
+`define IS_USE_FPU	
+
 
 
 `define INTERNAL_MEM_ADDR_BITS		8 //7

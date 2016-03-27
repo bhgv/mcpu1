@@ -206,39 +206,39 @@ always @(posedge clk) begin
   if(clk_oe == 0) begin
   
 		  if(rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;			 
-          bus_director = 0;
+          mem_wrk_state <= `MEM_CTLR_WAIT;			 
+          bus_director <= 0;
 
-          read_dn_r  = 0;
-          write_dn_r = 0;
+          read_dn_r  <= 0;
+          write_dn_r <= 0;
 
-          prg_data_r = 0;
-          prg_addr_r = 0;
+          prg_data_r <= 0;
+          prg_addr_r <= 0;
         end
 
 
   end else begin
   
   if(rst == 1) begin
-    tmp_addr = 0;
-	 tmp_data = 0;
+    tmp_addr <= 0;
+	 tmp_data <= 0;
 //	 tmp_video_data = 0;
 	 	 
-    mem_wrk_state = `MEM_CTLR_WAIT;
+    mem_wrk_state <= `MEM_CTLR_WAIT;
     
-//    ext_rw_busy = 0;
+//    ext_rw_busy <= 0;
 	 
-	 bus_director = 0;
+	 bus_director <= 0;
 	 
-	 read_dn_r = 0;
-	 write_dn_r = 0;
+	 read_dn_r <= 0;
+	 write_dn_r <= 0;
 	 
-	 prg_data_r = 0;
-	 prg_addr_r = 0;
+	 prg_data_r <= 0;
+	 prg_addr_r <= 0;
 	 
-	 prg_ce_r = 1;
-	 prg_oe_r = 0;
-	 prg_we_r = 1;
+	 prg_ce_r <= 1;
+	 prg_oe_r <= 0;
+	 prg_we_r <= 1;
   end else
   begin
   
@@ -247,158 +247,176 @@ always @(posedge clk) begin
     
       `MEM_CTLR_WAIT: begin
 		  
-        read_dn_r  = 0;
-        write_dn_r = 0;
+//        read_dn_r  = 0;
+//        write_dn_r = 0;
 
 //        tmp_addr = 0;
 //	     tmp_data = 0;
 //		  tmp_video_data = 0;
 		  
-		  prg_ce_r = 1;
+		  prg_ce_r <= 1;
 		
         if(read_q == 1 && rw_halt == 0) begin
+          read_dn_r  <= 0;
+          write_dn_r <= 0;
+			 
           if(addr_in >= MEM_BEGIN && addr_in < MEM_END) begin
 			 
-          tmp_addr = addr_in;// - INTERNAL_MEM_VALUE;
-	       //tmp_data = 0;
-          mem_wrk_state = `MEM_CTLR_READ_SET_ADDRESS;
+            tmp_addr <= addr_in;// - INTERNAL_MEM_VALUE;
+	         //tmp_data = 0;
+            mem_wrk_state <= `MEM_CTLR_READ_SET_ADDRESS;
 
-          bus_director = 0;
-			 
+            bus_director <= 0;
 			 end
         end
         else
         if(write_q == 1 && rw_halt == 0) begin
+          read_dn_r  <= 0;
+          write_dn_r <= 0;
+
           if(addr_in >= MEM_BEGIN && addr_in < MEM_END) begin
 			 
-          tmp_addr = addr_in;// - INTERNAL_MEM_VALUE;
-          tmp_data = data_in;
-//			 tmp_video_data = data_in;
-          mem_wrk_state = `MEM_CTLR_WRITE_SET_ADDRESS;
+            tmp_addr <= addr_in;// - INTERNAL_MEM_VALUE;
+            tmp_data <= data_in;
+//			   tmp_video_data = data_in;
+            mem_wrk_state <= `MEM_CTLR_WRITE_SET_ADDRESS;
 
-          bus_director = 1;
-			 
+            bus_director <= 1;
 			 end
         end
 		  else begin
-          tmp_addr = 0;
-	       tmp_data = 0;
+          read_dn_r  <= 0;
+          write_dn_r <= 0;
+
+          tmp_addr <= 0;
+	       tmp_data <= 0;
+			 
+			 bus_director <= 0;
 		  end
       end
 
 		// read states
       `MEM_CTLR_READ_SET_ADDRESS: begin
 		  if(rw_halt == 1) begin
-           mem_wrk_state = `MEM_CTLR_WAIT;			 
-			 bus_director = 0;
+           mem_wrk_state <= `MEM_CTLR_WAIT;			 
+			 bus_director <= 0;
         end else
 //        if(bus_director == 1)
         begin
-          prg_addr_r = tmp_addr - (/*is_addr_video1 ? VIDEO1_ADDR_B :*/ MEM_BEGIN);
+          prg_addr_r <= tmp_addr - (/*is_addr_video1 ? VIDEO1_ADDR_B :*/ MEM_BEGIN);
 
-          prg_ce_r = 0;
-			 prg_oe_r = 0;
-			 prg_we_r = 1;
+          prg_ce_r <= 0;
+			 prg_oe_r <= 0;
+			 prg_we_r <= 1;
 			 
-          mem_wrk_state = `MEM_CTLR_READ_DATA_GET;
+          mem_wrk_state <= `MEM_CTLR_READ_DATA_GET;
         end
       end
-  
+
       `MEM_CTLR_READ_DATA_GET: begin
 		  if(rw_halt == 1) begin
-           mem_wrk_state = `MEM_CTLR_WAIT;			 
-			 bus_director = 0;
+          mem_wrk_state <= `MEM_CTLR_WAIT;			 
+          bus_director <= 0;
         end else
 //        if(bus_director == 1) 
         begin
 			 
 //		    if(
-//				  is_addr_video1
-//				  && bus_director == 0
+//          is_addr_video1
+//          && bus_director == 0
 //			 ) begin
 //            tmp_video_data = video1_data;
 //          end else begin
-            tmp_data = prg_data;
+            tmp_data <= prg_data;
 //          end
 			 
-          read_dn_r = 1;
+          read_dn_r <= 1;
           
-          mem_wrk_state = `MEM_CTLR_READ_FINISH;
+          mem_wrk_state <= `MEM_CTLR_READ_FINISH;
         end
       end
       
       `MEM_CTLR_READ_FINISH: begin
 		  if(rw_halt == 1) begin
-           mem_wrk_state = `MEM_CTLR_WAIT;			 
-			 bus_director = 0;
+           mem_wrk_state <= `MEM_CTLR_WAIT;			 
+			 bus_director <= 0;
        end else
 //       if(bus_director == 1) 
        begin
-         tmp_addr = 0;
-	      tmp_data = 0;
+         tmp_addr <= 0;
+	      tmp_data <= 0;
 //			tmp_video_data = 0;
 
-          read_dn_r = 0;
+          read_dn_r <= 0;
                     
-          mem_wrk_state = `MEM_CTLR_WAIT;
+          mem_wrk_state <= `MEM_CTLR_WAIT;
 			 
-			 bus_director = 0;
+			 bus_director <= 0;
         end
       end
       
 		// write states
       `MEM_CTLR_WRITE_SET_ADDRESS: begin
 		  if(rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;			 
-          bus_director = 0;
+          mem_wrk_state <= `MEM_CTLR_WAIT;			 
+          bus_director <= 0;
         end else
 //        if(bus_director == 1) 
         begin
-          prg_addr_r = tmp_addr - (/*is_addr_video1 ? VIDEO1_ADDR_B :*/ MEM_BEGIN);
-          prg_data_r = tmp_data;
+          prg_addr_r <= tmp_addr - (/*is_addr_video1 ? VIDEO1_ADDR_B :*/ MEM_BEGIN);
+          prg_data_r <= tmp_data;
 
-          prg_ce_r = 0;
-			 prg_oe_r = 0;
+          prg_ce_r <= 0;
+			 prg_oe_r <= 0;
           
-          mem_wrk_state = `MEM_CTLR_WRITE_SET_WE;
+          mem_wrk_state <= `MEM_CTLR_WRITE_SET_WE;
         end
       end
       
       `MEM_CTLR_WRITE_SET_WE: begin
 		  if(rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;
-          bus_director = 0;
+          mem_wrk_state <= `MEM_CTLR_WAIT;
+          bus_director <= 0;
         end else
 //        if(bus_director == 1) 
         begin
-          prg_we_r = 0;
+          prg_we_r <= 0;
 			 
-          mem_wrk_state = `MEM_CTLR_WRITE_FINISH;
+          mem_wrk_state <= `MEM_CTLR_WRITE_FINISH;
         end
       end
           
       `MEM_CTLR_WRITE_FINISH: begin
 		  if(rw_halt == 1) begin
-          mem_wrk_state = `MEM_CTLR_WAIT;
-          bus_director = 0;
+          mem_wrk_state <= `MEM_CTLR_WAIT;
+          bus_director <= 0;
         end else
 //        if(bus_director == 1) 
         begin
-          write_dn_r = 1;
+          write_dn_r <= 1;
 			 
-			 prg_we_r = 1;
+			 prg_we_r <= 1;
           
-          mem_wrk_state = `MEM_CTLR_WAIT;
+          mem_wrk_state <= `MEM_CTLR_WAIT;
 			 
-			 bus_director = 0;
+			 bus_director <= 0;
         end
       end
-		
+
+/**/
 		default: begin
-        tmp_addr = 0;
-	     tmp_data = 0;
+        read_dn_r  <= 0;
+        write_dn_r <= 0;
+
+        tmp_addr <= 0;
+	     tmp_data <= 0;
+		  
+		  bus_director <= 0;
+		  
+		  mem_wrk_state <= `MEM_CTLR_WAIT;
 		end
-    
+/**/
+
     endcase
 	 
 /**/

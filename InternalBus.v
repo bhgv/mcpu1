@@ -84,7 +84,7 @@ module InternalBus(
   input wire[`ADDR_SIZE0:0] addr_unmodificable_b;
   
   
-  input tri [1:0] cpu_ind_rel;
+  input wire [1:0] cpu_ind_rel;
   
   input wire want_write_in;
   output wire want_write_out;
