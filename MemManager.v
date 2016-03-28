@@ -1048,45 +1048,45 @@ module MemManager (
 
       case(state)
 		  `START_BEGIN: begin
-		    mem1sz_op = `REG_OP_PREEXECUTE;
+		    mem1sz_op <= `REG_OP_PREEXECUTE;
 
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
 		  end
 		  
 		  `READ_MEM_SIZE_1: begin
-		    mem1sz_op = `REG_OP_READ;
+		    mem1sz_op <= `REG_OP_READ;
 
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
 		  end
 		
         `AFTER_MEM_SIZE_READ: begin	
-		    mem1sz_op = `REG_OP_NULL;
-//          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+//          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
 
-          cmd_op = `REG_OP_PREEXECUTE;
+          cmd_op <= `REG_OP_PREEXECUTE;
 		  end
 		
         `ALU_BEGIN: begin
-          cmd_op = `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 
-		    mem1sz_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
       
 //        `START_BEGIN: begin
@@ -1094,85 +1094,85 @@ module MemManager (
 //        end
 
         `START_READ_CMD: begin
-          cmd_op = `REG_OP_READ;
+          cmd_op <= `REG_OP_READ;
 
-		    mem1sz_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `START_READ_CMD_P: begin
-          cmd_op = `REG_OP_READ_P;
+          cmd_op <= `REG_OP_READ_P;
 
-		    mem1sz_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `WRITE_REG_IP: begin
-          cmd_op = `REG_OP_WRITE;
+          cmd_op <= `REG_OP_WRITE;
 
-		    mem1sz_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `ALU_RESULTS: begin
-            src0_op = `REG_OP_CATCH_DATA;
-            src1_op = `REG_OP_CATCH_DATA;
-            dst_op = `REG_OP_CATCH_DATA;
+            src0_op <= `REG_OP_CATCH_DATA;
+            src1_op <= `REG_OP_CATCH_DATA;
+            dst_op <= `REG_OP_CATCH_DATA;
             //???? it needs to do something. it catches 0 to cond reg ???//  cond_op = `REG_OP_CATCH_DATA;
            
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
 //            next_state = 1;
         end
 		  
 		  
         `FILL_DST_P: begin
-          dst_op = `REG_OP_CATCH_DATA;
+          dst_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
 
         `READ_DST: begin
-          dst_op = `REG_OP_READ;
+          dst_op <= `REG_OP_READ;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
 
         `WRITE_DST_P: begin
-          dst_op = `REG_OP_WRITE_P;
+          dst_op <= `REG_OP_WRITE_P;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         
@@ -1192,14 +1192,14 @@ module MemManager (
 //          if(^regCondFlags == 1) condw_waiting = 1;
 //          if(^regS1Flags == 1) src1w_waiting = 1;
 //          if(^regS0Flags == 1) src0w_waiting = 1;
-            src0_op = `REG_OP_PREEXECUTE;
-            src1_op = `REG_OP_PREEXECUTE;
-            dst_op = `REG_OP_PREEXECUTE;
-            cond_op = `REG_OP_PREEXECUTE;
-            cmd_op = `REG_OP_PREEXECUTE;
+            src0_op <= `REG_OP_PREEXECUTE;
+            src1_op <= `REG_OP_PREEXECUTE;
+            dst_op <= `REG_OP_PREEXECUTE;
+            cond_op <= `REG_OP_PREEXECUTE;
+            cmd_op <= `REG_OP_PREEXECUTE;
 
 
-		    mem1sz_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1212,102 +1212,102 @@ module MemManager (
         end
         
         `FILL_COND: begin
-          cond_op = `REG_OP_CATCH_DATA;
+          cond_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
 //          cond_op = `REG_OP_NULL;
         end
         
         `READ_COND: begin
-          cond_op = `REG_OP_READ;
+          cond_op <= `REG_OP_READ;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
 //          cond_op = `REG_OP_NULL;
         end
           
         `READ_COND_P: begin
-          cond_op = `REG_OP_READ_P;
+          cond_op <= `REG_OP_READ_P;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
 //          cond_op = `REG_OP_NULL;
         end
 
         `FILL_SRC1: begin
-          src1_op = `REG_OP_CATCH_DATA;
+          src1_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `READ_SRC1: begin
-          src1_op = `REG_OP_READ;
+          src1_op <= `REG_OP_READ;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
           
         `READ_SRC1_P: begin
-          src1_op = `REG_OP_READ_P;
+          src1_op <= `REG_OP_READ_P;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
 
         `FILL_SRC0: begin
-          src0_op = `REG_OP_CATCH_DATA;
+          src0_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `READ_SRC0: begin
-          src0_op = `REG_OP_READ;
+          src0_op <= `REG_OP_READ;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
          
         `READ_SRC0_P: begin
-          src0_op = `REG_OP_READ_P;
+          src0_op <= `REG_OP_READ_P;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `WRITE_PREP: begin
@@ -1337,13 +1337,13 @@ module MemManager (
 //              src0_r = (isRegS0Ptr==1 ? src0_r_adr : src0_r)-1;
 //            end
             
-            src1_op = `REG_OP_WRITE_PREP;
-            src0_op = `REG_OP_WRITE_PREP;
-            dst_op = `REG_OP_WRITE_PREP;
-            cond_op = `REG_OP_WRITE_PREP;
+            src1_op <= `REG_OP_WRITE_PREP;
+            src0_op <= `REG_OP_WRITE_PREP;
+            dst_op <= `REG_OP_WRITE_PREP;
+            cond_op <= `REG_OP_WRITE_PREP;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
@@ -1353,47 +1353,47 @@ module MemManager (
         end
 
         `WRITE_DST: begin
-          dst_op = `REG_OP_WRITE;
+          dst_op <= `REG_OP_WRITE;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
 
         `WRITE_COND: begin
-          cond_op = `REG_OP_WRITE;
+          cond_op <= `REG_OP_WRITE;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
 //          cond_op = `REG_OP_NULL;
         end
         
         `WRITE_SRC1: begin
-          src1_op = `REG_OP_WRITE;
+          src1_op <= `REG_OP_WRITE;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
         
         `WRITE_SRC0: begin
-          src0_op = `REG_OP_WRITE;
+          src0_op <= `REG_OP_WRITE;
 
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
         end
 
 
@@ -1409,12 +1409,12 @@ module MemManager (
 //        end
 
         default: begin
-		    mem1sz_op = `REG_OP_NULL;
-          cmd_op = `REG_OP_NULL;
-          src1_op = `REG_OP_NULL;
-          src0_op = `REG_OP_NULL;
-          dst_op = `REG_OP_NULL;
-          cond_op = `REG_OP_NULL;
+		    mem1sz_op <= `REG_OP_NULL;
+          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
 		  end
 
       endcase

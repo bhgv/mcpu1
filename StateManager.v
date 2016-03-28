@@ -177,16 +177,19 @@ module StateManager(
   reg condIsReaden;
   reg ipIsWriten;
   
+  
+  
+  
   always @( posedge next_state or posedge rst ) begin //negedge clk) begin //
     if( rst == 1 ) begin
-      state = `WAIT_FOR_START;
+      state <= `WAIT_FOR_START;
       
-      condIsReaden = 0;
-      ipIsWriten = 0;
+      condIsReaden <= 0;
+      ipIsWriten <= 0;
       
-      anti_continuous = 1;
+      anti_continuous <= 1;
 		
-		next_state_dn_r = 0;
+		next_state_dn_r <= 0;
     end
 //    else if(next_state != 1) begin
 //      anti_continuous = 1;
@@ -247,21 +250,21 @@ module StateManager(
 /**/
 
         `START_BEGIN: begin
-		    state = `READ_MEM_SIZE_1;
+		    state <= `READ_MEM_SIZE_1;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
 		  end
 		  
 		  `READ_MEM_SIZE_1: begin
-		    state = `AFTER_MEM_SIZE_READ;
+		    state <= `AFTER_MEM_SIZE_READ;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
 		  end
 		  
 		  `AFTER_MEM_SIZE_READ: begin
-		    state = `START_READ_CMD;
+		    state <= `START_READ_CMD;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
 		  end
         
         `PREEXECUTE: begin
@@ -269,101 +272,101 @@ module StateManager(
               ~isIpSaveAllowed
           ) begin
             if(&regCondFlags == 0) 
-              state = (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
+              state <= (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
             else if(&regS1Flags == 0) 
-              state = (
+              state <= (
 				            regNumS1 == `REG_IP 
 								|| (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
                       ) ? `FILL_SRC1 : `READ_SRC1;
             else if(&regS0Flags == 0) 
-              state = (
+              state <= (
 				            regNumS0 == `REG_IP 
 								|| (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read)
 								|| (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 							 ) ? `FILL_SRC0 : `READ_SRC0;
             else if(isRegDPtr == 1) 
-              state = (
+              state <= (
 				            regNumD == `REG_IP 
 								|| (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read)
 								|| (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 								|| (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 							 ) ? `FILL_DST_P : `READ_DST;
             else
-              state = `ALU_BEGIN;
+              state <= `ALU_BEGIN;
           end else begin
-            state = `WRITE_REG_IP;
+            state <= `WRITE_REG_IP;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
 /**/
         `WRITE_REG_IP: begin
-          ipIsWriten = 1;
+          ipIsWriten <= 1;
           
           if(&regCondFlags == 0 && ~condIsReaden) 
-            state = (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
+            state <= (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
           else if(&regS1Flags == 0) 
-            state = (
+            state <= (
 				          regNumS1 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
 						  ) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
-            state = (
+            state <= (
 				          regNumS0 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read)
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 /**/
         
         `READ_COND, `FILL_COND: begin
-          condIsReaden = 1;
+          condIsReaden <= 1;
           
           if(isRegCondPtr == 1) begin
-            state = `READ_COND_P;
+            state <= `READ_COND_P;
           end else 
           if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
-            state = `WRITE_REG_IP;
+            state <= `WRITE_REG_IP;
           end else
               
           if(&regS1Flags == 0) 
-            state = (
+            state <= (
 				          regNumS1 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
 						  ) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
-            state = (
+            state <= (
 				          regNumS0 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read)
 							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
 //          else if(&regS0Flags == 0) 
-//            state = (
+//            state <= (
 //				          regNumS0 == `REG_IP 
 //							 || (&regCondFlags == 0 && regNumS0 == regNumCnd) 
 //							 || (&regS1Flags == 0 && regNumS0 == regNumS1)
 //						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
         
 /*
 //          if(&regCondFlags == 0) begin
@@ -376,34 +379,34 @@ module StateManager(
             end
 */
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
         `READ_COND_P: begin
           if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
-            state = `WRITE_REG_IP;
+            state <= `WRITE_REG_IP;
           end else
               
           if(&regS1Flags == 0) 
-            state = (
+            state <= (
 				          regNumS1 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read)
 						  ) ? `FILL_SRC1 : `READ_SRC1;
           else if(&regS0Flags == 0) 
-            state = (
+            state <= (
 				          regNumS0 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
 
 /*        
           if(cond == 0) begin
@@ -412,55 +415,55 @@ module StateManager(
           end
 */
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
         `READ_SRC1, `FILL_SRC1: begin
           if(&regS0Flags == 0) 
-            state = (
+            state <= (
 				          regNumS0 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
 
           if(
 //            &regS1Flags == 0 &&
             isRegS1Ptr == 1
           ) begin
-            state = `READ_SRC1_P;
+            state <= `READ_SRC1_P;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         `READ_SRC1_P: begin
           if(&regS0Flags == 0) 
-            state = (
+            state <= (
 				          regNumS0 == `REG_IP 
 							 || (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read)
 						  ) ? `FILL_SRC0 : `READ_SRC0;
           else if(isRegDPtr == 1) 
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else begin
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
 		    end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         `READ_SRC0, `FILL_SRC0: begin
@@ -468,43 +471,43 @@ module StateManager(
 //            &regS0Flags == 0 &&
             isRegS0Ptr == 1
           ) begin
-            state = `READ_SRC0_P;
+            state <= `READ_SRC0_P;
           end
           else if(isRegDPtr == 1) begin
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           end else begin
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         `READ_SRC0_P: begin
           if(isRegDPtr == 1) 
-            state = (
+            state <= (
 				          regNumD == `REG_IP 
 							 || (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read) 
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
         `FILL_DST_P, `READ_DST: begin
 //          if(regNumD == `REG_IP)
 //            state = `READ_DST_P;
 //          else
-            state = `ALU_BEGIN;
+            state <= `ALU_BEGIN;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
 //        `READ_DST_P: begin
@@ -512,15 +515,15 @@ module StateManager(
 //        end
 
         `ALU_BEGIN: begin
-            state = `ALU_RESULTS;
+            state <= `ALU_RESULTS;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
         `ALU_RESULTS: begin
-            state = `WRITE_PREP;
+            state <= `WRITE_PREP;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         `WRITE_PREP: begin
@@ -538,33 +541,33 @@ module StateManager(
           if(
               isDSaveAllowed
           ) begin
-            state = isRegDPtr ? `WRITE_DST_P : `WRITE_DST;
+            state <= isRegDPtr ? `WRITE_DST_P : `WRITE_DST;
           end else
           if(
             isDSavePtrAllowed
           ) begin
-            state = `WRITE_DST_P;
+            state <= `WRITE_DST_P;
           end else
           if(
               isCndSaveAllowed
           ) begin
-            state = `WRITE_COND;
+            state <= `WRITE_COND;
           end else
           if(
               isS1SaveAllowed
           ) begin
-            state = `WRITE_SRC1;
+            state <= `WRITE_SRC1;
           end else
           if(
               isS0SaveAllowed
           ) begin
-            state = `WRITE_SRC0;
+            state <= `WRITE_SRC0;
           end else
           begin
-            state = `FINISH_BEGIN;
+            state <= `FINISH_BEGIN;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
         `WRITE_DST, `WRITE_DST_P: begin
@@ -574,71 +577,71 @@ module StateManager(
               state == `WRITE_DST_P
               && ^regDFlags == 1
           ) begin
-            state = `WRITE_DST;
+            state <= `WRITE_DST;
           end else
           if(
               isCndSaveAllowed
           ) begin
-            state = `WRITE_COND;
+            state <= `WRITE_COND;
           end else
           if(
               isS1SaveAllowed
           ) begin
-            state = `WRITE_SRC1;
+            state <= `WRITE_SRC1;
           end else
           if(
               isS0SaveAllowed
           ) begin
-            state = `WRITE_SRC0;
+            state <= `WRITE_SRC0;
           end else
           begin
-            state = `FINISH_BEGIN;
+            state <= `FINISH_BEGIN;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         `WRITE_COND: begin
           if(
               isS1SaveAllowed
           ) begin
-            state = `WRITE_SRC1;
+            state <= `WRITE_SRC1;
           end else
           if(
               isS0SaveAllowed
           ) begin
-            state = `WRITE_SRC0;
+            state <= `WRITE_SRC0;
           end else
           begin
-            state = `FINISH_BEGIN;
+            state <= `FINISH_BEGIN;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
         
         `WRITE_SRC1: begin
           if(
               isS0SaveAllowed
           ) begin
-            state = `WRITE_SRC0;
+            state <= `WRITE_SRC0;
           end else
           begin
-            state = `FINISH_BEGIN;
+            state <= `FINISH_BEGIN;
           end
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         `WRITE_SRC0: begin
-            state = `FINISH_BEGIN;
+            state <= `FINISH_BEGIN;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
         default: begin
-          state = state + 1;
+          state <= state + 1;
 			 
-			 next_state_dn_r = ~next_state_dn_r;
+			 next_state_dn_r <= ~next_state_dn_r;
         end
 
       endcase

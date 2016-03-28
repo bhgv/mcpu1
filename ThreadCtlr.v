@@ -151,26 +151,26 @@ module ThreadCtlr(
    
 	 if(clk_oe == 0) begin
 	 
-      next_state_r = 1'b 0;
+      next_state_r <= 1'b 0;
 	 
 	 end else begin
 
     if(rst == 1) begin
 //      src1_r = 0;//`DATA_SIZE'h zzzzzzzz;
 //      src0_r = 0; //`DATA_SIZE'h zzzzzzzz;
-      dst_r =  0;//`DATA_SIZE'h zzzzzzzz;
-      dst_h =  0;//`DATA_SIZE'h zzzzzzzz;
+      dst_r <=  0;//`DATA_SIZE'h zzzzzzzz;
+      dst_h <=  0;//`DATA_SIZE'h zzzzzzzz;
       
-      cpu_msg_r = 0; //8'h 00;
+      cpu_msg_r <= 0; //8'h 00;
       
-      signal_sent = 0;
+      signal_sent <= 0;
       
  //     cpu_msg_in_r = 0;
 //      is_bus_busy_r = 1'b z;
 
-      cpu_msg_pulse = 0;
+      cpu_msg_pulse <= 0;
 		
-		next_state_r = 1'b 0;
+		next_state_r <= 1'b 0;
 //		next_state_r = 1'b z;
     end else begin
 
@@ -178,15 +178,15 @@ module ThreadCtlr(
     
       case(state)
 		  default: begin
-		    cpu_msg_r = 0;
+		    cpu_msg_r <= 0;
         end
 		  
         `ALU_BEGIN: begin
-          dst_h = 0;
+          dst_h <= 0;
           
           case(cmd_code)
 		      default: begin
-		        cpu_msg_r = 0;
+		        cpu_msg_r <= 0;
             end
 		  
             `CMD_FORK: begin
@@ -195,39 +195,39 @@ module ThreadCtlr(
 //                  cpu_msg_r !== `CPU_R_FORK_THRD && 
                   signal_sent == 0
                 ) begin
-                  addr_r = src0 + base_addr;
-                  data_r = 
+                  addr_r <= src0 + base_addr;
+                  data_r <= 
 						        src1 == 0 
 								  ? 0 
 								  : src1 + base_addr_data
 								  ;
                 
-                  cpu_msg_r = `CPU_R_FORK_THRD;
+                  cpu_msg_r <= `CPU_R_FORK_THRD;
                   
-						cpu_msg_pulse = 1;
+						cpu_msg_pulse <= 1;
 						
-                  signal_sent = 1;
+                  signal_sent <= 1;
                 end
                 else begin
 //                  if(signal_sent == 0) begin
 //                    signal_sent = 1;
 //                  end
 //                  else begin
-                    cpu_msg_pulse = 0;
+                    cpu_msg_pulse <= 0;
 						  
-                    cpu_msg_r = 0; //8'h 00;
+                    cpu_msg_r <= 0; //8'h 00;
  //                   cpu_msg_in_r = 1;
                   
                     if(cpu_msg_in == `CPU_R_FORK_DONE) begin
                     
-                      signal_sent = 0;
-                      next_state_r = 1;
+                      signal_sent <= 0;
+                      next_state_r <= 1;
                     end
 //                  end
                 end
               end
               else begin
-                cpu_msg_r = 0; //8'h00;
+                cpu_msg_r <= 0; //8'h00;
               end
             end
             
@@ -239,42 +239,42 @@ module ThreadCtlr(
 //                  cpu_msg_r !== `CPU_R_FORK_THRD && 
                   signal_sent == 0
                 ) begin
-                  addr_r = src0 + base_addr - `THREAD_HEADER_SPACE;
-                  data_r = 
+                  addr_r <= src0 + base_addr - `THREAD_HEADER_SPACE;
+                  data_r <= 
 						        data_for_stop_msg
 //						        src1 == 0 
 //								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
 //								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
 								  ;
                 
-                  cpu_msg_r = `CPU_R_STOP_THRD;
+                  cpu_msg_r <= `CPU_R_STOP_THRD;
 						
-						cpu_msg_pulse = 1;
+						cpu_msg_pulse <= 1;
                   
-                  signal_sent = 1;
+                  signal_sent <= 1;
                 end
                 else begin
-					   addr_r = 0;
-						data_r = 0;
+					   addr_r <= 0;
+						data_r <= 0;
 						
 //                  if(signal_sent == 0) begin
 //                    signal_sent = 1;
 //                  end
 //                  else begin
-                  cpu_msg_pulse = 0;
+                  cpu_msg_pulse <= 0;
 						
-                  cpu_msg_r = 0; //8'h 00;
+                  cpu_msg_r <= 0; //8'h 00;
      //               cpu_msg_in_r = 1;
                   
                   if(cpu_msg_in == `CPU_R_STOP_DONE) begin
-                    signal_sent = 0;
-                    next_state_r = 1;
+                    signal_sent <= 0;
+                    next_state_r <= 1;
                   end
 //                end
                 end
               end
               else begin
-                cpu_msg_r = 0; //8'h00;
+                cpu_msg_r <= 0; //8'h00;
               end
             end
             
@@ -321,8 +321,5 @@ module ThreadCtlr(
   
   end
         
-        
-        
-        
-        
 endmodule
+

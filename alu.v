@@ -111,7 +111,7 @@ module Alu(
     //clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
 	 
-      next_state_r = 1'b 0;
+      next_state_r <= 1'b 0;
 //      next_state_r = 1'b z;
     
 //      is_bus_busy_r = 1'b z;
@@ -119,14 +119,14 @@ module Alu(
 	 end else begin
 
     if(rst == 1) begin
-      src1_r = 0; //`DATA_SIZE'h zzzzzzzz;
-      src0_r = 0; //`DATA_SIZE'h zzzzzzzz;
-      dst_r =  0; //`DATA_SIZE'h zzzzzzzz;
-      dst_h =  0; //`DATA_SIZE'h zzzzzzzz;
+      src1_r <= 0; //`DATA_SIZE'h zzzzzzzz;
+      src0_r <= 0; //`DATA_SIZE'h zzzzzzzz;
+      dst_r <=  0; //`DATA_SIZE'h zzzzzzzz;
+      dst_h <=  0; //`DATA_SIZE'h zzzzzzzz;
       
-		mlt_state = 0;
+		mlt_state <= 0;
 		
-		next_state_r = 1'b 0;
+		next_state_r <= 1'b 0;
 //		next_state_r = 1'b z;
 		
 //      is_bus_busy_r = 1'b z;
@@ -141,23 +141,23 @@ module Alu(
           
           case(cmd_code)
             `CMD_MOV: begin
-              {dst_r, src0_r} = {src0_in, src1_in};
+              {dst_r, src0_r} <= {src0_in, src1_in};
               //src = src0;
               //src0_r = dst_h;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_ADD: begin
-              {dst_h, dst_r} = src0_in + src1_in;
+              {dst_h, dst_r} <= src0_in + src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_SUB: begin
-              {dst_h, dst_r} = src0_in - src1_in;
+              {dst_h, dst_r} <= src0_in - src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_MUL: begin
@@ -182,9 +182,9 @@ module Alu(
 			       end
 				  end
 */
-              {dst_h, dst_r} = src0_in * src1_in;
+              {dst_h, dst_r} <= src0_in * src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_DIV: begin
@@ -209,98 +209,98 @@ module Alu(
 			       end
 				  end
 */
-              dst_r = src0_in / src1_in;
-              dst_h = src0_in % src1_in;
+              dst_r <= src0_in / src1_in;
+              dst_h <= src0_in % src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
 				// Shifts
             `CMD_SHR: begin
-              dst_r = src0_in >> src1_in;
+              dst_r <= src0_in >> src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_SHL: begin
-              dst_r = src0_in << src1_in;
+              dst_r <= src0_in << src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
 				// Boolean
             `CMD_XOR: begin
-              dst_r = src0_in ^ src1_in;
+              dst_r <= src0_in ^ src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_AND: begin
-              dst_r = src0_in & src1_in;
+              dst_r <= src0_in & src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
             `CMD_OR: begin
-              dst_r = src0_in | src1_in;
+              dst_r <= src0_in | src1_in;
               
-              next_state_r = 1;
+              next_state_r <= 1;
             end
             
 				// FPU
 /**/
             `CMD_FADD: begin
               if(fpu_busy == 0) begin
-				    fpu_op = 0;
-					 fpu_q = 1;
+				    fpu_op <= 0;
+					 fpu_q <= 1;
 				  end else begin 
-				    fpu_q = 0;
+				    fpu_q <= 0;
 				    if(fpu_dn == 1) begin
-					   dst_r = fpu_out_int;
+					   dst_r <= fpu_out_int;
 						
-                  next_state_r = 1;
+                  next_state_r <= 1;
 					 end
 				  end
             end
             
             `CMD_FSUB: begin
               if(fpu_busy == 0) begin
-				    fpu_op = 1;
-					 fpu_q = 1;
+				    fpu_op <= 1;
+					 fpu_q <= 1;
 				  end else begin 
-				    fpu_q = 0;
+				    fpu_q <= 0;
 				    if(fpu_dn == 1) begin
-					   dst_r = fpu_out_int;
+					   dst_r <= fpu_out_int;
 						
-                  next_state_r = 1;
+                  next_state_r <= 1;
 					 end
 				  end
             end
             
             `CMD_FMUL: begin
               if(fpu_busy == 0) begin
-				    fpu_op = 2;
-					 fpu_q = 1;
+				    fpu_op <= 2;
+					 fpu_q <= 1;
 				  end else begin 
-				    fpu_q = 0;
+				    fpu_q <= 0;
 				    if(fpu_dn == 1) begin
-					   dst_r = fpu_out_int;
+					   dst_r <= fpu_out_int;
 						
-                  next_state_r = 1;
+                  next_state_r <= 1;
 					 end
 				  end
             end
             
             `CMD_FDIV: begin
               if(fpu_busy == 0) begin
-				    fpu_op = 3;
-					 fpu_q = 1;
+				    fpu_op <= 3;
+					 fpu_q <= 1;
 				  end else begin 
-				    fpu_q = 0;
+				    fpu_q <= 0;
 				    if(fpu_dn == 1) begin
-					   dst_r = fpu_out_int;
+					   dst_r <= fpu_out_int;
 						
-                  next_state_r = 1;
+                  next_state_r <= 1;
 					 end
 				  end
             end

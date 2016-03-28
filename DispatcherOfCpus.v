@@ -213,7 +213,7 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                                   ? addr_chan_to_op_out
                                   : bus_busy_r == 1
 											 ? data_r
-											 : 0  //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+											 : 0
                                   ;
 /**/
 
