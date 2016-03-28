@@ -177,7 +177,16 @@ module StateManager(
   reg condIsReaden;
   reg ipIsWriten;
   
-  
+/**
+  wire isCndFillS1 = (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read);
+  wire isCndFillS0 = (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read);
+  wire isS1FillS0  = (&regS1Flags == 0 && regNumS0 == regNumS1 && is_s1_read);
+  wire isCndFillD  = (&regCondFlags == 0 && regNumD == regNumCnd && is_cnd_read);
+  wire isS1FillD   = (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read);
+  wire isS0FillD   = (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read);
+/**/
+
+
   
   
   always @( posedge next_state or posedge rst ) begin //negedge clk) begin //
