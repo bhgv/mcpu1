@@ -5,7 +5,7 @@
 `include "inter_cpu_msgs.v"
 
 
-module ThreadCtlr(
+module ChannelCtlr(
         clk,
 		  clk_oe,
 		  
@@ -49,7 +49,25 @@ module ThreadCtlr(
   
   input wire [31:0] command;
   
+  
+  
   wire [3:0] cmd_code = command[31:28];
+  
+
+  wire [1:0] regS1Flags;
+  assign regS1Flags = command[21:20];
+  
+  wire [1:0] regS0Flags;
+  assign regS0Flags = command[23:22];
+  
+  wire [1:0] regDFlags;
+  assign regDFlags = command[25:24];
+  
+//  wire [1:0] regCondFlags;
+//  assign regCondFlags = command[27:26];
+  
+  
+  
   
   input wire [`ADDR_SIZE0:0] base_addr;
   input wire [`ADDR_SIZE0:0] base_addr_data;
@@ -82,9 +100,6 @@ module ThreadCtlr(
   
   reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
   wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_r;
-//                                      cpu_msg_in_r == 0 
-//												  ? cpu_msg_r 
-//												  : 0;//`CPU_MSG_SIZE'h zzzz_zzzz;
 
 
   input [`DATA_SIZE0:0] data_in;
@@ -92,14 +107,6 @@ module ThreadCtlr(
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_in;
   wire [`DATA_SIZE0:0] data_out = 
-//                           (
-//                              disp_online == 1 
-//                              && state == `ALU_BEGIN 
-//                              && (
-//                                cpu_msg_r == `CPU_R_FORK_THRD
-//                                || cpu_msg_r == `CPU_R_STOP_THRD
-//                                )
-//                             )
 									  cpu_msg_pulse == 1
                              ? data_r 
                              : 0 
@@ -110,14 +117,6 @@ module ThreadCtlr(
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_in;
   wire [`ADDR_SIZE0:0] addr_out = 
-//                             (
-//                              disp_online == 1
-//                              && state == `ALU_BEGIN 
-//                              && (
-//                                cpu_msg_r == `CPU_R_FORK_THRD
-//                                || cpu_msg_r == `CPU_R_STOP_THRD
-//                                )
-//                             )
 									  cpu_msg_pulse == 1
                              ? addr_r 
                              : 0 
@@ -135,13 +134,14 @@ module ThreadCtlr(
   
   reg signal_sent;
   
-  
+ /* 
   wire [`DATA_SIZE0:0] data_for_stop_msg =
 						        src1 == 0 
 								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
 								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
 								  ;
-  
+*/
+
   //reg clk_oe;
   
   
@@ -156,10 +156,10 @@ module ThreadCtlr(
 	 end else begin
 
     if(rst == 1) begin
-//      src1_r = 0;//`DATA_SIZE'h zzzzzzzz;
-//      src0_r = 0; //`DATA_SIZE'h zzzzzzzz;
-      dst_r <=  0;//`DATA_SIZE'h zzzzzzzz;
-      dst_h <=  0;//`DATA_SIZE'h zzzzzzzz;
+//      src1_r = 0;
+//      src0_r = 0;
+      dst_r <=  0;
+      dst_h <=  0;
       
       cpu_msg_r <= 0; //8'h 00;
       
@@ -174,12 +174,13 @@ module ThreadCtlr(
 //		next_state_r = 1'b z;
     end else begin
 
-//      cpu_msg_r = 0; //`CPU_MSG_SIZE'h zzzz;
+//      cpu_msg_r = 0;
     
       case(state)
 		  default: begin
 		    cpu_msg_r <= 0;
 			 
+          dst_h <= 0;
 			 dst_r <= 0;
         end
 		  
@@ -188,33 +189,69 @@ module ThreadCtlr(
 //		  end
 		  
         `ALU_BEGIN: begin
-          dst_h <= 0;
           
           case(cmd_code)
 		      default: begin
 		        cpu_msg_r <= 0;
 				  
+              dst_h <= 0;
 				  dst_r <= 0;
             end
-		  
-            `CMD_FORK: begin
+
+            `CMD_CHN: begin
               if(disp_online == 1) begin
                 if(
-//                  cpu_msg_r !== `CPU_R_FORK_THRD && 
                   signal_sent == 0
                 ) begin
-                  addr_r <= src0 + base_addr;
-                  data_r <= 
-						        src1 == 0 
-								  ? 0 
-								  : src1 + base_addr_data
-								  ;
-                
-                  cpu_msg_r <= `CPU_R_FORK_THRD;
+					 
+/**
+					   case({&regDFlags, &regS0Flags, &regS1Flags})
+						  3'b 000: begin // r <- ch <- r 
+						    data_r <= src1;
+							 addr_r <= src0;
+                      cpu_msg_r <= `CPU_R_CHAN_SET;
+						  end
+						
+						  3'b 001: begin // r <- ch <- z // get from ch
+						    //data_r <= 0;
+                      addr_r <= src0;
+							 cpu_msg_r <= `CPU_R_CHAN_GET;
+						  end
+						
+						  3'b 010: begin // r <- z <- r  // test ch
+                      addr_r <= src1;
+							 cpu_msg_r <= `CPU_R_CHAN_TST;
+						  end
+						
+						  3'b 011: begin // r <- z <- z  // cr ch
+                      cpu_msg_r <= `CPU_R_CHAN_CRT;
+						  end
+						
+						  3'b 100: begin // z <- ch <- r // set to ch
+                      data_r <= src1;
+							 addr_r <= src0;
+							 cpu_msg_r <= `CPU_R_CHAN_SET;
+						  end
+						
+						  3'b 101: begin // z <- ch <- z // ??? 
+                      //cpu_msg_r <= `CPU_R_FORK_THRD;
+						  end
+						
+						  3'b 110: begin // z <- z <- r  // del ch
+                      addr_r <= src1;
+							 cpu_msg_r <= `CPU_R_CHAN_DEL;
+						  end
+						
+						  3'b 111: begin // z <- z <- z  // ???
+                      //cpu_msg_r <= `CPU_R_FORK_THRD;
+						  end
+						
+						endcase
                   
 						cpu_msg_pulse <= 1;
 						
                   signal_sent <= 1;
+/**/
                 end
                 else begin
 //                  if(signal_sent == 0) begin
@@ -226,98 +263,70 @@ module ThreadCtlr(
                     cpu_msg_r <= 0; //8'h 00;
  //                   cpu_msg_in_r = 1;
                   
-                    if(cpu_msg_in == `CPU_R_FORK_DONE) begin
-//                      dst_r <= data_in;
-							 
+                    if(cpu_msg_in == `CPU_R_CHAN_DONE) begin
+                    
+/**
+							 case({&regDFlags, &regS0Flags, &regS1Flags})
+							   3'b 000: begin // r <- ch <- r 
+								  //data_r <= src1;
+								  addr_r <= src0;
+								  cpu_msg_r <= `CPU_R_CHAN_GET;
+							   end
+							
+							   3'b 001: begin // r <- ch <- z // get from ch
+								  //data_r <= 0;
+								  //addr_r <= src0;
+								  //cpu_msg_r <= `CPU_R_CHAN_GET;
+								  dst_r <= data_in;
+							   end
+							
+							   3'b 010: begin // r <- z <- r  // test ch
+								  dst_r <= data_in;
+								  //addr_r <= src1;
+								  //cpu_msg_r <= `CPU_R_CHAN_TST;
+							   end
+							
+							   3'b 011: begin // r <- z <- z  // cr ch
+								  dst_r <= data_in;
+								  //cpu_msg_r <= `CPU_R_CHAN_CRT;
+							   end
+							
+							   3'b 100: begin // z <- ch <- r // set to ch
+								  //data_r <= src1;
+								  //addr_r <= src0;
+								  //cpu_msg_r <= `CPU_R_CHAN_SET;
+							   end
+							
+							   3'b 101: begin // z <- ch <- z // ??? 
+								  //cpu_msg_r <= `CPU_R_FORK_THRD;
+							   end
+							
+							   3'b 110: begin // z <- z <- r  // del ch
+								  //addr_r <= src1;
+								  //cpu_msg_r <= `CPU_R_CHAN_DEL;
+							   end
+							
+							   3'b 111: begin // z <- z <- z  // ???
+								  //cpu_msg_r <= `CPU_R_FORK_THRD;
+							   end
+							
+							 endcase
+						  
                       signal_sent <= 0;
                       next_state_r <= 1;
+/**/
                     end
 //                  end
                 end
               end
               else begin
-                cpu_msg_r <= 0; //8'h00;
-              end
-            end
-            
-            
-            `CMD_STOP: begin
-//              cpu_msg_r = `CPU_R_STOP_THRD;
-              if(disp_online == 1) begin
-                if(
-//                  cpu_msg_r !== `CPU_R_FORK_THRD && 
-                  signal_sent == 0
-                ) begin
-                  addr_r <= src0 + base_addr - `THREAD_HEADER_SPACE;
-                  data_r <= 
-						        data_for_stop_msg
-//						        src1 == 0 
-//								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
-//								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
-								  ;
-                
-                  cpu_msg_r <= `CPU_R_STOP_THRD;
-						
-						cpu_msg_pulse <= 1;
-                  
-                  signal_sent <= 1;
-                end
-                else begin
-					   addr_r <= 0;
-						data_r <= 0;
-						
-//                  if(signal_sent == 0) begin
-//                    signal_sent = 1;
-//                  end
-//                  else begin
-                  cpu_msg_pulse <= 0;
-						
-                  cpu_msg_r <= 0; //8'h 00;
-     //               cpu_msg_in_r = 1;
-                  
-                  if(cpu_msg_in == `CPU_R_STOP_DONE) begin
-//						  dst_r <= data_in;
-						  
-                    signal_sent <= 0;
-                    next_state_r <= 1;
-                  end
-//                end
-                end
-              end
-              else begin
-                cpu_msg_r <= 0; //8'h00;
-              end
-            end
-            
-            
-            /**
-            `CMD_EXT_CMD: begin
-            
-              //case(src0)
-                if(src0 === `EXT_CMD_NEW_THREAD) begin
-                  cpu_msg_r = `CPU_R_NEW_THRD;
-                end
-                
-					 else
-                if(src0 === `EXT_CMD_DESTROY_THREAD) begin
-                  cpu_msg_r = `CPU_R_DEL_THRD;
-                end
-              
-              //endcase
+                dst_h <= 0;
+				    dst_r <= 0;
 
+                cpu_msg_r <= 0; //8'h00;
+              end
             end
-            **/
             
-            
-//            `: begin
-//            end
-            
-//            `: begin
-//            end
-            
-//            `: begin
-//            end
-          
           endcase
           
         end

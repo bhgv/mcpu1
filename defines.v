@@ -7,7 +7,7 @@
 
 //`define IS_USE_PLL	
 
-`define IS_USE_FPU	
+//`define IS_USE_FPU	
 
 
 

@@ -90,7 +90,12 @@ module InternalBus(
   output wire want_write_out;
   
 
-  wire cpu_msg_pulse;
+  wire cpu_msg_pulse_t;
+  wire cpu_msg_pulse_ch;
+  wire cpu_msg_pulse = 
+                     cpu_msg_pulse_t
+							| cpu_msg_pulse_ch
+							;
   
 		
   output wire read_q;
@@ -108,6 +113,7 @@ module InternalBus(
   
   wire [`ADDR_SIZE0:0] addr_out_m;
   wire [`ADDR_SIZE0:0] addr_out_t;
+  wire [`ADDR_SIZE0:0] addr_out_ch;
   
   wire [`ADDR_SIZE0:0] addr_out = 
                                  (
@@ -118,6 +124,7 @@ module InternalBus(
 											? (
                                        addr_out_m[`ADDR_SIZE0:0]
                                      | addr_out_t[`ADDR_SIZE0:0]
+                                     | addr_out_ch[`ADDR_SIZE0:0]
                                    )
 											: 0
                                  ;
@@ -129,18 +136,28 @@ module InternalBus(
 //  wire [`DATA_SIZE0:0] data_out_s; // = data_r;
   wire [`DATA_SIZE0:0] data_out_m; // = data_r;
   wire [`DATA_SIZE0:0] data_out_t; // = data_r;
+  wire [`DATA_SIZE0:0] data_out_ch; // = data_r;
   wire [`DATA_SIZE0:0] data_out = 
                                  data_out_m
                                  | data_out_t
+											| data_out_ch
 //                                 | data_out_s
                                  ;
   
 
   wire [`DATA_SIZE0:0] src1_in;
   wire [`DATA_SIZE0:0] src0_in;
-  wire [`DATA_SIZE0:0] dst_in;
   
+  wire [`DATA_SIZE0:0] dst_alu_in;
   wire [`DATA_SIZE0:0] dst_trd_ctl_in;
+  wire [`DATA_SIZE0:0] dst_chnl_ctl_in;
+  
+  wire [`DATA_SIZE0:0] dst_in =
+                            dst_alu_in
+                            | dst_trd_ctl_in
+                            | dst_chnl_ctl_in
+                            ;
+  
   
   wire [`DATA_SIZE0:0] src1_out;
   wire [`DATA_SIZE0:0] src0_out;
@@ -158,7 +175,7 @@ module InternalBus(
   input next_state;
   wire next_state;
   
-  wire next_state_m, next_state_a, next_state_t;//, next_state_s;
+  wire next_state_m, next_state_a, next_state_t, next_state_ch;//, next_state_s;
   
   wire next_state_rslt = 
 								next_state
@@ -166,6 +183,7 @@ module InternalBus(
 								| next_state_a
 //								| next_state_s
 								| next_state_t
+								| next_state_ch
 								;
  
                     
@@ -177,7 +195,15 @@ module InternalBus(
   
   
   input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
-  output wire [`CPU_MSG_SIZE0:0] cpu_msg_out;
+  output [`CPU_MSG_SIZE0:0] cpu_msg_out;
+  
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out_t;
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out_ch;
+  
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = 
+                                       cpu_msg_out_t
+													| cpu_msg_out_ch
+                                       ;
   
   
   
@@ -328,10 +354,13 @@ module InternalBus(
             .src1_in(src1_in),
             .src0_in(src0_in),
             .dst_in(
-			               cmd_code == `CMD_FORK
-						   || cmd_code == `CMD_STOP
-						 ? dst_trd_ctl_in
-						 : dst_in 
+//			               cmd_code == `CMD_FORK
+//						   || cmd_code == `CMD_STOP
+//						 ? dst_trd_ctl_in
+//						 : cmd_code == `CMD_CHN
+//						 ? dst_chnl_ctl_in
+//						 : 
+						 dst_in 
 						),
             .dst_h_in(dst_h),
 //            .cond_in(cond),
@@ -389,7 +418,7 @@ module InternalBus(
 		  
         .src1_out(src1_in),
         .src0_out(src0_in),
-        .dst_out(dst_in),
+        .dst_out(dst_alu_in),
 		  
         .dst_h_out(dst_h),
         
@@ -431,11 +460,55 @@ module InternalBus(
         .disp_online(disp_online),
         
         .cpu_msg_in(cpu_msg_in),
-        .cpu_msg_out(cpu_msg_out),
+        .cpu_msg_out(cpu_msg_out_t),
 		  
-		  .cpu_msg_pulse(cpu_msg_pulse),
+		  .cpu_msg_pulse(cpu_msg_pulse_t),
         
         .next_state(next_state_t),
+        
+        .rst(rst)
+        );
+/**/
+
+
+/**/
+  ChannelCtlr chnl_1 (
+        .clk(clk),
+ 		  .clk_oe(clk_oe),
+
+			.is_bus_busy(bus_busy),
+        
+        .base_addr(base_addr),
+        .base_addr_data(base_addr_data),
+        
+        .command(command),
+        
+        .state(state),
+        
+        .src1(src1_out),
+        .src0(src0_out),
+//        .dst_in(dst_out),
+		  
+//        .src1_out(src1),
+//        .src0_out(src0),
+        .dst(dst_chnl_ctl_in),
+		  
+        .dst_h(dst_h),
+        
+        .data_in(data_in),
+        .data_out(data_out_ch),
+        
+		  .addr_in(addr_in),
+        .addr_out(addr_out_ch),
+        
+        .disp_online(disp_online),
+        
+        .cpu_msg_in(cpu_msg_in),
+        .cpu_msg_out(cpu_msg_out_ch),
+		  
+		  .cpu_msg_pulse(cpu_msg_pulse_ch),
+        
+        .next_state(next_state_ch),
         
         .rst(rst)
         );

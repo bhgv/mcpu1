@@ -133,6 +133,11 @@ module Alu(
     end else begin
     
       case(state)
+        default: begin
+          dst_h <= 0;
+          dst_r <= 0;
+        end
+
         `ALU_BEGIN: begin
 ///          dst_h = 0;
           
@@ -140,14 +145,16 @@ module Alu(
 //          src0_r = src0_in;
           
           case(cmd_code)
-            `CMD_MOV: begin
+/**
+            `CMD_CHN: begin
               {dst_r, src0_r} <= {src0_in, src1_in};
               //src = src0;
               //src0_r = dst_h;
               
               next_state_r <= 1;
             end
-            
+/**/
+
             `CMD_ADD: begin
               {dst_h, dst_r} <= src0_in + src1_in;
               
@@ -307,6 +314,8 @@ module Alu(
 /**/
 
             default: begin
+				  dst_h <= 0;
+				  dst_r <= 0;
 //              next_state_r = 1;       
             end
             

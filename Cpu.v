@@ -9,7 +9,7 @@
 
 
 
-module Cpu(
+module CpuCell(
             clk,
 				clk_oe,
             

@@ -13,6 +13,17 @@
 `define CPU_R_STOP_DONE 8'h5d
 
 
+`define CPU_R_CHAN_GET  8'hc9
+`define CPU_R_CHAN_SET  8'hc5
+
+`define CPU_R_CHAN_CRT  8'hcc
+`define CPU_R_CHAN_DEL  8'hcd
+
+`define CPU_R_CHAN_TST  8'hc7
+
+`define CPU_R_CHAN_DONE  8'hcf
+
+
 
 `define THREAD_CMD_NULL  0
 `define THREAD_CMD_RUN   1

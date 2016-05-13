@@ -1,7 +1,7 @@
 
 
 
-`define  CMD_MOV 00
+`define  CMD_CHN 00
 
 `define  CMD_ADD 01
 `define  CMD_SUB 02
