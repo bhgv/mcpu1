@@ -22,6 +22,7 @@
 module CpuBlock(
     clk,
     clk_oe,
+    clk_2f,
 
     addr_in,
     addr_out,
@@ -53,8 +54,10 @@ parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
 	input wire rst_in;
 	output wire rst_out;
 	
-	output wire clk_oe;
+	input wire clk_oe;
+//	output wire clk_oe;
 
+   input wire clk_2f;
 
 
    wire [`ADDR_SIZE0:0] mem_addr_out;
@@ -78,7 +81,7 @@ parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
   
    input wire read_dn;
    input wire write_dn;
-	 
+	
 	output /*wire*/ halt_q;
    input wire rw_halt_in;
 	output /*wire*/ rw_halt_out;
@@ -262,6 +265,9 @@ wire cpu_cell_read_dn;
 wire cpu_cell_write_dn;
 
 
+wire [CPU_QUANTITY-1:0]chan_msg_strb_i;
+wire chan_msg_strb_o = |chan_msg_strb_i;
+
 
 generate
 for(i = 0; i < CPU_QUANTITY; i=i+1) begin:cpu_cell_gen
@@ -295,6 +301,9 @@ CpuCell cpu_cell //[CPU_QUANTITY-1:0]
             .write_q(write_q_a[i]),
             .read_dn(cpu_cell_read_dn),
             .write_dn(cpu_cell_write_dn),
+				
+				.chan_msg_strb_o(chan_msg_strb_i[i]),
+				.chan_msg_strb_i(chan_msg_strb_o),
             
             .bus_busy_in(bus_busy_out_wire),
 				.bus_busy_out(bus_busy_in_a[i]),
@@ -428,6 +437,7 @@ assign want_write_in = want_write_out_a_to_or[CPU_QUANTITY - 1];
 DispatcherOfCpus disp_1(
             .clk(clk),
 				.clk_oe(clk_oe),
+				.clk_2f(clk_2f),
 				
             .rst_in(rst_in),
 				.rst_out(rst_out),

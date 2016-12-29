@@ -30,6 +30,9 @@ module CpuCell(
             write_q,
             read_dn,
             write_dn,
+				
+				chan_msg_strb_i,
+				chan_msg_strb_o,
             
             bus_busy_in,
 				bus_busy_out,
@@ -67,8 +70,10 @@ module CpuCell(
   output wire write_q;
   
   input wire read_dn;
-  
   input wire write_dn;
+  
+  input wire chan_msg_strb_i;
+  output wire chan_msg_strb_o;
   
 //  wire read_e;
 //  wire write_e;
@@ -261,6 +266,10 @@ BridgeToOutside outside_bridge (
             .data_out(data_out),
             .read_dn(read_dn),
             .write_dn(write_dn),
+				
+				.chan_msg_strb_i(chan_msg_strb_i),
+            .chan_msg_strb_o(chan_msg_strb_o),
+
 //            .read_e(read_e),
 //            .write_e(write_e),
             

@@ -41,6 +41,10 @@ module InternalBus(
             write_q,
             read_dn,
             write_dn,
+				
+            chan_msg_strb_i,
+            chan_msg_strb_o,
+
 //            read_e,
 //            write_e,
             
@@ -105,6 +109,9 @@ module InternalBus(
 //  output wire read_e;
 //  output wire write_e;
   
+  input wire chan_msg_strb_i;
+  output wire chan_msg_strb_o;
+
 
 //  reg [`ADDR_SIZE0:0] addr_out_r;
   input wire [`ADDR_SIZE0:0] addr_in; //= addr_out_r;
@@ -507,6 +514,9 @@ module InternalBus(
         .cpu_msg_out(cpu_msg_out_ch),
 		  
 		  .cpu_msg_pulse(cpu_msg_pulse_ch),
+		  
+		  .chan_msg_strb_i(chan_msg_strb_i),
+        .chan_msg_strb_o(chan_msg_strb_o),
         
         .next_state(next_state_ch),
         

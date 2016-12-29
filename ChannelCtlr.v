@@ -35,6 +35,9 @@ module ChannelCtlr(
 		  
 		  cpu_msg_pulse,
         
+        chan_msg_strb_i,
+        chan_msg_strb_o,
+
         next_state,
         
         rst
@@ -54,17 +57,17 @@ module ChannelCtlr(
   wire [3:0] cmd_code = command[31:28];
   
 
-  wire [1:0] regS1Flags;
-  assign regS1Flags = command[21:20];
+  wire [1:0] regS1en;
+  assign regS1en = !(&command[21:20]);
   
-  wire [1:0] regS0Flags;
-  assign regS0Flags = command[23:22];
+  wire [1:0] regS0en;
+  assign regS0en = !(&command[23:22]);
   
-  wire [1:0] regDFlags;
-  assign regDFlags = command[25:24];
+  wire [1:0] regDen;
+  assign regDen = !(&command[25:24]);
   
-//  wire [1:0] regCondFlags;
-//  assign regCondFlags = command[27:26];
+  wire [1:0] regCnden;
+  assign regCnden = !(&command[27:26]);
   
   
   
@@ -130,6 +133,9 @@ module ChannelCtlr(
   input wire rst;
   
   
+  input wire chan_msg_strb_i;
+  output reg chan_msg_strb_o;
+
 //  wire [3:0] cmd_code = command[31:28];
   
   reg signal_sent;
@@ -140,10 +146,7 @@ module ChannelCtlr(
 								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
 								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
 								  ;
-*/
-
-  //reg clk_oe;
-  
+*/  
   
   
         
@@ -152,6 +155,8 @@ module ChannelCtlr(
 	 if(clk_oe == 0) begin
 	 
       next_state_r <= 1'b 0;
+		
+		chan_msg_strb_o <= 1'b 0;
 	 
 	 end else begin
 
@@ -172,6 +177,8 @@ module ChannelCtlr(
 		
 		next_state_r <= 1'b 0;
 //		next_state_r = 1'b z;
+
+      chan_msg_strb_o <= 0;
     end else begin
 
 //      cpu_msg_r = 0;
@@ -204,52 +211,86 @@ module ChannelCtlr(
                   signal_sent == 0
                 ) begin
 					 
-/**
-					   case({&regDFlags, &regS0Flags, &regS1Flags})
-						  3'b 000: begin // r <- ch <- r 
+
+				  /**
+				  case({regDen, regS0en, regS1en})
+					3'b 111: begin // resp <- chN <- query
+						chan_msg_strb_o <= 1'b 1;
+					end
+					
+					3'b 110: begin // resp <- chN
+					end
+					
+					3'b 011: begin // chN <- query
+					end
+
+					3'b 101: begin // cnN <-CONV- number
+					end
+
+					3'b 100: begin // isready? chN
+					end
+					
+					3'b 010: begin
+					end
+					
+					3'b 001: begin
+					end
+					
+					3'b 000: begin
+						next_state_r <= 1;
+					end
+				
+				  endcase
+				  /**/
+
+/**/
+					   case({regDen, regS0en, regS1en}) //({&regDFlags, &regS0Flags, &regS1Flags})
+						  3'b 111: begin // resp <- chN <- query
 						    data_r <= src1;
 							 addr_r <= src0;
                       cpu_msg_r <= `CPU_R_CHAN_SET;
 						  end
 						
-						  3'b 001: begin // r <- ch <- z // get from ch
+						  3'b 110: begin // resp <- chN
 						    //data_r <= 0;
                       addr_r <= src0;
 							 cpu_msg_r <= `CPU_R_CHAN_GET;
 						  end
 						
-						  3'b 010: begin // r <- z <- r  // test ch
-                      addr_r <= src1;
-							 cpu_msg_r <= `CPU_R_CHAN_TST;
-						  end
-						
-						  3'b 011: begin // r <- z <- z  // cr ch
-                      cpu_msg_r <= `CPU_R_CHAN_CRT;
-						  end
-						
-						  3'b 100: begin // z <- ch <- r // set to ch
+						  3'b 011: begin // chN <- query
                       data_r <= src1;
 							 addr_r <= src0;
 							 cpu_msg_r <= `CPU_R_CHAN_SET;
 						  end
 						
-						  3'b 101: begin // z <- ch <- z // ??? 
+						  3'b 101: begin // cnN <-CONV- number
+                      addr_r <= src1;
+							 cpu_msg_r <= `CPU_R_CHAN_TST;
+						  end
+						
+						/**
+						  3'b 100: begin // r <- z <- z  // cr ch
+                      cpu_msg_r <= `CPU_R_CHAN_CRT;
+						  end
+						
+						  3'b 010: begin // z <- ch <- z // ??? 
                       //cpu_msg_r <= `CPU_R_FORK_THRD;
 						  end
 						
-						  3'b 110: begin // z <- z <- r  // del ch
+						  3'b 001: begin // z <- z <- r  // del ch
                       addr_r <= src1;
 							 cpu_msg_r <= `CPU_R_CHAN_DEL;
 						  end
+						/**/
 						
-						  3'b 111: begin // z <- z <- z  // ???
+						  3'b 000: begin // ???
+						    next_state_r <= 1;
                       //cpu_msg_r <= `CPU_R_FORK_THRD;
 						  end
 						
 						endcase
                   
 						cpu_msg_pulse <= 1;
-						
                   signal_sent <= 1;
 /**/
                 end

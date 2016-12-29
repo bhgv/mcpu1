@@ -57,8 +57,11 @@
 `define READ_DST     26
 `define READ_DST_P   27
 
-`define ALU_BEGIN  12
-`define ALU_RESULTS 20
+`define ALU_BEGIN		12
+`define ALU_RESULTS	20
+
+`define CHAN_WR_END	28
+`define CHAN_RD		29
 
 //`define WRITE_DATA 7
 `define WRITE_PREP 13

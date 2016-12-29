@@ -313,11 +313,11 @@ module Alu(
             end
 /**/
 
-            default: begin
-				  dst_h <= 0;
-				  dst_r <= 0;
-//              next_state_r = 1;       
-            end
+//            default: begin
+//				  dst_h <= 0;
+//				  dst_r <= 0;
+////              next_state_r = 1;       
+//            end
             
 //            `: begin
 //            end

@@ -1,9 +1,13 @@
 
 
-`define CPU_QUANTITY		3
+`define CPU_QUANTITY		4
 `define PROC_QUANTITY	7
 
-`define MAIN_CLK_FREQ		1 * 50000000
+`define CLK_FREQ_PLL		4 * 25000000
+
+`define MAIN_CLK_FREQ	`CLK_FREQ_PLL / 2
+
+`define FREQ_VIDEO_DIVIDER	((`CLK_FREQ_PLL / 25000000) - 1)
 
 //`define IS_USE_PLL	
 

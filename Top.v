@@ -116,6 +116,8 @@ module Top(
 	
 	input wire stop_btn;
 	
+	wire clk_pll;
+	
 	wire clk_oe_pll;
 	wire clk_oe;// = clk_oe_pll;
 
@@ -123,7 +125,7 @@ module Top(
 	wire clk_int;// = clk;
 	wire clk_50mhz;// = clk_oe;
 `else
-	wire clk_int = clk;
+	wire clk_int; // = clk;
 	wire clk_50mhz = clk;
 `endif
 	
@@ -499,6 +501,7 @@ wire ext_rw_halt;
 CpuBlock block_of_cpus(
     .clk(clk_int),
     .clk_oe(clk_oe),
+	 .clk_2f(clk_pll),
 
     .addr_in(mem_addr_in),
     .addr_out(mem_addr_out),
@@ -647,18 +650,18 @@ ExternalSRAMInterface ext_ram_itf(
 
 
 /**/
-`ifdef IS_USE_PLL
+//`ifdef IS_USE_PLL
 
   pll_core pll (
 //	.areset(~rst),
 	.inclk0(clk),
 	
-	.c0(clk_int),
-	.c1(clk_50mhz)
+	.c0(clk_pll),
+//	.c1(clk_50mhz)
 //	.c2(clk_25mhz)
 	);
 	
-`endif
+//`endif
 /**/
 
 
@@ -696,6 +699,19 @@ ExternalSRAMInterface ext_ram_itf(
 /**/
 
 
+  wire clk25mhz;
+
+  FrequencyManager fm (
+    .clk(clk_pll),
+    .clk_oe(clk_oe),
+	 .clk_int(clk_int),
+	 
+	 .clk25mhz(clk25mhz),
+	 
+	 .rst(rst_int)
+  );
+
+
 
 
   output wire pix_clk;
@@ -718,7 +734,7 @@ ExternalSRAMInterface ext_ram_itf(
 		 .clk(clk_int),
 		 .clk_oe(clk_oe),
 		 
-		 .clk_video(clk_50mhz), //~clk_25mhz),
+		 .clk_video(clk25mhz), //clk_50mhz), //~clk_25mhz),
 		 
 		 .pix_clk(pix_clk),
 		 .de(de),
