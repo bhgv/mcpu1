@@ -130,6 +130,8 @@ module ChannelCtlr(
   reg next_state_r;
   wire next_state = next_state_r;
   
+  reg [4:0] state_int;
+  
   input wire rst;
   
   
@@ -157,7 +159,9 @@ module ChannelCtlr(
       next_state_r <= 1'b 0;
 		
 		chan_msg_strb_o <= 1'b 0;
-	 
+
+      cpu_msg_r <= 0;
+
 	 end else begin
 
     if(rst == 1) begin
@@ -179,6 +183,8 @@ module ChannelCtlr(
 //		next_state_r = 1'b z;
 
       chan_msg_strb_o <= 0;
+		
+		state_int <= 0;
     end else begin
 
 //      cpu_msg_r = 0;
@@ -246,26 +252,62 @@ module ChannelCtlr(
 /**/
 					   case({regDen, regS0en, regS1en}) //({&regDFlags, &regS0Flags, &regS1Flags})
 						  3'b 111: begin // resp <- chN <- query
-						    data_r <= src1;
-							 addr_r <= src0;
-                      cpu_msg_r <= `CPU_R_CHAN_SET;
+                      case(state_int)
+							   0: begin
+                            data_r <= src1;
+                            addr_r <= src0;
+                            cpu_msg_r <= `CPU_R_CHAN_SET;
+
+                            cpu_msg_pulse <= 1;
+                            signal_sent <= 1;
+
+                            state_int <= 1;
+                        end
+								
+                        1: begin
+                            if( 
+                                cpu_msg_in == `CPU_R_CHAN_SET &&
+                                addr_in == src0
+                            ) begin
+                               dst_r <= data_in;
+                               state_int <= 0;
+
+								       next_state_r <= 1;
+                            end
+                        end
+                        
+                      endcase
 						  end
 						
 						  3'b 110: begin // resp <- chN
 						    //data_r <= 0;
-                      addr_r <= src0;
-							 cpu_msg_r <= `CPU_R_CHAN_GET;
+                      if( 
+                          cpu_msg_in == `CPU_R_CHAN_SET &&
+                          addr_in == src0
+                      ) begin
+                         dst_r <= data_in;
+								 next_state_r <= 1;
+                      end
+                      //addr_r <= src0;
+							 //cpu_msg_r <= `CPU_R_CHAN_GET;
 						  end
 						
 						  3'b 011: begin // chN <- query
                       data_r <= src1;
 							 addr_r <= src0;
 							 cpu_msg_r <= `CPU_R_CHAN_SET;
-						  end
+
+                      cpu_msg_pulse <= 1;
+                      signal_sent <= 1;
+
+							 next_state_r <= 1;
+                    end
 						
 						  3'b 101: begin // cnN <-CONV- number
-                      addr_r <= src1;
-							 cpu_msg_r <= `CPU_R_CHAN_TST;
+                      //addr_r <= src1;
+							 //cpu_msg_r <= `CPU_R_CHAN_TST;
+							 dst_r <= src1 + base_addr_data;
+							 next_state_r <= 1;
 						  end
 						
 						/**
@@ -290,8 +332,6 @@ module ChannelCtlr(
 						
 						endcase
                   
-						cpu_msg_pulse <= 1;
-                  signal_sent <= 1;
 /**/
                 end
                 else begin

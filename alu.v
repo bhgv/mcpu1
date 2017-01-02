@@ -127,7 +127,6 @@ module Alu(
 		mlt_state <= 0;
 		
 		next_state_r <= 1'b 0;
-//		next_state_r = 1'b z;
 		
 //      is_bus_busy_r = 1'b z;
     end else begin
@@ -139,10 +138,6 @@ module Alu(
         end
 
         `ALU_BEGIN: begin
-///          dst_h = 0;
-          
-//          src1_r = src1_in;
-//          src0_r = src0_in;
           
           case(cmd_code)
 /**
@@ -313,11 +308,11 @@ module Alu(
             end
 /**/
 
-//            default: begin
-//				  dst_h <= 0;
-//				  dst_r <= 0;
-////              next_state_r = 1;       
-//            end
+            default: begin
+				  dst_h <= 0;
+				  dst_r <= 0;
+//              next_state_r = 1;       
+            end
             
 //            `: begin
 //            end
@@ -327,7 +322,6 @@ module Alu(
           
           endcase
           
-//          next_state_r = 1;
         end
         
       endcase
