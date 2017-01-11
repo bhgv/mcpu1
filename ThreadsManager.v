@@ -77,6 +77,9 @@ parameter PROC_QUANTITY = 8;
   
   input wire [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
+  
+  
+  reg [`DATA_SIZE0:0] data_r_int;
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_out =
 /**/
@@ -144,14 +147,20 @@ parameter PROC_QUANTITY = 8;
   reg is_need_stop_thrd;
 
   reg [`DATA_SIZE0:0] tmp_data_r;
+  
+  reg next_proc_ready;
 
   
   always @(negedge clk_2f) begin
     if(rst == 1) begin
 //      proc_r = 0; //32'h zzzzzzzz;
       next_proc <= 0;
+		data_r <= 0;
     end else /*if(clk == 1)*/ begin
-      next_proc <= next_proc_int_r;
+	   if(next_proc_ready == 1) begin
+        next_proc <= next_proc_int_r;
+		  data_r <= data_r_int;
+		end
     end
   end
   
@@ -159,48 +168,69 @@ parameter PROC_QUANTITY = 8;
   always @(negedge clk) begin
 //  always @(negedge clk_2f) begin //negedge clk) begin
 
+//    if(ctl_state_int != 0) begin
+/**/
+
+
+
+
+
+
 		    case(ctl_state_int)
 				`CTL_CPU_START_THREAD_ph01: begin
-				      //aproc_tbl[aproc_e] <= pproc_r; //{data_r, next_proc_int_r};
-				      aproc_tbl[aproc_tbl_addr] <= pproc_r; //{data_r, next_proc_int_r};
+				      //aproc_tbl[aproc_e] <= pproc_r; //{data_r_int, next_proc_int_r};
+				      aproc_tbl[aproc_tbl_addr] <= pproc_r; //{data_r_int, next_proc_int_r};
                   //aproc_tbl_item <= pproc_r;
 				      is_pproc <= 0;
+						
+						next_proc_ready <= 0;
 						
 				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
 				end
 				
 				`CTL_CPU_REMOVE_THREAD_ph00: begin
-//                  {data_r, next_proc_int_r} <= aproc_tbl[aproc_i];
-                  {data_r, next_proc_int_r} <= aproc_tbl_item;
+//                  {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_i];
+                  {data_r_int, next_proc_int_r} <= aproc_tbl_item;
 
 				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
 				end
 				
 				`CTL_CPU_REMOVE_THREAD_ph10: begin
-//						 {data_r, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
-                  {data_r, next_proc_int_r} <= aproc_tbl_item;
+//						 {data_r_int, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
+                  {data_r_int, next_proc_int_r} <= aproc_tbl_item;
+						
+						next_proc_ready <= 1;
+
+				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph11;
+				end
+				
+				`CTL_CPU_REMOVE_THREAD_ph11: begin
+						next_proc_ready <= 0;
 
 				      ctl_state_int <= 0;
 				end
 				
 				`CTL_CPU_REMOVE_THREAD_ph20: begin
-//						 {data_r, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
-						 {data_r, next_proc_int_r} <= aproc_tbl_item;
+//						 {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
+						 {data_r_int, next_proc_int_r} <= aproc_tbl_item;
+						 
+						 next_proc_ready <= 1;
+						 
 						 ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph2;
 				end
 				
 /**/
             `CTL_CPU_REMOVE_THREAD_ph0: begin
-              if(is_sproc == 1 && {data_r, next_proc_int_r} == sproc_r) begin
+              if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 
-					  if(aproc_i == aproc_e_minus_1) begin
+					  if(aproc_i >= aproc_e_minus_1) begin
 						 aproc_i <= 0; //aproc_b;
 						 
 						 aproc_tbl_addr <= 0;
-						 //{data_r, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
+						 //{data_r_int, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
 			
 						 if(aproc_e > 1) begin 
-							aproc_e <= aproc_e - 1;
+							aproc_e <= aproc_e_minus_1; //aproc_e - 1;
 						 end
 						 
 						 //ctl_state_int <= 0;
@@ -211,7 +241,8 @@ parameter PROC_QUANTITY = 8;
 						 
 						 ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph10;
 					  end else begin
-						 //{data_r, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
+						 //{data_r_int, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
+						 
 						 aproc_tbl_addr <= aproc_e_minus_1;
 						 ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph20;
 					  end
@@ -227,14 +258,19 @@ parameter PROC_QUANTITY = 8;
                  end else begin
                     aproc_i <= aproc_i + 1;
                  end
+					  
+					  next_proc_ready <= 1;
               
-                 ctl_state_int <= 0;
+                 ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph11; //0;
               end
             end
 
 /**/
 		      `CTL_CPU_REMOVE_THREAD_ph2: begin
-              //aproc_tbl[aproc_i] <= {data_r, next_proc_int_r};
+              //aproc_tbl[aproc_i] <= {data_r_int, next_proc_int_r};
+				  
+				  next_proc_ready <= 0;
+				  
               aproc_tbl_addr = aproc_i;
 				  
               if(aproc_e > 1) begin 
@@ -248,8 +284,8 @@ parameter PROC_QUANTITY = 8;
 /**/
 
 		      `CTL_CPU_REMOVE_THREAD_ph12: begin
-              //aproc_tbl_item <= {data_r, next_proc_int_r};
-              aproc_tbl[aproc_tbl_addr] <= {data_r, next_proc_int_r};
+              //aproc_tbl_item <= {data_r_int, next_proc_int_r};
+              aproc_tbl[aproc_tbl_addr] <= {data_r_int, next_proc_int_r};
 				  
               //if(aproc_e > 1) begin 
               //  aproc_e <= aproc_e - 1;
@@ -274,6 +310,12 @@ parameter PROC_QUANTITY = 8;
           endcase
 
 
+
+
+
+//    end else
+
+
     if(clk_oe == 0) begin
 //    if(clk_oe == 0 && clk == 1) begin
 //    if(clk_oe == 0 && clk == 0) begin
@@ -284,14 +326,14 @@ parameter PROC_QUANTITY = 8;
 //		    case(ctl_state_int)
 /**
             `CTL_CPU_REMOVE_THREAD_ph0: begin
-              if(is_sproc == 1 && {data_r, next_proc_int_r} == sproc_r) begin
+              if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 
 					  if(aproc_i == aproc_e_minus_1) begin
 						 aproc_i <= 0; //aproc_b;
 						 
-	//					 {data_r, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
+	//					 {data_r_int, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
 						 //aproc_tbl_addr <= 0;
-						 {data_r, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
+						 {data_r_int, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
 			
 						 if(aproc_e > 1) begin 
 							aproc_e <= aproc_e - 1;
@@ -303,7 +345,7 @@ parameter PROC_QUANTITY = 8;
 						 
 						 ready_to_fork_thread <= 0;
 					  end else begin
-						 {data_r, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
+						 {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
 						 ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph2;
 					  end
 
@@ -327,7 +369,7 @@ parameter PROC_QUANTITY = 8;
 
 /**
 		      `CTL_CPU_REMOVE_THREAD_ph2: begin
-              aproc_tbl[aproc_i] <= {data_r, next_proc_int_r};
+              aproc_tbl[aproc_i] <= {data_r_int, next_proc_int_r};
 				  
               if(aproc_e > 1) begin 
                 aproc_e <= aproc_e - 1;
@@ -350,16 +392,20 @@ parameter PROC_QUANTITY = 8;
 				  ctl_state_int <= 0;
 				end
 /**/
-
-				
 //          endcase
+
+
+
 
 //    if(clk_oe == 0) begin
 	 
 	 end else begin
 	 
     if(rst == 1) begin
-      next_proc_int_r <= 0; 
+      next_proc_int_r <= 0;
+		//next_proc <= 0;
+		data_r_int <= 0;
+		//data_r <= 0;
       
       aproc_b <= 0;
       aproc_e <= 0;
@@ -384,6 +430,8 @@ parameter PROC_QUANTITY = 8;
       ctl_state_int <= 0;
 		
 		aproc_tbl_addr <= 0;
+		
+		next_proc_ready <= 0;
     end else begin
 
 
@@ -404,10 +452,12 @@ parameter PROC_QUANTITY = 8;
                 ready_to_fork_thread <= 0;
 
                 if(is_pproc == 1) begin
-				      {data_r, next_proc_int_r} <= pproc_r;
+				      {data_r_int, next_proc_int_r} <= pproc_r;
+						
+						next_proc_ready <= 1;
                   
 						aproc_tbl_addr <= aproc_e;
-                  //aproc_tbl[aproc_e] <= pproc_r; //{data_r, next_proc_int_r};
+                  //aproc_tbl[aproc_e] <= pproc_r; //{data_r_int, next_proc_int_r};
 						
 				      //is_pproc <= 0;
 
@@ -415,7 +465,7 @@ parameter PROC_QUANTITY = 8;
 //				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
                 end else begin
               
-//                  {data_r, next_proc_int_r} <= aproc_tbl[aproc_i];
+//                  {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_i];
 						aproc_tbl_addr <= aproc_i;
 
 				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph00;
@@ -427,7 +477,7 @@ parameter PROC_QUANTITY = 8;
 /**
             `CTL_CPU_REMOVE_THREAD_ph0: begin
 //                  if(is_need_stop_thrd) begin
-				      if(is_sproc == 1 && {data_r, next_proc_int_r} == sproc_r) begin
+				      if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 //                    aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
 //                    is_sproc = 0;
 					 
@@ -448,8 +498,8 @@ parameter PROC_QUANTITY = 8;
                 end else begin
 /**  only for test! * /
 //                  aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
-                  {/*is_need_stop_thrd,* / data_r, next_proc_int_r} = aproc_tbl[aproc_e];
-                  aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r, next_proc_int_r};
+                  {/*is_need_stop_thrd,* / data_r_int, next_proc_int_r} = aproc_tbl[aproc_e];
+                  aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r_int, next_proc_int_r};
                 end
 /** /
                   end
@@ -512,8 +562,8 @@ parameter PROC_QUANTITY = 8;
               end else begin
 /**  only for test! * /
 //                  aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
-                {/*is_need_stop_thrd,* / data_r, next_proc_int_r} = aproc_tbl[aproc_e];
-//                aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r, next_proc_int_r};
+                {/*is_need_stop_thrd,* / data_r_int, next_proc_int_r} = aproc_tbl[aproc_e];
+//                aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r_int, next_proc_int_r};
 			       ctl_state_int = `CTL_CPU_REMOVE_THREAD_ph2;
               end
 			 
@@ -523,7 +573,7 @@ parameter PROC_QUANTITY = 8;
 		  
 /**
 		      `CTL_CPU_REMOVE_THREAD_ph2: begin
-              aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r, next_proc_int_r};
+              aproc_tbl[aproc_i] = {/*is_need_stop_thrd,* / data_r_int, next_proc_int_r};
 			     ctl_state_int = 0;
 		      end
 /**/
@@ -534,7 +584,7 @@ parameter PROC_QUANTITY = 8;
               if(aproc_i == aproc_e_minus_1) begin
                 aproc_i = 0; //aproc_b;
 					 
-					 {data_r, next_proc_int_r} = aproc_tbl[0]; //aproc_b];
+					 {data_r_int, next_proc_int_r} = aproc_tbl[0]; //aproc_b];
 		
                 if(aproc_e > 0) begin 
                   aproc_e = aproc_e - 1;
@@ -546,7 +596,7 @@ parameter PROC_QUANTITY = 8;
 					 
 					 ready_to_fork_thread = 0;
               end else begin
-                {data_r, next_proc_int_r} = aproc_tbl[aproc_e];
+                {data_r_int, next_proc_int_r} = aproc_tbl[aproc_e];
 			       ctl_state_int = `CTL_CPU_REMOVE_THREAD_ph2;
               end
 		      end 
@@ -570,11 +620,11 @@ parameter PROC_QUANTITY = 8;
 				    pproc_r <= {data_in, addr_in};
 					 is_pproc <= 1;
                 
-                data_r <= -1;
+                data_r_int <= -1;
                 thrd_rslt_r <= 1;
               end else
               begin
-                data_r <= 0;
+                data_r_int <= 0;
                 thrd_rslt_r <= 0;
               end
             end
@@ -582,14 +632,14 @@ parameter PROC_QUANTITY = 8;
             `THREAD_CMD_STOP: begin
 				
 				  if(is_sproc == 1) begin
-                data_r <= 0;
+                data_r_int <= 0;
                 thrd_rslt_r <= 0;
 				  end else begin
 				    sproc_r <= {data_in, addr_in};
 					 sproc_finish_i_r <= aproc_i;
 					 is_sproc <= 1;
 					 
-                data_r <= -1;
+                data_r_int <= -1;
                 thrd_rslt_r <= 1;
               end
               
@@ -600,7 +650,7 @@ parameter PROC_QUANTITY = 8;
                 if( aproc_tbl[i][`ADDR_SIZE0:0] == addr_in ) begin
                   aproc_tbl[i][(`DATA_SIZE0 + `ADDR_SIZE + 1)] = 1'b 1;
 
-                  data_r = -1;
+                  data_r_int = -1;
                   thrd_rslt_r = 1;
                 end
               end
@@ -612,11 +662,11 @@ parameter PROC_QUANTITY = 8;
                 pproc_tbl[pproc_e] = addr;
                 pproc_e = pproc_e + 1;
                 
-                data_r = -1;
+                data_r_int = -1;
                 thrd_rslt_r = 1;
               end else
               begin
-                data_r = 0;
+                data_r_int = 0;
                 thrd_rslt_r = 0;
               end
               */

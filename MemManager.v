@@ -78,6 +78,10 @@ module MemManager (
 				is_s0_read,
 				is_s0_read_ptr,
 				is_d_read,
+				
+				no_data_new,
+				no_data_tick,
+				no_data_exit_and_wait_begin,
             
             rst
             );
@@ -326,6 +330,31 @@ module MemManager (
 
   
   
+  
+  output no_data_new;
+  wire no_data_new_ip, no_data_new_s1, no_data_new_s0, no_data_new_d, no_data_new_c, no_data_new_mem1sz;
+  wire no_data_new = 
+									  no_data_new_ip 
+									| no_data_new_s1
+									| no_data_new_s0
+									| no_data_new_d
+									| no_data_new_c
+									| no_data_new_mem1sz
+									;
+
+
+  output no_data_tick;
+  wire no_data_tick_ip, no_data_tick_s1, no_data_tick_s0, no_data_tick_d, no_data_tick_c, no_data_tick_mem1sz;
+  wire no_data_tick = 
+									  no_data_tick_ip 
+									| no_data_tick_s1
+									| no_data_tick_s0
+									| no_data_tick_d
+									| no_data_tick_c
+									| no_data_tick_mem1sz
+									;
+  
+  
 /**  
   inout  [`DATA_SIZE0:0] cond;
   inout  [`DATA_SIZE0:0] src1;
@@ -358,6 +387,15 @@ module MemManager (
 
 
   reg [`SIZE_REG_OP-1:0] cmd_op;
+  
+  
+  input wire no_data_exit_and_wait_begin;
+  wire [1:0] ip_reg_inc_flag = 
+                        no_data_exit_and_wait_begin == 1'b 0 
+                        ? 2'b 01
+								: 2'b 00
+								;
+  
   /**
   wire [`SIZE_REG_OP-1:0] cmd_op = (state == `START_READ_CMD)
                                     ? `REG_OP_READ
@@ -419,7 +457,7 @@ module MemManager (
             .reg_ptr_out(ip_ptr_out),
             
             .isRegPtr(1),      //ip is ptr of cmd
-            .regFlags(2'b 01), //post-increment
+            .regFlags(ip_reg_inc_flag), //2'b 01), //post-increment
             .regNum(`REG_IP), //0xf is the number of ip reg
             
             .isNeedSave(1'b 1),
@@ -434,6 +472,9 @@ module MemManager (
 				
 				.is_read(is_ip_read),
 				.is_read_ptr(is_ip_read_ptr),
+				
+				.no_data_new(no_data_new_ip),
+				.no_data_tick(no_data_tick_ip),
             
             .cmd_ptr(cmd_ptr),
             
@@ -550,6 +591,9 @@ module MemManager (
 				
 				.is_read(is_s1_read),
 				.is_read_ptr(is_s1_read_ptr),
+				
+				.no_data_new(no_data_new_s1),
+				.no_data_tick(no_data_tick_s1),
             
             .cmd_ptr(cmd_ptr),
             
@@ -666,6 +710,9 @@ module MemManager (
 				
 				.is_read(is_s0_read),
 				.is_read_ptr(is_s0_read_ptr),
+				
+				.no_data_new(no_data_new_s0),
+				.no_data_tick(no_data_tick_s0),
             
             .cmd_ptr(cmd_ptr),
             
@@ -789,6 +836,9 @@ module MemManager (
 				
 				.is_read(is_d_read),
 //				.is_read_ptr(1'b z), //is_d_read_ptr),
+				
+				.no_data_new(no_data_new_d),
+				.no_data_tick(no_data_tick_d),
             
             .cmd_ptr(cmd_ptr),
             
@@ -892,6 +942,9 @@ module MemManager (
 				
 				.is_read(is_cnd_read),
 				.is_read_ptr(is_cnd_read_ptr),
+				
+				.no_data_new(no_data_new_c),
+				.no_data_tick(no_data_tick_c),
             
             .cmd_ptr(cmd_ptr),
             
@@ -1019,6 +1072,9 @@ module MemManager (
 				
 				.is_read(is_mem1sz_read),
 //				.is_read_ptr(is_mem1sz_read_ptr),
+				
+				.no_data_new(no_data_new_mem1sz),
+				.no_data_tick(no_data_tick_mem1sz),
             
             .cmd_ptr(cmd_ptr),
             
@@ -1114,7 +1170,20 @@ module MemManager (
           dst_op <= `REG_OP_NULL;
           cond_op <= `REG_OP_NULL;
         end
-        
+
+/**        
+        `BREAK_THREAD_AND_BEGIN_WAIT: begin	
+		    mem1sz_op <= `REG_OP_NULL;
+//          cmd_op <= `REG_OP_NULL;
+          src1_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_NULL;
+          dst_op <= `REG_OP_NULL;
+          cond_op <= `REG_OP_NULL;
+
+          cmd_op <= `REG_OP_PREEXECUTE;
+		  end
+/**/
+		
         `WRITE_REG_IP: begin
           cmd_op <= `REG_OP_WRITE;
 

@@ -11,37 +11,105 @@ init{
   r11 = h'9b;
 
   r15 =h'10;
+
+  r8 = 8;
 }
 
 
-//  [r4] = z + r10--; // uart out "b7"
+//  [r4] = z + r10--; // uart out "b8"
 
-  r8 = fork [ip++] (r2);
-  man;
+//  r5 = fork [ip++] (r2);
+//  in;
+
+//  [r4] = z + r10++; // uart out "ba"
+
+  r5 = fork [ip++] (r2);
+  out_;
 
 msg:
   [r4] = z + r10; // uart out "b9"
 
+
+
+
+loop:
+	r2 = z + [r4];
+	[r4] = z + r2;
+
+	r2 = r2 << [ip++];
+	8;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
+
+	r2 = r2 << [ip++];
+	8;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
+
+//	r2 -> r8;
+
+//        ip = z + [ip]; // goto "loop" label
+//        loop;
+
+
+
+
+
+
 stop_self:
-  r3 = stop r2 (r2);
+//  [r4] = z + r11; // uart out "9b"
+  r2 = z + [ip++];
+  0;
+
+//  r3 = stop r2 (r2);
 
   [r4] = z + r11; // uart out "9b"
 
-//  r0 = z +[ip++];
-//  3000;
 lpoo:
-//  r0-- = r0+z;
-  ip = z + [ip++];// ? r0;
-  stop_self;
-
-//  lpoo;
+//  ip = z + [ip++];// ? r0;
+//  stop_self;
 
   ip = z + [ip];
-  msg;
+  loop;
+//  msg;
 
 
+/*
+def in(){
+init{
+  r4 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
+  r3 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
 
-def man(){
+  r2 = h'fa; //1024;
+
+  r8 = 8;
+}
+
+//	[ip++] -> r8;
+//	h'fa;
+
+loop:
+	r2 = z + [r4];
+	[r4] = z + r2;
+
+	r2 = r2 << [ip++];
+	8;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
+
+	r2 = r2 << [ip++];
+	8;
+	r2 = r2 + [r4];
+	[r4] = z + r2;
+
+	r2 -> r8;
+
+        ip = z + [ip]; // goto "loop" label
+        loop;
+}
+*/
+
+def out_(){
 init{
   r4 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
   r3 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
@@ -60,18 +128,23 @@ init{
   r9 = h'80001;
   r12 = h'a5801;
   r13 = h'cafff;//caf00; //h'CB000;
+
+  r0 = 8;
 }
 
 //var{
 //	tst;
 //}
 
+//        r1 = r1 + z;
 
-loop:
+loop2:
 	r8 = z + r7;
 	r9 = r8 + r5;
 	r10 = r9 + r5;
 	r11 = r10 + r5;
+
+//	r2 <- r0;
 
 vga_fill:
 	[r11++] = z + r2;
@@ -81,29 +154,20 @@ vga_fill:
    
 	r14 = r13 - r11;
 
-/**
-	r0 = z+r14;
-vga_fill_addr_out:
-	[r4] = z + r0;
-        r0 = r0 >> [ip++]; // uart out (echo)
-        8;
-        ip = z + [ip++] ? r0;
-        vga_fill_addr_out;
-/**/
-
-       ip = z + [ip++] ? r14;
+       if( r14 ) ip = z + [ip++]; //? r14;
        vga_fill;
 
-addr_out:
-        [r4] = z + r11;
-        r11 = r11 >> [ip++]; // uart out (echo)
-        8;
-        ip = z + [ip++] ? r11;
-        addr_out;
+//addr_out:
+//        [r4] = z + r11;
+//        r11 = r11 >> [ip++]; // uart out (echo)
+//        8;
+//        if( r11 ) ip = z + [ip++]; //? r11;
+//        addr_out;
 
-//	r11 = z + r12;
-//	r10 = z + r9;
 
+//	r2 <- r0;
+
+/**
 	r2 = z + [r4];
 	[r4] = z + r2;
 
@@ -116,96 +180,14 @@ addr_out:
 	8;
 	r2 = r2 + [r4];
 	[r4] = z + r2;
-
+/**/
 
         ip = z + [ip]; // goto "loop" label
-        loop;
+        loop2;
 
 
         ip = z + [ip++]; // goto "begin" label
-        loop;
-
-
-
-
-/**
-	r7 = r2 >> r1; // calculate of chanel (1, 2 or 3) 
-	[r4] = z + r7; // uart out of chanel
-
-	r5 = r4 - r7; // calculate addr of chanel
-//	[r4] = r7 + z;
-
-	[r5] = r2 & [ip++]; // out of masked data
-	15;
-
-	[r4] = z + [r5];
-/**/
-
-
-/**
-        r1 = [ip++] + z;
-        5;
-        [r3] = r1 + z;
-        z = z + r1++;
-        ip = z + [ip];
-        loop;
-
-//	1024;
-//	[r3] = r3 + r3;
-//	r3 = [r3] + z;
-	[r3] = [r3] + [r3];
-
-
-//	r11 = [ip++] + z;
-//	trd1;
-	
-	r10 = r11 + [ip++];
-	17;
-	
-	[r10] = [ip++] + z;
-	16;
-	
-	r1 = fork[ip++](r11);
-	intr;
-	
-	r1 = z + [ip++];
-	intr;
-	r1 = r1 + [ip++];
-	17;
-	
-	r1 = z - [r1];
-	
-	r8 = [ip++] + Z ;
-	2;
-l1:
-	z = z + r8-- ;
-	ip = [ip++] + z ? r8 ;
-	l1 ;
-	
-	r1 = [r7] + [r8];
-	
-	r2 = r1 + r1;
-	r3 = r1 - r1;
-	
-	[r7++]  =  ip++    + [ip++] ;
-	l1;
-l2:
-	tst;
-	
-	def internal(){
-		r3 <- r2++ <- [r1++] ;
-	}
-
-	r3 <- r2 <- r1;
-	
-	def intr(){
-		r0 = stop z (z);
-	l1:
-		r1 = z + [ip];
-		ip = [ip++] + z;
-		l1;
-	}
-/**/
+        loop2;
 }
 
 

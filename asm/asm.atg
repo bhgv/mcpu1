@@ -335,7 +335,11 @@ PRODUCTIONS
 										   cond = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
 				(
-				   Dst<out dst> ("=" | "<-") 
+				   [ "if" "(" Cond<out cond> ")"  
+				   ] 
+				   Dst<out dst> 
+				   (
+				      "="
 						(
 						    Src<out src0> 
 						    Operation<out op> 
@@ -347,8 +351,20 @@ PRODUCTIONS
 						    Src<out src0> 
 						    "(" Src<out src1> ")"
 						)
-				   [ "?" Cond<out cond>  
-				   ] 
+                                    | "<-" Src<out src0>			(. 
+										   op = 0
+										   src1 = {'r': 0, 'rop': 3, 'isptr': 0}
+										.)
+				    | "->" Src<out src0>			(.
+										   op = 0
+										   src1 = dst
+										   dst = {'r': 0, 'rop': 3, 'isptr': 0}
+										.)
+                                    | "?" Src<out src1>				(. 
+										   op = 0
+										   src0 = {'r': 0, 'rop': 3, 'isptr': 0}
+										.)
+				   )
 										(.
 										   cmd |= (cond['r'] << 12) | (cond['rop'] << 26) | (cond['isptr'] << 19)
 										   cmd |= (dst['r'] << 8) | (dst['rop'] << 24) | (dst['isptr'] << 18)

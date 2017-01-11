@@ -39,6 +39,9 @@ module CpuBlock(
 	 halt_q,
     rw_halt_in,
 	 rw_halt_out,
+	 
+    ext_bus_q,
+    ext_bus_allow,
 
     rst_in,
 	 rst_out
@@ -85,6 +88,9 @@ parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
 	output /*wire*/ halt_q;
    input wire rw_halt_in;
 	output /*wire*/ rw_halt_out;
+	
+	input wire ext_bus_q;
+	output wire ext_bus_allow;
 	
 	//-----------------------------------------------------
 
@@ -487,7 +493,10 @@ DispatcherOfCpus disp_1(
             .cpu_msg_in(cpu_msg_out), //cpu_msg_in),
             .cpu_msg_out(cpu_msg_dispatcher_out),
             
-            .dispatcher_q(dispatcher_q)
+            .dispatcher_q(dispatcher_q),
+				
+				.ext_bus_q(ext_bus_q),
+				.ext_bus_allow(ext_bus_allow)
           );
           
 defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;

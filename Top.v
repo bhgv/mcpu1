@@ -80,6 +80,9 @@ module Top(
 	
 	stop_btn,
 	
+	ext_bus_q_btn,
+	ext_bus_allow_led,
+	
 	rst
 );
 
@@ -111,6 +114,9 @@ module Top(
   
 	input wire clk;
 	input wire rst;
+	
+	input wire ext_bus_q_btn;
+	output wire ext_bus_allow_led;
 
 	wire rst_int;
 	
@@ -498,6 +504,11 @@ wire halt_q;
 wire ext_rw_halt;
 
 
+wire ext_bus_q = ~ext_bus_q_btn; //1'b 0;
+wire ext_bus_allow;
+assign ext_bus_allow_led = ext_bus_allow;
+
+
 CpuBlock block_of_cpus(
     .clk(clk_int),
     .clk_oe(clk_oe),
@@ -518,6 +529,9 @@ CpuBlock block_of_cpus(
 	 .halt_q(halt_q),
     .rw_halt_in(DOC_ext_rw_halt_in),
 	 .rw_halt_out(ext_rw_halt),
+	 
+    .ext_bus_q(ext_bus_q),
+    .ext_bus_allow(ext_bus_allow),
 
     .rst_in(~rst),
 	 .rst_out(rst_int)

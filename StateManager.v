@@ -35,6 +35,10 @@ module StateManager(
 				is_s0_read,
 				is_s0_read_ptr,
 				is_d_read,
+				
+				no_data_exit_and_wait_begin,
+				
+				thread_escape,
             
             rst
             );
@@ -42,6 +46,10 @@ module StateManager(
   
   input wire clk;
   output reg [`STATE_SIZE0:0] state;
+  
+  input wire no_data_exit_and_wait_begin;
+  
+  input wire thread_escape;
   
 
   input wire [31:0] command;  
@@ -189,8 +197,8 @@ module StateManager(
 
   
   
-  always @( posedge next_state or posedge rst ) begin //negedge clk) begin //
-    if( rst == 1 ) begin
+  always @( posedge next_state or posedge rst /*or posedge thread_escape*/ /*or posedge no_data_exit_and_wait_begin*/) begin //negedge clk) begin //
+    if( rst == 1'b 1 ) begin
       state <= `WAIT_FOR_START;
       
       condIsReaden <= 0;
@@ -237,6 +245,97 @@ module StateManager(
       end
       */
 //        anti_continuous = 0;
+
+/**/
+
+/**/
+    if(thread_escape == 1'b 1) begin
+	   case(state)
+		
+		  //`WAIT_FOR_START,
+		  `FINISH_BEGIN,
+		  `FINISH_END
+		  : begin
+	       state <= state + 1;
+		    next_state_dn_r <= ~next_state_dn_r;
+		  end
+		
+		  default: begin
+	       state <= `FINISH_BEGIN;
+		    next_state_dn_r <= ~next_state_dn_r;
+		  end
+		  
+		endcase
+	 end else
+/**/
+    if(no_data_exit_and_wait_begin == 1'b 1) begin
+	   case(state)
+		  `READ_MEM_SIZE_1,
+		  `START_READ_CMD,
+		  `START_READ_CMD_P,
+		  `READ_COND,
+		  `READ_COND_P,
+		  `READ_SRC1,
+		  `READ_SRC1_P,
+		  `READ_SRC0,
+		  `READ_SRC0_P,
+		  `READ_DST,
+		  `READ_DST_P,
+		  `WRITE_DST_P 
+		  : begin
+//		    if(thread_escape == 1)
+//			   state <= `FINISH_BEGIN;
+//			 else
+            state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+        end
+		  
+		  `BREAK_THREAD_AND_BEGIN_WAIT: begin
+//		    if(thread_escape == 1)
+//			   state <= `FINISH_BEGIN;
+//			 else
+		      state <= `AFTER_MEM_SIZE_READ;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+		  end
+		  
+		  `AFTER_MEM_SIZE_READ: begin
+//		    if(thread_escape == 1)
+//			   state <= `FINISH_BEGIN;
+//			 else
+			   state <= `WRITE_REG_IP;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+		  end
+		  
+		  `WRITE_REG_IP: begin
+			 state <= `FINISH_BEGIN;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+		  end
+		  
+/**/
+		  `FINISH_BEGIN: begin
+          state <= state + 1;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+        end
+/**/
+
+        default: begin
+//		    if(thread_escape == 1)
+//			   state <= `FINISH_BEGIN;
+//			 else
+            state <= state + 1;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+        end
+		
+		endcase
+	 end else 
+/**/
+//	 begin
       
       case(state)
 /**
@@ -258,6 +357,34 @@ module StateManager(
         end
 /**/
 
+/**
+        `START_READ_CMD: begin
+          if(no_data_exit_and_wait_begin == 1'b 1) begin
+            state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+          end else begin
+            state <= `START_READ_CMD_P;
+          end
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+        end
+
+        `START_READ_CMD_P: begin
+          if(no_data_exit_and_wait_begin == 1'b 1) begin
+            state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+          end else begin
+            state <= `PREEXECUTE;
+          end
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+        end
+
+		  `BREAK_THREAD_AND_BEGIN_WAIT: begin
+			 //state <= `FINISH_BEGIN;
+			 
+			 next_state_dn_r <= ~next_state_dn_r;
+		  end
+/**/
+		  
         `START_BEGIN: begin
 		    state <= `READ_MEM_SIZE_1;
 			 
@@ -342,6 +469,10 @@ module StateManager(
         
         `READ_COND, `FILL_COND: begin
           condIsReaden <= 1;
+			 
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
           
           if(isRegCondPtr == 1) begin
             state <= `READ_COND_P;
@@ -392,6 +523,10 @@ module StateManager(
         end
         
         `READ_COND_P: begin
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
+          
           if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
             state <= `WRITE_REG_IP;
           end else
@@ -428,6 +563,10 @@ module StateManager(
         end
         
         `READ_SRC1, `FILL_SRC1: begin
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
+          
           if(&regS0Flags == 0) 
             state <= (
 				          regNumS0 == `REG_IP 
@@ -455,6 +594,10 @@ module StateManager(
         end
 
         `READ_SRC1_P: begin
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
+          
           if(&regS0Flags == 0) 
             state <= (
 				          regNumS0 == `REG_IP 
@@ -476,6 +619,10 @@ module StateManager(
         end
 
         `READ_SRC0, `FILL_SRC0: begin
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
+          
           if(
 //            &regS0Flags == 0 &&
             isRegS0Ptr == 1
@@ -497,6 +644,10 @@ module StateManager(
         end
 
         `READ_SRC0_P: begin
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
+          
           if(isRegDPtr == 1) 
             state <= (
 				          regNumD == `REG_IP 
@@ -511,6 +662,10 @@ module StateManager(
         end
         
         `FILL_DST_P, `READ_DST: begin
+//			 if(no_data_exit_and_wait_begin == 1'b 1) begin
+//			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
+//			 end else
+          
 //          if(regNumD == `REG_IP)
 //            state = `READ_DST_P;
 //          else
@@ -654,6 +809,7 @@ module StateManager(
         end
 
       endcase
+//    end // if(no_data_exit_and_wait_begin ...
       
     end 
 //    else if(state == 0) begin

@@ -23,6 +23,8 @@
 
 `define CPU_R_CHAN_DONE  8'hcf
 
+`define CPU_R_BREAK_THREAD  8'hbf
+
 
 
 `define THREAD_CMD_NULL  0

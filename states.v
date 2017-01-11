@@ -1,8 +1,10 @@
 
-
+// VVV -- dispatcherOfCpus states
 `define CTL_RESET_BEGIN 0
 `define CTL_RESET_WAIT  1
 `define CTL_CPU_LOOP    2
+`define CTL_CPU_EXT_BUS 14
+
 
 `define CTL_CPU_REMOVE_THREAD_ph00	9
 `define CTL_CPU_REMOVE_THREAD_ph0	7
@@ -14,6 +16,7 @@
 `define CTL_CPU_START_THREAD_ph1		8
 
 `define CTL_CPU_REMOVE_THREAD_ph10		11
+`define CTL_CPU_REMOVE_THREAD_ph11		14
 `define CTL_CPU_REMOVE_THREAD_ph20		12
 `define CTL_CPU_REMOVE_THREAD_ph12		13
 
@@ -28,9 +31,11 @@
 
 `define CTL_CPU_CMD     3
 `define CTL_MEM_WORK    4
+// AAA -- dispatcherOfCpus states
 
 
 
+// VVV -- CPU module states
 `define WAIT_FOR_START   0
 
 `define START_BEGIN      1
@@ -67,8 +72,8 @@
 `define ALU_BEGIN		12
 `define ALU_RESULTS	20
 
-`define CHAN_WR_END	28
-`define CHAN_RD		29
+//`define CHAN_WR_END	28
+//`define CHAN_RD		29
 
 //`define WRITE_DATA 7
 `define WRITE_PREP 13
@@ -85,6 +90,8 @@
 `define FINISH_BEGIN 18
 `define FINISH_END   19
 
+`define BREAK_THREAD_AND_BEGIN_WAIT	31
+// AAA -- CPU module states
 
 
 

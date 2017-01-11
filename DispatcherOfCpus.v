@@ -45,6 +45,9 @@ module DispatcherOfCpus(
 				ext_rw_halt_out,
 				
 //            ext_rw_busy,
+
+            ext_bus_q,
+            ext_bus_allow,
             
             read_q,
             write_q,
@@ -148,6 +151,8 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   input wire dispatcher_q;
   
   
+  input wire ext_bus_q;
+  output reg ext_bus_allow;
   
   
   reg [31:0] mem_addr_tmp;
@@ -216,7 +221,8 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                                   ? addr_chan_to_op_out
                                   : bus_busy_r == 1
 											 ? data_r
-											 : 0
+											 : data_in //0
+											 //: (data_r | data_in)
                                   ;
 /**/
 
@@ -267,6 +273,7 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   reg [`DATA_SIZE0:0] cpu_num_na;
   
   reg [`DATA_SIZE0:0] cpu_num;
+  wire [`DATA_SIZE0:0] cpu_num_plus_1 = cpu_num + 1;
 
 //  reg [7:0] state_ctl;
   
@@ -372,6 +379,8 @@ always @(/*pos*/negedge clk) begin
 	 rw_halt_r <= 0;
 	 
 	 next_thread_r <= 0;
+	 
+	 ext_bus_allow <= 0;
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
@@ -427,6 +436,8 @@ always @(/*pos*/negedge clk) begin
 
     case(state_ctl)
       `CTL_RESET_WAIT: begin
+		  ext_bus_allow <= 1'b 0;
+		  
 		  bus_busy_r <= 1'b 0;
 
 		    // VV test!
@@ -475,28 +486,32 @@ always @(/*pos*/negedge clk) begin
 			 next_thread_r <= 0;
 			 
         if(bus_busy_r == 0) begin
-          if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
-            ext_cpu_index_r <= `CPU_NONACTIVE;
-            new_cpu_restarted <= 1;
-          end else begin
-            if(cpu_num >= cpu_num_a-1) begin
-              cpu_num <= 0;
-              ext_cpu_index_r <= 0 | `CPU_ACTIVE;
+          if(ext_bus_q == 1'b 1) begin
+            state_ctl <= `CTL_CPU_EXT_BUS;
+				
+			 end else begin
+            if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
+              ext_cpu_index_r <= `CPU_NONACTIVE;
+              new_cpu_restarted <= 1;
             end else begin
-              cpu_num <= cpu_num + 1;
-              ext_cpu_index_r <= (cpu_num + 1) | `CPU_ACTIVE;
-            end
+              if(cpu_num >= cpu_num_a-1) begin
+                cpu_num <= 0;
+                ext_cpu_index_r <= 0 | `CPU_ACTIVE;
+              end else begin
+                cpu_num <= cpu_num + 1;
+                ext_cpu_index_r <= (cpu_num + 1) | `CPU_ACTIVE;
+//                cpu_num <= cpu_num_plus_1; //cpu_num + 1;
+//                ext_cpu_index_r <= cpu_num_plus_1 | `CPU_ACTIVE; //(cpu_num + 1) | `CPU_ACTIVE;
+              end
 //            ext_cpu_index_r <= cpu_num | `CPU_ACTIVE;
-            new_cpu_restarted <= 0;
-          end
-        
-//          if(ext_cpu_index === 0) begin
+              new_cpu_restarted <= 0;
+            end
             addr_out_r <= next_proc; 
-//          end
                   
-          cpu_q_r <= 1;
+            cpu_q_r <= 1;
                   
-          state_ctl <= `CTL_CPU_CMD;
+            state_ctl <= `CTL_CPU_CMD;
+          end
         end else begin
 		    bus_busy_r <= 1'b 0;
 		  end
@@ -592,7 +607,7 @@ always @(/*pos*/negedge clk) begin
 				    next_thread_r <= 1;
 //                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
                 
-                cpu_msg_r <= 0;
+                //cpu_msg_r <= 0;
               end
 				  
 				  default: next_thread_r <= 0;
@@ -752,6 +767,19 @@ always @(/*pos*/negedge clk) begin
               state_ctl <= `CTL_CPU_LOOP;
             end
           end
+      end
+
+      `CTL_CPU_EXT_BUS: begin
+        if(ext_bus_q == 1'b 1) begin
+          ext_bus_allow <= 1'b 1;
+			 
+        end else begin
+          ext_bus_allow <= 1'b 0;
+          
+          //if(dispatcher_q == 1) begin
+            state_ctl <= `CTL_CPU_LOOP;
+          //end
+        end
       end
     
     endcase

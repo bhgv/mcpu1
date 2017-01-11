@@ -1,9 +1,9 @@
 
 
-`define CPU_QUANTITY		4
+`define CPU_QUANTITY		3
 `define PROC_QUANTITY	7
 
-`define CLK_FREQ_PLL		100 * 1000000
+`define CLK_FREQ_PLL		50 * 1000000
 
 `define MAIN_CLK_FREQ	`CLK_FREQ_PLL / 2
 
@@ -14,8 +14,11 @@
 //`define IS_USE_FPU	
 
 
+`define NO_DATA_COUNTER_MAX	4
+`define THREAD_SLEEP_TIMEOUT	1024
 
-`define INTERNAL_MEM_ADDR_BITS		8 //7
+
+`define INTERNAL_MEM_ADDR_BITS		9 //7
 `define INTERNAL_MEM_VALUE		(2**`INTERNAL_MEM_ADDR_BITS) //256 //128 //200
 `define INTERNAL_MEM_FILE		"mem.txt"
 

@@ -60,11 +60,11 @@ module CpuCell(
   
   input wire clk_oe;
   
+  wire [`ADDR_SIZE0:0] addr_out_bridge, addr_out_bus;
+  output wire [`ADDR_SIZE0:0] addr_out = addr_out_bridge | addr_out_bus;
   input wire [`ADDR_SIZE0:0] addr_in;
-  output wire [`ADDR_SIZE0:0] addr_out;
   
   wire int_read_q;
-  wire int_write_q;
   
   output wire read_q;
   output wire write_q;
@@ -94,7 +94,8 @@ module CpuCell(
 									;
 */
 
-  wire [`DATA_SIZE0:0] data_out; /* = 
+  wire [`DATA_SIZE0:0] data_out_bridge, data_out_bus; 
+  wire [`DATA_SIZE0:0] data_out = data_out_bridge | data_out_bus; /* = 
 											 read_q === 1'b 1
 											 || write_q === 1'b 1
 											? data
@@ -163,6 +164,16 @@ module CpuCell(
   output wire dispatcher_q;
   
   input wire [`ADDR_SIZE0:0] addr_unmodificable_b;
+  
+  wire chan_op;
+  
+  
+  
+  wire no_data_new;
+  wire no_data_tick;
+  wire no_data_exit_and_wait_begin;
+
+  wire thread_escape;
 
           
 /**/
@@ -188,9 +199,9 @@ BridgeToOutside outside_bridge (
             .bus_busy_out(bus_busy_out),
 				
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_bridge),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_bridge),
             .read_q(int_read_q),
             .write_q(int_write_q),
             .read_dn(read_dn),
@@ -204,9 +215,17 @@ BridgeToOutside outside_bridge (
             .dst_h(dst_h),
             .cond(cond),
             
+				.chan_op(chan_op),
+				
             .disp_online(disp_online),
             
             .next_state(nxt_state),
+            
+            .no_data_new(no_data_new),
+		      .no_data_tick(no_data_tick),
+		      .no_data_exit_and_wait_begin(no_data_exit_and_wait_begin),
+				
+				.thread_escape(thread_escape),
             
             .rst(rst),
             
@@ -259,16 +278,18 @@ BridgeToOutside outside_bridge (
             
             .bus_busy(bus_busy_in),
             .addr_in(addr_in),
-            .addr_out(addr_out),
+            .addr_out(addr_out_bus),
             .read_q(int_read_q),
             .write_q(int_write_q),
             .data_in(data_in),
-            .data_out(data_out),
+            .data_out(data_out_bus),
             .read_dn(read_dn),
             .write_dn(write_dn),
 				
 				.chan_msg_strb_i(chan_msg_strb_i),
             .chan_msg_strb_o(chan_msg_strb_o),
+				
+				.chan_op(chan_op),
 
 //            .read_e(read_e),
 //            .write_e(write_e),
@@ -286,6 +307,12 @@ BridgeToOutside outside_bridge (
             
             .next_state(nxt_state),
             
+            .no_data_new(no_data_new),
+		      .no_data_tick(no_data_tick),
+		      .no_data_exit_and_wait_begin(no_data_exit_and_wait_begin),
+				
+				.thread_escape(thread_escape),
+
             .rst(rst)
             );
           

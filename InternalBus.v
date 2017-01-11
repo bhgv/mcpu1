@@ -55,10 +55,18 @@ module InternalBus(
         
         cpu_msg_in,
         cpu_msg_out,
+		  
+		  chan_op,
         
         disp_online,
         
         next_state,
+		  
+		  no_data_new,
+		  no_data_tick,
+		  no_data_exit_and_wait_begin,
+		  
+		  thread_escape,
         
         rst
         );
@@ -228,7 +236,14 @@ module InternalBus(
 		;
   
   
+  output wire chan_op;
   
+  
+  output wire no_data_new;
+  output wire no_data_tick;
+  input wire no_data_exit_and_wait_begin;
+  
+  input wire thread_escape;
   
 
 /**
@@ -318,6 +333,12 @@ module InternalBus(
 				.is_s0_read(is_s0_read),
 				.is_s0_read_ptr(is_s0_read_ptr),
 				.is_d_read(is_d_read),
+				
+				.no_data_exit_and_wait_begin(no_data_exit_and_wait_begin),
+//				.no_data_new(no_data_new),
+//				.no_data_tick(no_data_tick),
+
+				.thread_escape(thread_escape),
 
             .rst(rst)
             );
@@ -403,6 +424,10 @@ module InternalBus(
 				.is_s0_read(is_s0_read),
 				.is_s0_read_ptr(is_s0_read_ptr),
 				.is_d_read(is_d_read),
+				
+				.no_data_new(no_data_new),
+				.no_data_tick(no_data_tick),
+				.no_data_exit_and_wait_begin(no_data_exit_and_wait_begin),
             
             .rst(rst)
             );
@@ -517,6 +542,8 @@ module InternalBus(
 		  
 		  .chan_msg_strb_i(chan_msg_strb_i),
         .chan_msg_strb_o(chan_msg_strb_o),
+		  
+		  .chan_op(chan_op),
         
         .next_state(next_state_ch),
         
