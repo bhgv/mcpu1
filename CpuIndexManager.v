@@ -45,7 +45,7 @@ module CpuIndexManager (
 
 
 
-  always @(posedge clk) begin
+  always @(posedge clk /*or negedge cpu_index_set*/) begin
 	 if(clk_oe == 0) begin
 	 
 	 

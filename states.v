@@ -87,10 +87,13 @@
 `define WRITE_DST_P  24
 
 
+`define AUX_PRE_FINISH_BEGIN 33
+
 `define FINISH_BEGIN 18
 `define FINISH_END   19
 
-`define BREAK_THREAD_AND_BEGIN_WAIT	31
+`define BREAK_THREAD_SAVE_IP_AND_WAIT	31
+`define BREAK_THREAD_EXIT_AND_WAIT	32
 // AAA -- CPU module states
 
 

@@ -620,7 +620,7 @@ parameter PROC_QUANTITY = 8;
 				    pproc_r <= {data_in, addr_in};
 					 is_pproc <= 1;
                 
-                data_r_int <= -1;
+                data_r_int <= 32'h deadbeef; //-1;
                 thrd_rslt_r <= 1;
               end else
               begin
@@ -639,7 +639,7 @@ parameter PROC_QUANTITY = 8;
 					 sproc_finish_i_r <= aproc_i;
 					 is_sproc <= 1;
 					 
-                data_r_int <= -1;
+                data_r_int <= 32'h beefdead; //-1;
                 thrd_rslt_r <= 1;
               end
               

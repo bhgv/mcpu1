@@ -63,7 +63,7 @@ stop_self:
 
 //  r3 = stop r2 (r2);
 
-  [r4] = z + r11; // uart out "9b"
+//  [r4] = z + r11; // uart out "9b"
 
 lpoo:
 //  ip = z + [ip++];// ? r0;

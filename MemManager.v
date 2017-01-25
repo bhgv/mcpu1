@@ -1103,8 +1103,8 @@ module MemManager (
 //    cond_op = `REG_OP_NULL;
 
       case(state)
-		  `START_BEGIN: begin
-		    mem1sz_op <= `REG_OP_PREEXECUTE;
+        `START_BEGIN: begin
+          mem1sz_op <= `REG_OP_PREEXECUTE;
 
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
@@ -1113,18 +1113,18 @@ module MemManager (
           cond_op <= `REG_OP_NULL;
 		  end
 		  
-		  `READ_MEM_SIZE_1: begin
-		    mem1sz_op <= `REG_OP_READ;
+        `READ_MEM_SIZE_1: begin
+          mem1sz_op <= `REG_OP_READ;
 
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
           dst_op <= `REG_OP_NULL;
           cond_op <= `REG_OP_NULL;
-		  end
+        end
 		
         `AFTER_MEM_SIZE_READ: begin	
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
 //          cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1132,12 +1132,12 @@ module MemManager (
           cond_op <= `REG_OP_NULL;
 
           cmd_op <= `REG_OP_PREEXECUTE;
-		  end
+        end
 		
         `ALU_BEGIN: begin
           cmd_op <= `REG_OP_NULL;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1152,7 +1152,7 @@ module MemManager (
         `START_READ_CMD: begin
           cmd_op <= `REG_OP_READ;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1163,7 +1163,7 @@ module MemManager (
         `START_READ_CMD_P: begin
           cmd_op <= `REG_OP_READ_P;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1173,7 +1173,7 @@ module MemManager (
 
 /**        
         `BREAK_THREAD_AND_BEGIN_WAIT: begin	
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
 //          cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1187,7 +1187,7 @@ module MemManager (
         `WRITE_REG_IP: begin
           cmd_op <= `REG_OP_WRITE;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1196,12 +1196,12 @@ module MemManager (
         end
         
         `ALU_RESULTS: begin
-            src0_op <= `REG_OP_CATCH_DATA;
-            src1_op <= `REG_OP_CATCH_DATA;
-            dst_op <= `REG_OP_CATCH_DATA;
-            //???? it needs to do something. it catches 0 to cond reg ???//  cond_op = `REG_OP_CATCH_DATA;
-           
-		    mem1sz_op <= `REG_OP_NULL;
+          src0_op <= `REG_OP_CATCH_DATA;
+          src1_op <= `REG_OP_CATCH_DATA;
+          dst_op <= `REG_OP_CATCH_DATA;
+          //???? it needs to do something. it catches 0 to cond reg ???//  cond_op = `REG_OP_CATCH_DATA;
+
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1214,7 +1214,7 @@ module MemManager (
         `FILL_DST_P: begin
           dst_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1225,7 +1225,7 @@ module MemManager (
         `READ_DST: begin
           dst_op <= `REG_OP_READ;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1236,7 +1236,7 @@ module MemManager (
         `WRITE_DST_P: begin
           dst_op <= `REG_OP_WRITE_P;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1268,7 +1268,7 @@ module MemManager (
             cmd_op <= `REG_OP_PREEXECUTE;
 
 
-		    mem1sz_op <= `REG_OP_NULL;
+            mem1sz_op <= `REG_OP_NULL;
 //          cmd_op = `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1283,7 +1283,7 @@ module MemManager (
         `FILL_COND: begin
           cond_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1294,7 +1294,7 @@ module MemManager (
         `READ_COND: begin
           cond_op <= `REG_OP_READ;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1305,7 +1305,7 @@ module MemManager (
         `READ_COND_P: begin
           cond_op <= `REG_OP_READ_P;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1316,7 +1316,7 @@ module MemManager (
         `FILL_SRC1: begin
           src1_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1327,7 +1327,7 @@ module MemManager (
         `READ_SRC1: begin
           src1_op <= `REG_OP_READ;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1338,7 +1338,7 @@ module MemManager (
         `READ_SRC1_P: begin
           src1_op <= `REG_OP_READ_P;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1349,7 +1349,7 @@ module MemManager (
         `FILL_SRC0: begin
           src0_op <= `REG_OP_CATCH_DATA;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1360,7 +1360,7 @@ module MemManager (
         `READ_SRC0: begin
           src0_op <= `REG_OP_READ;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1371,7 +1371,7 @@ module MemManager (
         `READ_SRC0_P: begin
           src0_op <= `REG_OP_READ_P;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1411,8 +1411,8 @@ module MemManager (
             dst_op <= `REG_OP_WRITE_PREP;
             cond_op <= `REG_OP_WRITE_PREP;
 
-		    mem1sz_op <= `REG_OP_NULL;
-          cmd_op <= `REG_OP_NULL;
+            mem1sz_op <= `REG_OP_NULL;
+            cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
 //          dst_op = `REG_OP_NULL;
@@ -1424,7 +1424,7 @@ module MemManager (
         `WRITE_DST: begin
           dst_op <= `REG_OP_WRITE;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1435,7 +1435,7 @@ module MemManager (
         `WRITE_COND: begin
           cond_op <= `REG_OP_WRITE;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1446,7 +1446,7 @@ module MemManager (
         `WRITE_SRC1: begin
           src1_op <= `REG_OP_WRITE;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
 //          src1_op = `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
@@ -1457,7 +1457,7 @@ module MemManager (
         `WRITE_SRC0: begin
           src0_op <= `REG_OP_WRITE;
 
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
 //          src0_op = `REG_OP_NULL;
@@ -1478,13 +1478,13 @@ module MemManager (
 //        end
 
         default: begin
-		    mem1sz_op <= `REG_OP_NULL;
+          mem1sz_op <= `REG_OP_NULL;
           cmd_op <= `REG_OP_NULL;
           src1_op <= `REG_OP_NULL;
           src0_op <= `REG_OP_NULL;
           dst_op <= `REG_OP_NULL;
           cond_op <= `REG_OP_NULL;
-		  end
+        end
 
       endcase
       

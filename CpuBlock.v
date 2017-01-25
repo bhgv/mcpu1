@@ -282,6 +282,7 @@ CpuCell cpu_cell //[CPU_QUANTITY-1:0]
 (
             .clk(clk),
 				.clk_oe(clk_oe),
+				.clk_2f(clk_2f),
             
             .halt_q_in(cpu_cell_halt_q_in_wire),
             .halt_q_out(halt_q_a[i]),

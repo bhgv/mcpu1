@@ -146,8 +146,8 @@ module ThreadCtlr(
   
   
   
-        
-  always @(negedge clk) begin
+
+  always @(/*neg*/ posedge clk) begin
    
 	 if(clk_oe == 0) begin
 	 
@@ -288,35 +288,6 @@ module ThreadCtlr(
                 cpu_msg_r <= 0; //8'h00;
               end
             end
-            
-            
-            /**
-            `CMD_EXT_CMD: begin
-            
-              //case(src0)
-                if(src0 === `EXT_CMD_NEW_THREAD) begin
-                  cpu_msg_r = `CPU_R_NEW_THRD;
-                end
-                
-					 else
-                if(src0 === `EXT_CMD_DESTROY_THREAD) begin
-                  cpu_msg_r = `CPU_R_DEL_THRD;
-                end
-              
-              //endcase
-
-            end
-            **/
-            
-            
-//            `: begin
-//            end
-            
-//            `: begin
-//            end
-            
-//            `: begin
-//            end
           
           endcase
           

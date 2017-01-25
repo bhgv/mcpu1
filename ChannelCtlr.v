@@ -155,7 +155,7 @@ module ChannelCtlr(
   output reg chan_op;
   
         
-  always @(negedge clk) begin
+  always @(/*neg*/ posedge clk) begin
    
 	 if(clk_oe == 0) begin
 	 
@@ -164,8 +164,9 @@ module ChannelCtlr(
 		chan_msg_strb_o <= 1'b 0;
 
       cpu_msg_r <= 0;
+      //cpu_msg_pulse <= 0;
 		
-		//chan_op <= 0;
+//		chan_op <= 0;
 
 	 end else begin
 
@@ -227,9 +228,9 @@ module ChannelCtlr(
 
             `CMD_CHN: begin
               if(disp_online == 1) begin
-                if(
-                  signal_sent == 0
-                ) begin
+//                if(
+//                  signal_sent == 0
+//                ) begin
 					 
 
 				  /**
@@ -266,7 +267,7 @@ module ChannelCtlr(
 /**/
 					   case({regDen, regS0en, regS1en}) //({&regDFlags, &regS0Flags, &regS1Flags})
 						  3'b 111: begin // resp <- chN <- query
-                      case(state_int)
+                      case(signal_sent) //state_int)
 							   0: begin
                             data_r <= src1;
                             addr_r <= src0;
@@ -275,28 +276,34 @@ module ChannelCtlr(
                             cpu_msg_pulse <= 1;
                             signal_sent <= 1;
 
-                            state_int <= 1;
-									 
+                            //state_int <= 1;
+
+//                               next_state_r <= 1;
+
 									 chan_op <= 1;
                         end
-								
+
                         1: begin
                             if( 
                                 cpu_msg_in == `CPU_R_CHAN_SET &&
                                 addr_in == src0
                             ) begin
                                dst_r <= data_in;
-                               state_int <= 0;
+                               //state_int <= 0;
 
-								       next_state_r <= 1;
+                               next_state_r <= 1;
                             end
+
+//                          state_int <= 0;
+
+//                          next_state_r <= 1;
 									 
-									 chan_op <= 1;
+                          chan_op <= 1;
                         end
                         
                       endcase
 						  end
-						
+
 						  3'b 110: begin // resp <- chN
 						    //data_r <= 0;
                       if( 
@@ -312,7 +319,7 @@ module ChannelCtlr(
 							 //cpu_msg_r <= `CPU_R_CHAN_GET;
 						  end
 						
-						  3'b 011: begin // chN <- query
+						  3'b 011: begin // chN <- data
                       data_r <= src1;
 							 addr_r <= src0;
 							 cpu_msg_r <= `CPU_R_CHAN_SET;
@@ -366,7 +373,7 @@ module ChannelCtlr(
 						
 						endcase
                   
-/**/
+/**
                 end
                 else begin
 //                  if(signal_sent == 0) begin
@@ -431,10 +438,10 @@ module ChannelCtlr(
 						  
                       signal_sent <= 0;
                       next_state_r <= 1;
-/**/
                     end
 //                  end
                 end
+/**/
               end
               else begin
                 dst_h <= 0;

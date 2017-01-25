@@ -682,6 +682,9 @@ module RegisterManager (
 
         
         `REG_OP_WRITE, `REG_OP_WRITE_P: begin
+//		    if(is_read_r == 0 /*&& reg_op == `REG_OP_WRITE*/) begin
+//			   next_state_r <= 1;
+//			 end else
           if(is_bus_busy == 1) begin
 			   halt_q_r <= 0;
 				

@@ -610,6 +610,13 @@ always @(/*pos*/negedge clk) begin
                 //cpu_msg_r <= 0;
               end
 				  
+				  `CPU_R_BREAK_THREAD: begin
+				    next_thread_r <= 0;
+//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+                
+                //cpu_msg_r <= 0;
+              end
+				  
 				  default: next_thread_r <= 0;
             
             endcase
@@ -699,9 +706,9 @@ always @(/*pos*/negedge clk) begin
 		  begin
           ext_rw_halt_r <= 0;
 			 rw_halt_r <= 0;     //!!
-        end
+//        end // test
 /**/
-        
+          /** // test
           if(mem_rd == 1 || mem_wr == 1) begin
             if(bus_busy_r == 1) begin
               bus_busy_r <= 1'b 0; //z;
@@ -712,7 +719,8 @@ always @(/*pos*/negedge clk) begin
   //              state_ctl = `CTL_CPU_LOOP;
   //            end
             end
-          end 
+          end
+          /**/  // test
   //        else begin
   //            if(dispatcher_q == 1) begin
   //              state_ctl = `CTL_CPU_LOOP;
@@ -720,6 +728,17 @@ always @(/*pos*/negedge clk) begin
   //        end
 
           if(mem_rd == 1) begin            
+
+            if(bus_busy_r == 1) begin
+              bus_busy_r <= 1'b 0; //z;
+              mem_rd <= 0;
+              //mem_wr <= 0;
+//              halt_q = 0;
+  //            if(dispatcher_q == 1) begin
+  //              state_ctl = `CTL_CPU_LOOP;
+  //            end
+            end else
+
             if(ext_read_dn == 1) begin
               addr_out_r <= ext_mem_addr_in; //mem_addr_tmp;
               data_r <= ext_mem_data_in; //mem[mem_addr_tmp];
@@ -741,6 +760,17 @@ always @(/*pos*/negedge clk) begin
           end 
           else
           if(mem_wr == 1) begin
+
+            if(bus_busy_r == 1) begin
+              bus_busy_r <= 1'b 0; //z;
+              //mem_rd <= 0;
+              mem_wr <= 0;
+//              halt_q = 0;
+  //            if(dispatcher_q == 1) begin
+  //              state_ctl = `CTL_CPU_LOOP;
+  //            end
+            end else
+
             if(ext_write_dn == 1) begin
               addr_out_r <= ext_mem_addr_in; //mem_addr_tmp;
               data_r <= ext_mem_data_in; //mem_data_tmp;
@@ -767,6 +797,9 @@ always @(/*pos*/negedge clk) begin
               state_ctl <= `CTL_CPU_LOOP;
             end
           end
+
+        end // test
+
       end
 
       `CTL_CPU_EXT_BUS: begin

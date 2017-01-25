@@ -314,12 +314,6 @@ module Alu(
 //              next_state_r = 1;       
             end
             
-//            `: begin
-//            end
-            
-//            `: begin
-//            end
-          
           endcase
           
         end

@@ -12,6 +12,7 @@
 module CpuCell(
             clk,
 				clk_oe,
+				clk_2f,
             
             addr_in,
             addr_out,
@@ -59,6 +60,8 @@ module CpuCell(
   input wire clk;
   
   input wire clk_oe;
+  
+  input wire clk_2f;
   
   wire [`ADDR_SIZE0:0] addr_out_bridge, addr_out_bus;
   output wire [`ADDR_SIZE0:0] addr_out = addr_out_bridge | addr_out_bus;
@@ -180,6 +183,7 @@ module CpuCell(
 BridgeToOutside outside_bridge (
             .clk(clk),
 				.clk_oe(clk_oe),
+				.clk_2f(clk_2f),
 
             .state(state),
             
