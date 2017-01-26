@@ -1067,11 +1067,11 @@ module BridgeToOutside (
             end
             
             `FINISH_BEGIN: begin
-                cpu_msg_r <= 0;
+                cpu_msg_r <= 0; //cpu_msg_r ^ `CPU_R_END; //0;
                 //thread_escape <= 1'b 0;
                 //no_data_exit_and_wait_begin <= 1'b 0;
 
-                //ext_dispatcher_q_r <= 1'b 1;
+                ext_dispatcher_q_r <= 1'b 1; //?????
 
                 ext_next_cpu_e_r <= ext_next_cpu_e_stim;
             end

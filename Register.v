@@ -715,9 +715,9 @@ module RegisterManager (
 				  
 //				  halt_q_r <= 0;
 				  
-				  if(registerw_waiting == 1) begin
-				    no_data_tick <= 1;
-				  end
+				  //if(registerw_waiting == 1) begin
+				  //  no_data_tick <= 1;
+				  //end
 				  
               write_q_r <= 1'b 0; //z;
 				end else                  //!! AA
