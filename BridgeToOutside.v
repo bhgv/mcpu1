@@ -120,7 +120,7 @@ module BridgeToOutside (
   wire [`ADDR_SIZE0:0] addr_in; // = addr_r;
   wire [`ADDR_SIZE0:0] addr_out =
                                 cpu_msg_r == `CPU_R_BREAK_THREAD
-										  ? base_addr_r //addr_r
+										  ? base_addr_r - `THREAD_HEADER_SPACE //addr_r
 										  : 0
 										  ;
   
@@ -137,7 +137,7 @@ module BridgeToOutside (
   wire [`DATA_SIZE0:0] data_in; // = data_r;
   wire [`DATA_SIZE0:0] data_out = 
                                 cpu_msg_r == `CPU_R_BREAK_THREAD
-										  ? base_addr_data_r //data_r
+										  ? base_addr_data_r - `THREAD_HEADER_SPACE//data_r
 										  : 0
 										  ;
   
@@ -312,8 +312,8 @@ module BridgeToOutside (
 								
 								ext_cpu_msg_in == `CPU_R_BREAK_THREAD &&
 
-								addr_in == base_addr_r &&
-								data_in == base_addr_data_r &&
+								addr_in == base_addr_r - `THREAD_HEADER_SPACE &&
+								data_in == base_addr_data_r - `THREAD_HEADER_SPACE &&
 								
 //                        ext_cpu_index[30:0] > cpu_index/*_r*/[30:0]
 								cpu_ind_rel == 2'b 10 //&&
@@ -511,7 +511,7 @@ module BridgeToOutside (
 		 else if(no_data_tick == 1'b 1) begin
 		   /**/
 		   if(no_data_cntr >= `NO_DATA_COUNTER_MAX) begin
-			  no_data_cntr <= 0;
+			  //no_data_cntr <= 0;
 			  
 			  no_data_exit_and_wait_begin <= 1'b 1;
 			  
@@ -809,7 +809,7 @@ module BridgeToOutside (
 //           end
                 
               base_addr_r <= addr_in + `THREAD_HEADER_SPACE;
-                
+              
 /**/
               if(data_in == 0 ) begin
                  base_addr_data_r <= addr_in + `THREAD_HEADER_SPACE;

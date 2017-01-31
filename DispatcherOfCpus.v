@@ -611,10 +611,12 @@ always @(/*pos*/negedge clk) begin
               end
 				  
 				  `CPU_R_BREAK_THREAD: begin
-				    next_thread_r <= 0;
-//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
-                
-                //cpu_msg_r <= 0;
+                addr_thread_to_op_r <= addr_in;
+                addr_chan_to_op_r <= data_in;
+
+                thrd_cmd_r <= `THREAD_CMD_PAUSE;
+
+                next_thread_r <= 1;
               end
 				  
 				  default: next_thread_r <= 0;
@@ -650,14 +652,19 @@ always @(/*pos*/negedge clk) begin
 						
                   thrd_cmd_r <= `THREAD_CMD_STOP;
                 end
-              
+                
                 `CPU_R_FORK_THRD: begin
                   addr_thread_to_op_r <= addr_in;
                   addr_chan_to_op_r <= data_in;
 						
                   thrd_cmd_r <= `THREAD_CMD_RUN;
                 end
-                        
+                
+				    //`CPU_R_BREAK_THREAD: begin
+                  //next_thread_r <= 0;
+                //  thrd_cmd_r <= `THREAD_CMD_NULL;
+                //end
+                
               endcase
             end else
             if(thrd_cmd_r == `THREAD_CMD_RUN) begin
@@ -669,6 +676,11 @@ always @(/*pos*/negedge clk) begin
             if(thrd_cmd_r == `THREAD_CMD_STOP) begin
               cpu_msg_r <= `CPU_R_STOP_DONE;
               
+              thrd_cmd_r <= `THREAD_CMD_NULL;
+            end
+            else
+            if(thrd_cmd_r == `THREAD_CMD_PAUSE) begin
+              //cpu_msg_r <= `CPU_R_STOP_DONE;
               thrd_cmd_r <= `THREAD_CMD_NULL;
             end
         end
