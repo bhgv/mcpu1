@@ -351,16 +351,16 @@ PRODUCTIONS
 						    Src<out src0> 
 						    "(" Src<out src1> ")"
 						)
-                                    | "<-" Src<out src0>			(. 
+                                    | "<-c" Src<out src0>			(. 
 										   op = 0
 										   src1 = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
-				    | "->" Src<out src0>			(.
+				    | "c<-" Src<out src1>			(.
 										   op = 0
-										   src1 = dst
+										   src0 = dst
 										   dst = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
-                                    | "?" Src<out src1>				(. 
+                                    | "?c" Src<out src1>			(. 
 										   op = 0
 										   src0 = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)

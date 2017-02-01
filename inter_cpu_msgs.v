@@ -25,6 +25,9 @@
 
 `define CPU_R_BREAK_THREAD  8'hbf
 
+`define CPU_R_THREAD_ADDRESS  8'hfa
+
+
 
 
 `define THREAD_CMD_NULL  0

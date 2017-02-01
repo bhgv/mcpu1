@@ -266,8 +266,8 @@ async_receiver rx(
 			 //&& is_rs232_busy == 0
 			 && state == `UART_WAIT_CMD
 		  ) begin
-		    rx_buf = rx_data;
-			 is_rx_buf = 1;
+		    rx_buf <= rx_data;
+			 is_rx_buf <= 1;
 			 
 //			 rw_halt_r = 0;
 		  end

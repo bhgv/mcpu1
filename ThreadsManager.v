@@ -39,10 +39,10 @@ module ThreadsManager(
                     
                     rst
                       );
-                      
+
 parameter PROC_QUANTITY = 8;
 
-                      
+
   input wire clk;
   
   input wire clk_oe;
@@ -330,7 +330,7 @@ parameter PROC_QUANTITY = 8;
 				  
 				  next_proc_ready <= 0;
 				  
-              aproc_tbl_addr = aproc_i;
+              aproc_tbl_addr <= aproc_i;
 				  
               if(aproc_e > 1) begin 
                 aproc_e <= aproc_e - 1;

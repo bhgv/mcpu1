@@ -112,8 +112,8 @@ module InternalBus(
 		
   output wire read_q;
   output wire write_q;
-  input tri read_dn;
-  input tri write_dn;
+  input wire read_dn;
+  input wire write_dn;
 //  output wire read_e;
 //  output wire write_e;
   
@@ -137,9 +137,9 @@ module InternalBus(
 											 || cpu_msg_pulse == 1
 											)
 											? (
-                                       addr_out_m[`ADDR_SIZE0:0]
-                                     | addr_out_t[`ADDR_SIZE0:0]
-                                     | addr_out_ch[`ADDR_SIZE0:0]
+                                       addr_out_m //[`ADDR_SIZE0:0]
+                                     | addr_out_t //[`ADDR_SIZE0:0]
+                                     | addr_out_ch //[`ADDR_SIZE0:0]
                                    )
 											: 0
                                  ;
@@ -153,10 +153,18 @@ module InternalBus(
   wire [`DATA_SIZE0:0] data_out_t; // = data_r;
   wire [`DATA_SIZE0:0] data_out_ch; // = data_r;
   wire [`DATA_SIZE0:0] data_out = 
-                                 data_out_m
-                                 | data_out_t
-											| data_out_ch
-//                                 | data_out_s
+                                 (
+                                    read_q == 1
+											 || write_q == 1
+											 || cpu_msg_pulse == 1
+											)
+											? (
+                                       data_out_m
+                                     | data_out_t
+                                     | data_out_ch
+//                                   | data_out_s
+                                   )
+											: 0
                                  ;
   
 
@@ -339,6 +347,8 @@ module InternalBus(
 //				.no_data_tick(no_data_tick),
 
 				.thread_escape(thread_escape),
+				
+            .chan_op(chan_op),
 
             .rst(rst)
             );

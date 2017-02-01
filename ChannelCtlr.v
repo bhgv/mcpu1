@@ -59,17 +59,17 @@ module ChannelCtlr(
   wire [3:0] cmd_code = command[31:28];
   
 
-  wire [1:0] regS1en;
-  assign regS1en = !(&command[21:20]);
+  wire regS1en; // = ~(&command[21:20]);
+  assign regS1en = !(command[21] & command[20]);
   
-  wire [1:0] regS0en;
-  assign regS0en = !(&command[23:22]);
+  wire regS0en; // = ~(&command[23:22]);
+  assign regS0en = !(command[23] & command[22]);
   
-  wire [1:0] regDen;
-  assign regDen = !(&command[25:24]);
+  wire regDen; // = ~(&command[25:24]);
+  assign regDen = !(command[25] & command[24]);
   
-  wire [1:0] regCnden;
-  assign regCnden = !(&command[27:26]);
+  wire regCnden; // = ~(&command[27:26]);
+  assign regCnden = !(command[27] & command[26]);
   
   
   
@@ -104,7 +104,11 @@ module ChannelCtlr(
   output [`CPU_MSG_SIZE0:0] cpu_msg_out;
   
   reg [`CPU_MSG_SIZE0:0] cpu_msg_r;
-  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = cpu_msg_r;
+  wire [`CPU_MSG_SIZE0:0] cpu_msg_out = 
+                             cpu_msg_pulse == 1
+                             ? cpu_msg_r
+                             : 0
+                             ;
 
 
   input [`DATA_SIZE0:0] data_in;
@@ -163,8 +167,11 @@ module ChannelCtlr(
 		
 		chan_msg_strb_o <= 1'b 0;
 
-      cpu_msg_r <= 0;
+      //cpu_msg_r <= 0;
       //cpu_msg_pulse <= 0;
+		
+      //data_r <= 0;
+      //addr_r <= 0;
 		
 //		chan_op <= 0;
 
@@ -196,13 +203,14 @@ module ChannelCtlr(
     end else //begin
     if(chan_op == 1) begin
 	   chan_op <= 0;
+      cpu_msg_pulse <= 0;
     end else begin
 
 //      cpu_msg_r = 0;
     
       case(state)
 		  default: begin
-		    cpu_msg_r <= 0;
+		    //cpu_msg_r <= 0;
 			 
           dst_h <= 0;
 			 dst_r <= 0;
@@ -211,12 +219,32 @@ module ChannelCtlr(
 //		  `ALU_RESULTS: begin
 //		    cpu_msg_r <= 0;
 //		  end
-		  
+
+/**
+        `ALU_CHAN_THREAD_ADDR_OUT: begin
+          data_r <= base_addr_data - `THREAD_HEADER_SPACE;
+          addr_r <= base_addr - `THREAD_HEADER_SPACE;
+          cpu_msg_r <= `CPU_R_THREAD_ADDRESS;
+			 
+			 chan_op <= 1;
+
+          cpu_msg_pulse <= 1;
+			 
+			 next_state_r <= 1;
+        end
+/**/
+
+        `ALU_RESULTS: begin
+          if(/*disp_online == 1 &&*/ cmd_code == `CMD_CHN) begin
+            next_state_r <= 1;
+          end
+        end
+
         `ALU_BEGIN: begin
           
           case(cmd_code)
 		      default: begin
-		        cpu_msg_r <= 0;
+		        cpu_msg_r <= 8'h fe;
 				  
 				  cpu_msg_pulse <= 0;
 				  
@@ -231,43 +259,13 @@ module ChannelCtlr(
 //                if(
 //                  signal_sent == 0
 //                ) begin
-					 
-
-				  /**
-				  case({regDen, regS0en, regS1en})
-					3'b 111: begin // resp <- chN <- query
-						chan_msg_strb_o <= 1'b 1;
-					end
-					
-					3'b 110: begin // resp <- chN
-					end
-					
-					3'b 011: begin // chN <- query
-					end
-
-					3'b 101: begin // cnN <-CONV- number
-					end
-
-					3'b 100: begin // isready? chN
-					end
-					
-					3'b 010: begin
-					end
-					
-					3'b 001: begin
-					end
-					
-					3'b 000: begin
-						next_state_r <= 1;
-					end
-				
-				  endcase
-				  /**/
 
 /**/
 					   case({regDen, regS0en, regS1en}) //({&regDFlags, &regS0Flags, &regS1Flags})
+						
+						/**/
 						  3'b 111: begin // resp <- chN <- query
-                      case(signal_sent) //state_int)
+                      case(state_int)
 							   0: begin
                             data_r <= src1;
                             addr_r <= src0;
@@ -276,7 +274,7 @@ module ChannelCtlr(
                             cpu_msg_pulse <= 1;
                             signal_sent <= 1;
 
-                            //state_int <= 1;
+                            state_int <= 1;
 
 //                               next_state_r <= 1;
 
@@ -284,21 +282,26 @@ module ChannelCtlr(
                         end
 
                         1: begin
-                            if( 
-                                cpu_msg_in == `CPU_R_CHAN_SET &&
-                                addr_in == src0
-                            ) begin
-                               dst_r <= data_in;
-                               //state_int <= 0;
+                          cpu_msg_pulse <= 0;
+                         
+                          state_int <= 2;
+                        end
 
-                               next_state_r <= 1;
-                            end
+                        2: begin
+                          if( 
+                             cpu_msg_in == `CPU_R_CHAN_SET &&
+                             addr_in == src0
+                          ) begin
+                            dst_r <= data_in;
+                            state_int <= 0;
 
-//                          state_int <= 0;
+                            next_state_r <= 1;
+                          end
 
-//                          next_state_r <= 1;
-									 
+                            next_state_r <= 1;
                           chan_op <= 1;
+								  
+                          state_int <= 0;
                         end
                         
                       endcase
@@ -320,18 +323,51 @@ module ChannelCtlr(
 						  end
 						
 						  3'b 011: begin // chN <- data
-                      data_r <= src1;
-							 addr_r <= src0;
-							 cpu_msg_r <= `CPU_R_CHAN_SET;
+                      case(state_int)
+                        0: begin
+                          data_r <= src1;
+							     addr_r <= src0;
+							     cpu_msg_r <= `CPU_R_CHAN_SET;
 
-                      cpu_msg_pulse <= 1;
-                      signal_sent <= 1;
+                          cpu_msg_pulse <= 1;
+                          signal_sent <= 1;
 							 
-							 chan_msg_strb_o <= 1;
+							     chan_msg_strb_o <= 1;
 							 
-							 chan_op <= 1;
+							     chan_op <= 1;
 
-							 next_state_r <= 1;
+                          state_int <= 1;
+							     next_state_r <= 0;
+                        end
+								
+								1: begin
+                          data_r <= base_addr_data - `THREAD_HEADER_SPACE;
+                          addr_r <= base_addr - `THREAD_HEADER_SPACE;
+                          cpu_msg_r <= `CPU_R_THREAD_ADDRESS;
+			 
+			                 chan_op <= 1;
+
+                          cpu_msg_pulse <= 1;
+			 
+			                 next_state_r <= 0;
+			 
+                          state_int <= 2;
+                        end
+
+                        2: begin
+                          cpu_msg_pulse <= 0;
+                          signal_sent <= 0;
+
+                          chan_msg_strb_o <= 0;
+
+                          //chan_op <= 0;
+
+                          state_int <= 0;
+							     next_state_r <= 1;
+                        end
+
+                      endcase
+							     //next_state_r <= 1;
                     end
 						
 						  3'b 101: begin // cnN <-CONV- number
@@ -359,15 +395,29 @@ module ChannelCtlr(
 						  end
 						/**/
 						
+						/**
 						  3'b 000: begin // ???
 						    next_state_r <= 1;
 							 
-							 cpu_msg_r <= 0;
+							 cpu_msg_r <= 8'h fb; //0;
 							 cpu_msg_pulse <= 0;
 							 
 							 chan_msg_strb_o <= 0;
 							 
-							 chan_op <= 1;
+							 //chan_op <= 1;
+                      //cpu_msg_r <= `CPU_R_FORK_THRD;
+						  end
+						/**/
+						
+						  default: begin // ???
+						    next_state_r <= 1;
+							 
+							 cpu_msg_r <= {5'b 11110, regDen, regS0en, regS1en};
+							 cpu_msg_pulse <= 1;
+							 
+							 chan_msg_strb_o <= 1;
+							 
+							 //chan_op <= 1;
                       //cpu_msg_r <= `CPU_R_FORK_THRD;
 						  end
 						
@@ -447,7 +497,7 @@ module ChannelCtlr(
                 dst_h <= 0;
 				    dst_r <= 0;
 
-                cpu_msg_r <= 0; //8'h00;
+                //cpu_msg_r <= 0; //8'h00;
 					 cpu_msg_pulse <= 0;
 					 
 					 chan_msg_strb_o <= 0;

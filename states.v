@@ -71,6 +71,7 @@
 
 `define ALU_BEGIN		12
 `define ALU_RESULTS	20
+`define ALU_CHAN_THREAD_ADDR_OUT	55
 
 //`define CHAN_WR_END	28
 //`define CHAN_RD		29
@@ -94,6 +95,9 @@
 
 `define BREAK_THREAD_SAVE_IP_AND_WAIT	31
 `define BREAK_THREAD_EXIT_AND_WAIT	32
+
+
+`define CPU_STATE_FIRST_EMPTY 35
 // AAA -- CPU module states
 
 

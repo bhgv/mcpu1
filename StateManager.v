@@ -39,6 +39,8 @@ module StateManager(
 				no_data_exit_and_wait_begin,
 				
 				thread_escape,
+				
+				chan_op,
             
             rst
             );
@@ -57,6 +59,8 @@ module StateManager(
   //                                   ;
   
   input wire thread_escape;
+  
+  input wire chan_op;
   
 
   input wire [31:0] command;  
@@ -727,10 +731,20 @@ module StateManager(
 //        end
 
         `ALU_BEGIN: begin
+          //if(chan_op == 1) begin
+          //  state <= `ALU_CHAN_THREAD_ADDR_OUT;
+          //end else begin
             state <= `ALU_RESULTS;
+          //end
 			 
 			 next_state_dn_r <= ~next_state_dn_r;
         end
+        
+        //`ALU_CHAN_THREAD_ADDR_OUT: begin
+        //  state <= `ALU_BEGIN;
+        //
+        //  next_state_dn_r <= ~next_state_dn_r;
+        //end
         
         `ALU_RESULTS: begin
             state <= `WRITE_PREP;

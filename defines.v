@@ -1,6 +1,6 @@
 
 
-`define CPU_QUANTITY		3
+`define CPU_QUANTITY		2
 `define PROC_QUANTITY	7
 
 `define CLK_FREQ_PLL		50 * 1000000
@@ -14,7 +14,7 @@
 //`define IS_USE_FPU	
 
 
-`define NO_DATA_COUNTER_MAX	8
+`define NO_DATA_COUNTER_MAX	32
 `define THREAD_SLEEP_TIMEOUT	256
 
 
