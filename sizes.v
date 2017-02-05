@@ -14,6 +14,10 @@
 `define ADDR_SIZE  32
 
 
+`define CHN_OP_SIZE0 7
+`define CHN_OP_SIZE 8
+
+
 `define FLOAT_SIZE0	31
 `define FLOAT_SIZE	32
 

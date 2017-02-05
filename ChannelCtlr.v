@@ -234,17 +234,17 @@ module ChannelCtlr(
         end
 /**/
 
-        `ALU_RESULTS: begin
-          if(/*disp_online == 1 &&*/ cmd_code == `CMD_CHN) begin
-            next_state_r <= 1;
-          end
-        end
+        //`ALU_RESULTS: begin
+        //  if(/*disp_online == 1 &&*/ cmd_code == `CMD_CHN) begin
+        //    next_state_r <= 1;
+         // end
+        //end
 
         `ALU_BEGIN: begin
           
           case(cmd_code)
 		      default: begin
-		        cpu_msg_r <= 8'h fe;
+		        //cpu_msg_r <= 0;
 				  
 				  cpu_msg_pulse <= 0;
 				  
@@ -362,8 +362,22 @@ module ChannelCtlr(
 
                           //chan_op <= 0;
 
-                          state_int <= 0;
-							     next_state_r <= 1;
+                          case(cpu_msg_in)
+                            0: begin
+                            end
+
+                            `CPU_R_CHAN_NO_RESULTS: begin
+                              state_int <= 0;
+                            end
+
+                            //`CPU_R_CHAN_RES_RD: begin
+                            //`CPU_R_CHAN_RES_WR: begin
+                            default: begin
+                              state_int <= 0;
+                              next_state_r <= 1;
+                            end
+
+                          endcase
                         end
 
                       endcase

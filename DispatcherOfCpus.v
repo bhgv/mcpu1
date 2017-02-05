@@ -232,9 +232,11 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 //                                ? 
                                   addr_out_r 
 											 | addr_in
-//                                : `ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz
                                 ;
 
+  wire [`ADDR_SIZE0:0] chan_num_in;
+  wire [`DATA_SIZE0:0] chan_data_in;
+  wire [`CHN_OP_SIZE0:0] chan_thread_result_op_in;
   
   reg next_thread_r;
   wire next_thread =
@@ -264,6 +266,10 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                     .data_out(addr_chan_to_op_out),
                     .data_in(addr_chan_to_op),
                     
+						  .chan_data_out(chan_data_in),
+						  
+						  .result_op_out(chan_thread_result_op_in),
+
                     .rst(rst_out)
                     );
 
@@ -660,31 +666,71 @@ always @(/*pos*/negedge clk) begin
                   thrd_cmd_r <= `THREAD_CMD_RUN;
                 end
                 
+					 `CPU_R_CHAN_SET: begin
+                  addr_thread_to_op_r <= addr_in;
+                  addr_chan_to_op_r <= data_in;
+						
+                  thrd_cmd_r <= `THREAD_CMD_CHAN_SET;
+					 end
+					 
+					 `CPU_R_THREAD_ADDRESS: begin
+                  addr_thread_to_op_r <= addr_in;
+                  addr_chan_to_op_r <= data_in;
+						
+                  thrd_cmd_r <= `THREAD_CMD_THRD_ADDR;
+					 end
+					 
 				    //`CPU_R_BREAK_THREAD: begin
                   //next_thread_r <= 0;
                 //  thrd_cmd_r <= `THREAD_CMD_NULL;
                 //end
                 
               endcase
-            end else
-            if(thrd_cmd_r == `THREAD_CMD_RUN) begin
-              cpu_msg_r <= `CPU_R_FORK_DONE;
-              
-              thrd_cmd_r <= `THREAD_CMD_NULL;
-            end
-            else
-            if(thrd_cmd_r == `THREAD_CMD_STOP) begin
-              cpu_msg_r <= `CPU_R_STOP_DONE;
-              
-              thrd_cmd_r <= `THREAD_CMD_NULL;
-            end
-            else
-            if(thrd_cmd_r == `THREAD_CMD_PAUSE) begin
-              //cpu_msg_r <= `CPU_R_STOP_DONE;
-              thrd_cmd_r <= `THREAD_CMD_NULL;
-            end
+            end else begin
+				  case(thrd_cmd_r)
+					 `THREAD_CMD_RUN: begin
+					   cpu_msg_r <= `CPU_R_FORK_DONE;
+					  
+					   thrd_cmd_r <= `THREAD_CMD_NULL;
+					 end
+					
+					 `THREAD_CMD_STOP: begin
+					   cpu_msg_r <= `CPU_R_STOP_DONE;
+					  
+					   thrd_cmd_r <= `THREAD_CMD_NULL;
+					 end
+					
+					 `THREAD_CMD_CHAN_SET,
+					 //`THREAD_CMD_THRD_ADDR,
+					 `THREAD_CMD_PAUSE
+					 //default
+					 : begin
+					   //cpu_msg_r <= `CPU_R_STOP_DONE;
+					   thrd_cmd_r <= `THREAD_CMD_NULL;
+					 end
+					
+					 `THREAD_CMD_THRD_ADDR
+					 : begin
+					   //cpu_msg_r <= `CPU_R_STOP_DONE;
+					   thrd_cmd_r <= `THREAD_CMD_NULL;
+						
+						state_ctl <= `CTL_CHAN_RESULT_LOOP;
+					 end
+				  endcase
+				end
         end
       end
+		
+		`CTL_CHAN_RESULT_LOOP: begin
+		  if(chan_thread_result_op_in != 0 /*`CHAN_OP_NULL*/) begin
+		    cpu_msg_r <= chan_thread_result_op_in;
+			 data_r <= chan_data_in;
+			 
+			 bus_busy_r <= 1;
+			 
+		    state_ctl <= `CTL_CPU_LOOP;
+		  end
+		end
       
       `CTL_MEM_WORK: begin			
 		  

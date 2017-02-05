@@ -103,7 +103,9 @@ module StateManager(
   
   wire [1:0] regCondFlags;
   assign regCondFlags = command[27:26];
-
+  
+  wire [3:0] cmd = command[31:28];
+  wire isCmdChanOp = cmd == `CMD_CHN;
 
   input wire [`DATA_SIZE0:0] cond;
   

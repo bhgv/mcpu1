@@ -3,7 +3,7 @@
 `define CTL_RESET_BEGIN 0
 `define CTL_RESET_WAIT  1
 `define CTL_CPU_LOOP    2
-`define CTL_CPU_EXT_BUS 14
+`define CTL_CPU_EXT_BUS 16
 
 
 `define CTL_CPU_REMOVE_THREAD_ph00	9
@@ -20,6 +20,8 @@
 `define CTL_CPU_REMOVE_THREAD_ph20		12
 `define CTL_CPU_REMOVE_THREAD_ph12		13
 
+`define CTL_CPU_CHAN_OP_ph0		15
+
 /**
 `define CTL_CPU_LOOP_ACTIVATE_PROC_SAVE_TO_APROC	5
 `define CTL_CPU_LOOP_ACTIVATE_PROC_NEW_APROC_E		6
@@ -31,6 +33,8 @@
 
 `define CTL_CPU_CMD     3
 `define CTL_MEM_WORK    4
+
+`define CTL_CHAN_RESULT_LOOP    5
 // AAA -- dispatcherOfCpus states
 
 
@@ -102,6 +106,7 @@
 
 
 
+// VVV registers internal states
 `define MEM_BEGIN 0
 
 `define MEM_RD_SRC1_BEGIN 2
@@ -113,6 +118,15 @@
 `define MEM_WR_DST_WAIT 1
 `define MEM_WR_SRC_REGS 2
 `define MEM_WR_SRC_REGS_WAIT 3
+// AAA registers internal states
 
 
+// VVV channels in-threadManager ops/states
+`define CHN_OP_NULL 0
+`define CHN_OP_SEND 1
+`define CHN_OP_RECEIVE 2
+`define CHN_OP_DATA_RECEIVED 3
+`define CHN_OP_DATA_SENT 4
 
+`define CHN_OP_NO_RESULTS 8'h c0
+// AAA channels in-threadManager ops/states

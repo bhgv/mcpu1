@@ -256,8 +256,17 @@ module BridgeToOutside (
   
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
   wire [`CPU_MSG_SIZE0:0] int_cpu_msg_in;
-  wire [`CPU_MSG_SIZE0:0] int_cpu_msg_out = 
-/**/
+  wire [`CPU_MSG_SIZE0:0] int_cpu_msg_out =  //ext_cpu_msg_in;
+                              (
+                                ext_cpu_msg_in == `CPU_R_FORK_DONE ||
+                                ext_cpu_msg_in == `CPU_R_STOP_DONE ||
+                                ext_cpu_msg_in == `CPU_R_CHAN_NO_RESULTS
+                              )								
+                              ? ext_cpu_msg_in
+                              :  0 
+                          ;
+
+/**
 								     (
                               ext_cpu_msg_in == `CPU_R_FORK_DONE
                               ? `CPU_R_FORK_DONE
@@ -1037,7 +1046,7 @@ module BridgeToOutside (
               if(cmd_code == `CMD_CHN) begin
                 ext_next_cpu_e_r <= 1;
                 
-                ext_dispatcher_q_r <= 1'b 1;
+                //ext_dispatcher_q_r <= 1'b 1;
               end
             end
             
