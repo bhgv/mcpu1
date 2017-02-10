@@ -8,7 +8,7 @@
 `include "misc_codes.v"
 
 
-
+//`define USE_CLK_2F 1
 
 
 module ThreadsManager(
@@ -65,8 +65,12 @@ parameter PROC_QUANTITY = 8;
   input wire [7:0] cpu_msg_in;
   output wire [7:0] cpu_msg_out;
 
-  output reg [`DATA_SIZE0:0] next_proc;
   reg [`DATA_SIZE0:0] next_proc_int_r;
+`ifdef USE_CLK_2F
+  output /*reg*/ wire [`DATA_SIZE0:0] next_proc = next_proc_int_r;
+`else
+  output reg [`DATA_SIZE0:0] next_proc;
+`endif
   
   input wire [3:0] thrd_cmd;
   
@@ -94,8 +98,12 @@ parameter PROC_QUANTITY = 8;
                              )
                              || cpu_q == 1
 /**/
+`ifdef USE_CLK_2F
+                             ? data_r_int //data_r
+`else
                              ? data_r
-                             : 0 //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz
+`endif
+                             : 0
                              ;
   
   input wire [`ADDR_SIZE0:0] addr_in;
@@ -157,9 +165,9 @@ parameter PROC_QUANTITY = 8;
   //wire [`DATA_SIZE0:0] chn_cur_num_parsed = chn_data_r_int[`ADDR_SIZE0:0];
   
   // VV loop of active channel operations (also sinchronised with the main threads loop)
-  reg [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_tbl [0:PROC_QUANTITY];
-  wire [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_tbl_item = chn_proc_tbl[aproc_tbl_addr];
-  reg [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_r_int;
+  //reg [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_tbl [0:PROC_QUANTITY];
+  //wire [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_tbl_item = chn_proc_tbl[aproc_tbl_addr];
+  //reg [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_r_int;
 
   reg [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_data_tbl [0:PROC_QUANTITY];
   wire [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_data_tbl_item = chn_data_tbl[aproc_tbl_addr];
@@ -217,9 +225,13 @@ parameter PROC_QUANTITY = 8;
   
   reg next_proc_ready;
   
+  reg chn_seek_cntr;
+  
   //reg [7:0] dbg;
 
   
+/**/
+`ifndef USE_CLK_2F
   always @(negedge clk_2f) begin
     if(rst == 1) begin
 //      proc_r = 0; //32'h zzzzzzzz;
@@ -232,10 +244,15 @@ parameter PROC_QUANTITY = 8;
 		end
     end
   end
-  
-  
+`endif
+/**/
+
+
+`ifdef USE_CLK_2F
+  always @(negedge clk_2f) begin //negedge clk) begin
+`else
   always @(negedge clk) begin
-//  always @(negedge clk_2f) begin //negedge clk) begin
+`endif
 
 //    if(ctl_state_int != 0) begin
 /**/
@@ -253,7 +270,7 @@ parameter PROC_QUANTITY = 8;
               pause_proc_tbl[aproc_tbl_addr] <= 0;
 				  
               chn_data_tbl[aproc_tbl_addr] <= 0;
-              chn_proc_tbl[aproc_tbl_addr] <= 0;
+              //chn_proc_tbl[aproc_tbl_addr] <= 0;
               chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_NULL;
               //aproc_tbl_item <= pproc_r;
 				  
@@ -269,20 +286,20 @@ parameter PROC_QUANTITY = 8;
 				  ctl_state_int <= 0;
 				end
 				
-				`CTL_CPU_REMOVE_THREAD_ph00: begin
+				`CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0: begin
 //                  {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_i];
                   {data_r_int, next_proc_int_r} <= aproc_tbl_item;
 						
 						pause_proc_r_int <= pause_proc_tbl_item;
 						
-						chn_proc_r_int <= chn_proc_tbl_item;
+						//chn_proc_r_int <= chn_proc_tbl_item;
 						chn_data_r_int <= chn_data_tbl_item;
 						chn_op_r_int <= chn_op_tbl_item;
 
 						if(is_chn_proc == 1 && is_chn_data == 1 && is_chn_rslt == 0) begin
 				        ctl_state_int <= `CTL_CPU_CHAN_OP_ph0;
 						end else begin
-				        ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
+				        ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 						end
 				end
 				
@@ -292,10 +309,10 @@ parameter PROC_QUANTITY = 8;
 						
 						next_proc_ready <= 1;
 
-				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph11;
+				      ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER;
 				end
 				
-				`CTL_CPU_REMOVE_THREAD_ph11: begin
+				`CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER: begin
 						next_proc_ready <= 0;
 
 				      ctl_state_int <= 0;
@@ -312,40 +329,71 @@ parameter PROC_QUANTITY = 8;
 				
 				`CTL_CPU_CHAN_OP_ph0: begin
 				  if(
-				    chn_proc_r == {data_r_int, next_proc_int_r}
+				    chn_proc_r == {data_r_int, next_proc_int_r} 
+					 //&& chn_op_r_int == `CHN_OP_NULL
 				  ) begin
+				  
+				    if(chn_op_r_int != `CHN_OP_NULL) begin
+						chn_op_r <= `CHN_OP_NULL;
+					 
+					   is_chn_proc <= 0;
+					   is_chn_data <= 0;
+						
+					   ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
+					 end else
+				    if(chn_seek_cntr == 0 /*&& chn_op_r_int == `CHN_OP_NULL*/) begin
+					   aproc_tbl_addr <= aproc_i_next;
+						aproc_i <= aproc_i_next;
+						
+					   chn_seek_cntr <= 1;
+						
+					   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+					 end else begin
+				      //if(chn_op_r_int == `CHN_OP_NULL) begin
                     chn_data_tbl[aproc_tbl_addr] <= {chn_data_r, chn_number_r};
                     chn_op_tbl[aproc_tbl_addr] <= chn_op_r;
+
+						  chn_data_r_int <= {chn_data_r, chn_number_r};
+                    chn_op_r_int <= chn_op_r;
 						
-                //chn_op_tbl[aproc_tbl_addr] <= chn_op_r;
-					 is_chn_proc <= 0;
-					 is_chn_data <= 0;
+						  chn_op_r <= `CHN_OP_NULL;
+                  //end
 					 
+                  //chn_op_tbl[aproc_tbl_addr] <= chn_op_r;
+					   is_chn_proc <= 0;
+					   is_chn_data <= 0;
+						
+					   ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
+					 end
+					 
+					 /*
 					 case(chn_op_r)
 					   `CHN_OP_SEND,
 						`CHN_OP_RECEIVE
 						: begin
-					     aproc_i <= aproc_i_next;
-					     aproc_tbl_addr <= aproc_i_next;
+					     //aproc_i <= aproc_i_next;
+					     //aproc_tbl_addr <= aproc_i_next;
 
-                    ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
+                    ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 					   end
 						
 						`CHN_OP_DATA_RECEIVED,
 						`CHN_OP_DATA_SENT
 						: begin
-						  chn_data_r_int <= {chn_data_r, chn_number_r};
-                    chn_op_r_int <= chn_op_r;
+//						  chn_data_r_int <= {chn_data_r, chn_number_r};
+//                    chn_op_r_int <= chn_op_r;
  
-					     ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
+					     ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 						end
 						
                 endcase
+					 */
 						
 				  end else 
 				  if(chn_number_r == chn_num_parsed) begin
 				    case(chn_op_r_int)
 					   `CHN_OP_DATA_SENT,
+						`CHN_OP_SEND_FREEZED,
 				      `CHN_OP_SEND: begin // thread from loop sends
 					     if(
 						    chn_op_r == `CHN_OP_RECEIVE //&&
@@ -354,17 +402,29 @@ parameter PROC_QUANTITY = 8;
 						  ) begin
 						    chn_data_r <= chn_data_parsed;
 							 chn_op_r <= `CHN_OP_DATA_RECEIVED;
+/*
+							 is_chn_rslt <= 1;
 							 
+                      chn_rslt_proc_r <= chn_proc_r;
+                      chn_rslt_number_r <= chn_number_r;
+
+                      chn_rslt_data_r <= chn_data_parsed;
+                      chn_rslt_op_r <= chn_op_r_int;
+						
+                      is_chn_data <= 0;
+                      is_chn_proc <= 0;
+
 					       //is_chn_proc <= 0;
 					       //is_chn_data <= 0;
-							 
+*/
 							 chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_DATA_SENT;
 							 chn_op_r_int <= `CHN_OP_DATA_SENT;
-							 
-					       ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
 						  end
+							 
+					       ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 					   end
 
+						`CHN_OP_RECEIVE_FREEZED,
 				      `CHN_OP_RECEIVE: begin // thread from loop receives
 					     if(
 						    chn_op_r == `CHN_OP_SEND ||
@@ -373,37 +433,42 @@ parameter PROC_QUANTITY = 8;
 						    //chn_number_r == chn_num_parsed
 						  ) begin
 						    chn_data_tbl[aproc_tbl_addr] <= {chn_data_r, chn_number_r};
+							 chn_data_r_int <= {chn_data_r, chn_number_r};
+							 
 							 chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_DATA_RECEIVED;
+							 chn_op_r_int <= `CHN_OP_DATA_RECEIVED;
 							 
 							 chn_op_r <= `CHN_OP_DATA_SENT;
-							 
-					       ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
 						  end
+							 
+					       ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 					   end
 
 					   default: begin
-					     ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
+					     ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 					   end
 				    endcase
               //end else
 				  //if(chn_op_r_int != `CHN_OP_NULL) begin
 				  end else begin
-				    ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
+				    ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 				  end
 				
 				end
 				
 /**/
-            `CTL_CPU_REMOVE_THREAD_ph0: begin
-              if(
-				      chn_op_r_int == `CHN_OP_SEND &&
-				      chn_op_r_int == `CHN_OP_RECEIVE
+            `CTL_CPU_MAIN_THREAD_PROCESSOR_0: begin
+/*
+				if(
+				      chn_op_r_int == `CHN_OP_SEND_FREEZED ||
+				      chn_op_r_int == `CHN_OP_RECEIVE_FREEZED
               ) begin
 					 aproc_i <= aproc_i_next;
 					 aproc_tbl_addr <= aproc_i_next;
 
-                ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph00;
+                ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
               end else
+*/
               if(is_pause_proc == 1 && {data_r_int, next_proc_int_r} == pause_proc_r) begin
 
                 pause_proc_tbl[aproc_tbl_addr] <= `THREAD_SLEEP_TIMEOUT;
@@ -413,7 +478,7 @@ parameter PROC_QUANTITY = 8;
 					 aproc_i <= aproc_i_next;
 					 aproc_tbl_addr <= aproc_i_next;
 
-                ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph00;
+                ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
               end else
               if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 
@@ -449,23 +514,122 @@ parameter PROC_QUANTITY = 8;
 
                  if(pause_proc_r_int == 0) begin
 
-                   if(
-						     is_chn_rslt == 0 &&
-							  chn_op_r_int != `CHN_OP_NULL
-                   ) begin
-					      chn_rslt_proc_r <= chn_proc_r_int;
-                     chn_rslt_data_r <= chn_data_parsed;  // chn_cur_data_parsed
-                     chn_rslt_number_r <= chn_num_parsed; // chn_cur_num_parsed
-                     chn_rslt_op_r <= chn_op_r_int;
+					    case(chn_op_r_int)
+						   //`CHN_OP_NULL: begin
+							//end
 							
-                     is_chn_rslt <= 1;
-                   end
+                      `CHN_OP_SEND_FREEZED,
+                      `CHN_OP_RECEIVE_FREEZED
+                      : begin
+                        //aproc_i <= aproc_i_next;
+                        aproc_tbl_addr <= aproc_i_next;
 
-					    aproc_i <= aproc_i_next;
-					  
-                   next_proc_ready <= 1;
-                   
-                   ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph11; //0;
+                        next_proc_ready <= 0;
+                        ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+							 end
+
+						   `CHN_OP_SEND: begin
+							  //if(chn_seek_cntr == 0) begin
+							  //  chn_seek_cntr <= 1;
+
+							  //  aproc_tbl_addr <= aproc_i_next;
+
+                       //  next_proc_ready <= 0;
+                       //  ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+                       //end else begin
+                         chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_SEND_FREEZED;
+
+                       next_proc_ready <= 1;
+                       ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+
+							    //aproc_tbl_addr <= aproc_i_next;
+
+                         //next_proc_ready <= 0;
+                         //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+                       //end
+                     end
+
+							`CHN_OP_RECEIVE: begin
+							  //if(chn_seek_cntr == 0) begin
+							  //  chn_seek_cntr <= 1;
+
+							  //  aproc_tbl_addr <= aproc_i_next;
+
+                       //  next_proc_ready <= 0;
+                       //  ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+                       //end else begin
+                         chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_RECEIVE_FREEZED;
+
+                       next_proc_ready <= 1;
+                       ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+
+							    //aproc_tbl_addr <= aproc_i_next;
+
+                         //next_proc_ready <= 0;
+                         //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+                       //end
+                     end
+
+                     `CHN_OP_DATA_SENT,
+                     `CHN_OP_DATA_RECEIVED
+							: begin
+
+							  //if(chn_proc_r == {data_r_int, next_proc_int_r}) begin
+                         if(
+							        is_chn_rslt == 0 &&
+								     //is_chn_data == 0 &&
+								     //is_chn_proc == 0 &&
+									  chn_proc_r == {data_r_int, next_proc_int_r}
+                         ) begin
+					            chn_rslt_proc_r <= {data_r_int, next_proc_int_r}; //chn_proc_r_int;
+                           chn_rslt_data_r <= chn_data_parsed;  // chn_cur_data_parsed
+                           chn_rslt_number_r <= chn_num_parsed; // chn_cur_num_parsed
+                           chn_rslt_op_r <= chn_op_r_int;
+								 
+								   chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_NULL;
+								 //chn_op_r <= `CHN_OP_NULL;
+								 
+								 //chn_data_tbl[aproc_tbl_addr] <= 0;
+
+                           is_chn_rslt <= 1;
+								 
+								 //is_chn_data <= 0;
+								 //is_chn_proc <= 0;
+
+                           next_proc_ready <= 1;
+                           ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+                         end else begin
+								   //aproc_tbl_addr <= aproc_i_next;
+								 
+							      //next_proc_ready <= 0;
+								   //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+								 
+                           next_proc_ready <= 1;
+                           ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+							    end
+								 
+                       //end else begin
+								 //aproc_tbl_addr <= aproc_i_next;
+								 
+							    //next_proc_ready <= 0;
+								 //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+								 
+                       //  next_proc_ready <= 1;
+                       //  ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+							  //end
+                     end
+							
+							default: begin
+                       next_proc_ready <= 1;
+                       ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+							end
+                   endcase
+
+                   aproc_i <= aproc_i_next;
+
+//                   next_proc_ready <= 1;
+
+//                   ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
                  end else begin
 
                    pause_proc_tbl[aproc_tbl_addr] <= pause_proc_r_int - 1;
@@ -475,7 +639,7 @@ parameter PROC_QUANTITY = 8;
 
                    next_proc_ready <= 0;
                    
-                   ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph00;
+                   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
                  end
               end
             end
@@ -536,7 +700,7 @@ parameter PROC_QUANTITY = 8;
 //    if(clk_oe == 0 && clk == 0) begin
 
       //data_r <= 0;
-		chan_data_r <= 0;
+//		chan_data_r <= 0;
       //result_op_r <= `CHN_OP_NULL;
 
 //      case(ctl_state)
@@ -544,7 +708,7 @@ parameter PROC_QUANTITY = 8;
 		  
 //		    case(ctl_state_int)
 /**
-            `CTL_CPU_REMOVE_THREAD_ph0: begin
+            `CTL_CPU_MAIN_THREAD_PROCESSOR_0: begin
               if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 
 					  if(aproc_i == aproc_e_minus_1) begin
@@ -669,6 +833,8 @@ parameter PROC_QUANTITY = 8;
 		
 		chan_data_r <= 0;
 		result_op_r <= 0;
+		
+		chn_seek_cntr <= 0;
     end else begin
 
 
@@ -706,14 +872,14 @@ parameter PROC_QUANTITY = 8;
 //                  {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_i];
 						aproc_tbl_addr <= aproc_i;
 
-				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph00;
-//				      ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph0;
+				      ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+//				      ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
                 end
               end
             end
 
 /**
-            `CTL_CPU_REMOVE_THREAD_ph0: begin
+            `CTL_CPU_MAIN_THREAD_PROCESSOR_0: begin
 //                  if(is_need_stop_thrd) begin
 				      if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 //                    aproc_tbl[aproc_i] = aproc_tbl[aproc_e];
@@ -943,33 +1109,57 @@ parameter PROC_QUANTITY = 8;
 				  /**/
             end
             
+            `THREAD_CMD_CHAN_GET: begin
+				  /**/
+              if(is_chn_proc == 0 && is_chn_data == 0) begin
+				    chn_op_r <= `CHN_OP_RECEIVE;
+				    //chn_number_r <= {data_in, addr_in};
+				    chn_data_r <= 32'hdeadbeef;
+				    chn_number_r <= addr_in;
+					 is_chn_data <= 1;
+                
+                //data_r_int <= 32'h deadbeef; //-1;
+                //thrd_rslt_r <= 0;
+              end else
+              begin
+                data_r_int <= 0;
+                thrd_rslt_r <= 0;
+              end
+				  /**/
+            end
+            
             `THREAD_CMD_THRD_ADDR: begin
 				  /**/
               if(is_chn_proc == 0 && is_chn_data == 1) begin
 				    chn_proc_r <= {data_in, addr_in};
 //					 is_chn_proc <= 1;
 					 
-					 if(
-					     is_chn_rslt == 1 &&
-						  chn_rslt_proc_r == {data_in, addr_in} &&
-						  chn_number_r == chn_rslt_number_r
-					 ) begin
-					   //chan_data_r <= chn_rslt_number_r;
-						//data_r <= chn_rslt_data_r;
-						chan_data_r <= chn_rslt_data_r;
-						result_op_r <= chn_rslt_op_r;
-						
+					 if(is_chn_rslt == 1) begin
+					   if( 
+						    chn_rslt_proc_r == {data_in, addr_in} //&&
+						    //chn_number_r == chn_rslt_number_r
+					   ) begin
+					     //chan_data_r <= chn_rslt_number_r;
+						  //data_r <= chn_rslt_data_r;
+						  chan_data_r <= chn_rslt_data_r;
+						  result_op_r <= chn_rslt_op_r;
+
+						  is_chn_rslt <= 0;
+                  end else begin
+						  result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+                  end
 					   is_chn_data <= 0;
 					   is_chn_proc <= 0;
 					 end else begin
 						result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+						
+						chn_seek_cntr <= 0;
 
 					   is_chn_proc <= 1;
 					 end
-					 
                 
                 //data_r_int <= 32'h deadbeef; //-1;
-                //thrd_rslt_r <= 1;
+                //thrd_rslt_r <= 0;
               end else
               begin
                 data_r_int <= 0;

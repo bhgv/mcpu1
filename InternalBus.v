@@ -253,6 +253,8 @@ module InternalBus(
   
   input wire thread_escape;
   
+  wire chan_wait_next_time;
+  
 
 /**
   StartManager start_mng(
@@ -349,6 +351,7 @@ module InternalBus(
 				.thread_escape(thread_escape),
 				
             .chan_op(chan_op),
+				.chan_wait_next_time(chan_wait_next_time),
 
             .rst(rst)
             );
@@ -554,6 +557,7 @@ module InternalBus(
         .chan_msg_strb_o(chan_msg_strb_o),
 		  
 		  .chan_op(chan_op),
+		  .chan_wait_next_time(chan_wait_next_time),
         
         .next_state(next_state_ch),
         

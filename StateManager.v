@@ -41,6 +41,7 @@ module StateManager(
 				thread_escape,
 				
 				chan_op,
+				chan_wait_next_time,
             
             rst
             );
@@ -61,6 +62,7 @@ module StateManager(
   input wire thread_escape;
   
   input wire chan_op;
+  input wire chan_wait_next_time;
   
 
   input wire [31:0] command;  
@@ -105,7 +107,7 @@ module StateManager(
   assign regCondFlags = command[27:26];
   
   wire [3:0] cmd = command[31:28];
-  wire isCmdChanOp = cmd == `CMD_CHN;
+  reg isCmdChanOp;
 
   input wire [`DATA_SIZE0:0] cond;
   
@@ -225,6 +227,8 @@ module StateManager(
       anti_continuous <= 1;
 		
 		//no_data_exit_way <= 1;
+		
+		isCmdChanOp <= 0;
 		
 		next_state_dn_r <= 0;
     end
@@ -454,10 +458,17 @@ module StateManager(
           state <= `START_READ_CMD;
           next_state_dn_r <= ~next_state_dn_r;
         end
+		  
+		  `START_READ_CMD_P: begin
+		    isCmdChanOp <= (cmd == `CMD_CHN);
+			 
+          state <= `PREEXECUTE;
+          next_state_dn_r <= ~next_state_dn_r;
+		  end
  
         `PREEXECUTE: begin
           if(
-              ~isIpSaveAllowed
+              ~isIpSaveAllowed || isCmdChanOp
           ) begin
             if(&regCondFlags == 0) 
               state <= (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
@@ -494,7 +505,9 @@ module StateManager(
         `WRITE_REG_IP: begin
           ipIsWriten <= 1;
           
-          if(&regCondFlags == 0 && ~condIsReaden) 
+			 if(isCmdChanOp)
+			   state <= `WRITE_PREP;
+          else if(&regCondFlags == 0 && ~condIsReaden) 
             state <= (regNumCnd == `REG_IP) ? `FILL_COND : `READ_COND;
           else if(&regS1Flags == 0) 
             state <= (
@@ -531,7 +544,7 @@ module StateManager(
           if(isRegCondPtr == 1) begin
             state <= `READ_COND_P;
           end else 
-          if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
+          if(isIpSaveAllowed && cond == 0 && ~ipIsWriten && ~isCmdChanOp) begin
             state <= `WRITE_REG_IP;
           end else
               
@@ -581,7 +594,7 @@ module StateManager(
 //			   state <= `BREAK_THREAD_AND_BEGIN_WAIT;
 //			 end else
           
-          if(isIpSaveAllowed && cond == 0 && ~ipIsWriten) begin
+          if(isIpSaveAllowed && cond == 0 && ~ipIsWriten && ~isCmdChanOp) begin
             state <= `WRITE_REG_IP;
           end else
               
@@ -736,6 +749,9 @@ module StateManager(
           //if(chan_op == 1) begin
           //  state <= `ALU_CHAN_THREAD_ADDR_OUT;
           //end else begin
+			 if(chan_wait_next_time)
+				state <= `FINISH_BEGIN;
+          else
             state <= `ALU_RESULTS;
           //end
 			 
@@ -749,8 +765,11 @@ module StateManager(
         //end
         
         `ALU_RESULTS: begin
+		    if(isCmdChanOp)
+              state <= `WRITE_REG_IP;
+          else
             state <= `WRITE_PREP;
-			 
+
 			 next_state_dn_r <= ~next_state_dn_r;
         end
 

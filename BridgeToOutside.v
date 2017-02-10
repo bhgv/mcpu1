@@ -136,7 +136,8 @@ module BridgeToOutside (
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_in; // = data_r;
   wire [`DATA_SIZE0:0] data_out = 
-                                cpu_msg_r == `CPU_R_BREAK_THREAD
+                                cpu_msg_r == `CPU_R_BREAK_THREAD &&
+										  base_addr_data_r != base_addr_r
 										  ? base_addr_data_r - `THREAD_HEADER_SPACE//data_r
 										  : 0
 										  ;
@@ -260,7 +261,9 @@ module BridgeToOutside (
                               (
                                 ext_cpu_msg_in == `CPU_R_FORK_DONE ||
                                 ext_cpu_msg_in == `CPU_R_STOP_DONE ||
-                                ext_cpu_msg_in == `CPU_R_CHAN_NO_RESULTS
+                                ext_cpu_msg_in == `CPU_R_CHAN_NO_RESULTS ||
+                                ext_cpu_msg_in == `CPU_R_CHAN_RES_RD ||
+                                ext_cpu_msg_in == `CPU_R_CHAN_RES_WR //||
                               )								
                               ? ext_cpu_msg_in
                               :  0 
@@ -326,7 +329,13 @@ module BridgeToOutside (
 								ext_cpu_msg_in == `CPU_R_BREAK_THREAD &&
 
 								addr_in == base_addr_r - `THREAD_HEADER_SPACE &&
-								data_in == base_addr_data_r - `THREAD_HEADER_SPACE &&
+								(
+								  data_in == base_addr_data_r - `THREAD_HEADER_SPACE 
+								  || (
+								       base_addr_data_r == base_addr_r &&
+										 data_in == 0
+								  )
+                        ) &&
 								
 //                        ext_cpu_index[30:0] > cpu_index/*_r*/[30:0]
 								cpu_ind_rel == 2'b 10 //&&
@@ -1046,7 +1055,7 @@ module BridgeToOutside (
               if(cmd_code == `CMD_CHN) begin
                 ext_next_cpu_e_r <= 1;
                 
-                //ext_dispatcher_q_r <= 1'b 1;
+                ext_dispatcher_q_r <= 1'b 1;
               end
             end
             

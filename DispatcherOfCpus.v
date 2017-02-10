@@ -219,9 +219,11 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 //                                   || (state_ctl == `CTL_CPU_LOOP)
                                   )
                                   ? addr_chan_to_op_out
-                                  : bus_busy_r == 1
-											 ? data_r
-											 : data_in //0
+                                  : (
+											    bus_busy_r == 1
+											    ? data_r
+											    : data_in //0
+											 )
 											 //: (data_r | data_in)
                                   ;
 /**/
@@ -673,12 +675,23 @@ always @(/*pos*/negedge clk) begin
                   thrd_cmd_r <= `THREAD_CMD_CHAN_SET;
 					 end
 					 
+					 `CPU_R_CHAN_GET: begin
+                  addr_thread_to_op_r <= addr_in;
+                  //addr_chan_to_op_r <= data_in;
+						
+                  thrd_cmd_r <= `THREAD_CMD_CHAN_GET;
+					 end
+					 
 					 `CPU_R_THREAD_ADDRESS: begin
                   addr_thread_to_op_r <= addr_in;
                   addr_chan_to_op_r <= data_in;
 						
                   thrd_cmd_r <= `THREAD_CMD_THRD_ADDR;
 					 end
+					 
+                    //.addr_in(addr_thread_to_op_r),
+                    //.data_in(addr_chan_to_op),
+
 					 
 				    //`CPU_R_BREAK_THREAD: begin
                   //next_thread_r <= 0;
@@ -701,6 +714,7 @@ always @(/*pos*/negedge clk) begin
 					 end
 					
 					 `THREAD_CMD_CHAN_SET,
+					 `THREAD_CMD_CHAN_GET,
 					 //`THREAD_CMD_THRD_ADDR,
 					 `THREAD_CMD_PAUSE
 					 //default
