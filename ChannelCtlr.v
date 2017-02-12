@@ -334,10 +334,14 @@ module ChannelCtlr(
 								
 								1: begin
                           addr_r <= base_addr - `THREAD_HEADER_SPACE;
-								  if(base_addr_data == base_addr)
-								    data_r <= 0;
-                          else
+                          //data_r <= base_addr_data_r != base_addr_r
+									//	  ? base_addr_data_r - `THREAD_HEADER_SPACE//data_r
+									//	  : 0;
+								  //if(base_addr_data == base_addr)
+								  //  data_r <= 0;
+                          //else
                             data_r <= base_addr_data - `THREAD_HEADER_SPACE;
+
                           cpu_msg_r <= `CPU_R_THREAD_ADDRESS;
 			 
 			                 chan_op <= 1;
@@ -413,10 +417,11 @@ module ChannelCtlr(
 								
 								1: begin
                           addr_r <= base_addr - `THREAD_HEADER_SPACE;
-								  if(base_addr_data == base_addr)
-								    data_r <= 0;
-                          else
+								  //if(base_addr_data == base_addr)
+								  //  data_r <= 0;
+                          //else
                             data_r <= base_addr_data - `THREAD_HEADER_SPACE;
+
                           cpu_msg_r <= `CPU_R_THREAD_ADDRESS;
 			 
 			                 chan_op <= 1;

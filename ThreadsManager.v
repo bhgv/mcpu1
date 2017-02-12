@@ -72,7 +72,7 @@ parameter PROC_QUANTITY = 8;
   output reg [`DATA_SIZE0:0] next_proc;
 `endif
   
-  input wire [3:0] thrd_cmd;
+  input wire [7:0] thrd_cmd;
   
   output [1:0] thrd_rslt;
   reg [1:0] thrd_rslt_r;
@@ -145,6 +145,9 @@ parameter PROC_QUANTITY = 8;
   reg [`DATA_SIZE0:0] pause_proc_tbl [0:PROC_QUANTITY];
   wire [`DATA_SIZE0:0] pause_proc_tbl_item = pause_proc_tbl[aproc_tbl_addr];
   reg [`DATA_SIZE0:0] pause_proc_r_int;
+  
+  reg [9:0] pause_proc_timeout_r;
+  
 
   // VV thread of current channel operation 
   reg [(`DATA_SIZE0 + `ADDR_SIZE):0] chn_proc_r;
@@ -296,6 +299,34 @@ parameter PROC_QUANTITY = 8;
 						chn_data_r_int <= chn_data_tbl_item;
 						chn_op_r_int <= chn_op_tbl_item;
 
+                  if(
+				        is_pause_proc == 1 //&& 
+						//  /*{data_r_int, next_proc_int_r}*/ aproc_tbl_item == pause_proc_r
+                  ) begin
+				      //  ctl_state_int <= `CTL_CPU_PAUSE_SET_TO_LOOP;
+						//end else
+                    if(
+				        //    is_pause_proc == 1 //&& 
+						      /*{data_r_int, next_proc_int_r}*/ aproc_tbl_item == pause_proc_r
+                    ) begin
+				          ctl_state_int <= `CTL_CPU_PAUSE_SET_TO_LOOP;
+                    end else 
+						  if(pause_proc_timeout_r == 0) begin
+						    is_pause_proc <= 0;
+							 //pause_proc_timeout_r <= 0;
+							 
+							 ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
+                    end else begin
+                      pause_proc_timeout_r <= pause_proc_timeout_r - 1;
+							 
+							 ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
+                    end
+						end else
+						
+						if(pause_proc_tbl_item != 0) begin
+						  ctl_state_int <= `CTL_CPU_PAUSE_PROCESS;
+						end else
+						
 						if(is_chn_proc == 1 && is_chn_data == 1 && is_chn_rslt == 0) begin
 				        ctl_state_int <= `CTL_CPU_CHAN_OP_ph0;
 						end else begin
@@ -457,6 +488,57 @@ parameter PROC_QUANTITY = 8;
 				end
 				
 /**/
+            `CTL_CPU_PAUSE_SET_TO_LOOP: begin
+              //if(
+				  //    is_pause_proc == 1'b 1 && 
+              //    {data_r_int, next_proc_int_r} == pause_proc_r
+              //) begin
+              //if(/*is_pause_proc == 1 &&*/ {data_r_int, next_proc_int_r} == pause_proc_r) begin
+                if(pause_proc_tbl_item == 0) begin
+                  pause_proc_tbl[aproc_tbl_addr] <= `THREAD_SLEEP_TIMEOUT;
+                end
+					 
+					 is_pause_proc <= 0;
+					 //pause_proc_r <= 0;
+					 
+					 pause_proc_timeout_r <= 0;
+
+					 aproc_i <= aproc_i_next;
+					 aproc_tbl_addr <= aproc_i_next;
+
+                next_proc_ready <= 0;
+              
+                ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+              //end else begin
+				    //if(pause_proc_timeout_r != 0) begin
+					 //  pause_proc_timeout_r <= pause_proc_timeout_r - 1;
+                //end else begin
+                //  is_pause_proc <= 0;
+                //end
+
+					 //aproc_i <= aproc_i_next;
+					 //aproc_tbl_addr <= aproc_i_next;
+
+                //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+              //end 
+              //end else
+				end
+
+				
+				`CTL_CPU_PAUSE_PROCESS: begin
+                 //end else begin
+//              pause_proc_tbl[aproc_tbl_addr] <= pause_proc_tbl_item - 1; //pause_proc_r_int - 1;
+              pause_proc_tbl[aproc_tbl_addr] <= pause_proc_r_int - 1;
+
+              aproc_i <= aproc_i_next;
+              aproc_tbl_addr <= aproc_i_next;
+
+              next_proc_ready <= 0;
+              
+              ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+            end
+				
+				
             `CTL_CPU_MAIN_THREAD_PROCESSOR_0: begin
 /*
 				if(
@@ -469,17 +551,39 @@ parameter PROC_QUANTITY = 8;
                 ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
               end else
 */
-              if(is_pause_proc == 1 && {data_r_int, next_proc_int_r} == pause_proc_r) begin
 
-                pause_proc_tbl[aproc_tbl_addr] <= `THREAD_SLEEP_TIMEOUT;
+/*
+              if(
+				      is_pause_proc == 1'b 1 && 
+						{data_r_int, next_proc_int_r} == pause_proc_r
+              ) begin
+              //if(/*is_pause_proc == 1 &&* / {data_r_int, next_proc_int_r} == pause_proc_r) begin
+                if(pause_proc_tbl_item == 0) begin
+                  pause_proc_tbl[aproc_tbl_addr] <= `THREAD_SLEEP_TIMEOUT;
+                end
 					 
 					 is_pause_proc <= 0;
+					 pause_proc_r <= 0;
 
 					 aproc_i <= aproc_i_next;
 					 aproc_tbl_addr <= aproc_i_next;
 
                 ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+              //end else begin
+				    //if(pause_proc_timeout_r != 0) begin
+					 //  pause_proc_timeout_r <= pause_proc_timeout_r - 1;
+                //end else begin
+                //  is_pause_proc <= 0;
+                //end
+
+					 //aproc_i <= aproc_i_next;
+					 //aproc_tbl_addr <= aproc_i_next;
+
+                //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+              //end 
               end else
+*/
+				  
               if(is_sproc == 1 && {data_r_int, next_proc_int_r} == sproc_r) begin
 
 					  if(aproc_i >= aproc_e_minus_1) begin
@@ -512,7 +616,7 @@ parameter PROC_QUANTITY = 8;
 					     is_sproc <= 0;
                  end
 
-                 if(pause_proc_r_int == 0) begin
+                 //if(pause_proc_r_int == 0) begin
 
 					    case(chn_op_r_int)
 						   //`CHN_OP_NULL: begin
@@ -630,17 +734,17 @@ parameter PROC_QUANTITY = 8;
 //                   next_proc_ready <= 1;
 
 //                   ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
-                 end else begin
+                 //end else begin
 
-                   pause_proc_tbl[aproc_tbl_addr] <= pause_proc_r_int - 1;
+                 //  pause_proc_tbl[aproc_tbl_addr] <= pause_proc_r_int - 1;
                   
-					    aproc_i <= aproc_i_next;
-					    aproc_tbl_addr <= aproc_i_next;
+					  //  aproc_i <= aproc_i_next;
+					  //  aproc_tbl_addr <= aproc_i_next;
 
-                   next_proc_ready <= 0;
+                 //  next_proc_ready <= 0;
                    
-                   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
-                 end
+                 //  ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+                 //end
               end
             end
 
@@ -835,6 +939,8 @@ parameter PROC_QUANTITY = 8;
 		result_op_r <= 0;
 		
 		chn_seek_cntr <= 0;
+		
+		pause_proc_timeout_r <= 0;
     end else begin
 
 
@@ -1081,8 +1187,10 @@ parameter PROC_QUANTITY = 8;
 				    pause_proc_r <= {data_in, addr_in};
 					 is_pause_proc <= 1;
                 
-                data_r_int <= 32'h deadbeef; //-1;
-                thrd_rslt_r <= 1;
+                //data_r_int <= 32'h deadbeef; //-1;
+                thrd_rslt_r <= 0; //1;
+					 
+					 pause_proc_timeout_r <= PROC_QUANTITY; // * 2;
               end else
               begin
                 data_r_int <= 0;

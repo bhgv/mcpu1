@@ -166,7 +166,7 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   
 
 
-  reg [3:0] thrd_cmd_r;
+  reg [7:0] thrd_cmd_r;
   wire [1:0] thrd_rslt;
   
   wire [`DATA_SIZE0:0] next_proc;
@@ -244,6 +244,7 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   wire next_thread =
                    cpu_msg_in == `CPU_R_START
 						 || cpu_msg_in == `CPU_R_FORK_DONE
+						 || next_thread_r == 1
                    ;
 
   ThreadsManager trds_mngr (
@@ -345,6 +346,8 @@ always @(/*pos*/negedge clk) begin
 //  clk_oe = ~clk_oe;
   
   if(clk_oe == 0) begin
+  
+    //thrd_cmd_r <= 0;
 	 
   end else begin
     
@@ -585,7 +588,7 @@ always @(/*pos*/negedge clk) begin
 			 state_ctl <= `CTL_MEM_WORK;
         end else 
         if(ext_cpu_e == 1) begin
-//!!          ext_cpu_index_r = 0; //`DATA_SIZE'h ffff_ffff_ffff_ffff;
+//!!          ext_cpu_index_r = 0;
           ext_read_q_r <= 0;
 			 ext_write_q_r <= 0;
 			 
