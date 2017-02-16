@@ -107,7 +107,7 @@ module RegisterManager (
   output [`DATA_SIZE0:0] register_out;
   input wire [`DATA_SIZE0:0] reg_ptr_in;
   output [`DATA_SIZE0:0] reg_ptr_out;
-  wire [`DATA_SIZE0:0] register_r_adr = base_addr + regNum /* `DATA_SIZE*/;
+  wire [`DATA_SIZE0:0] register_r_adr = base_addr_data + regNum; //base_addr + regNum /* `DATA_SIZE*/;
   reg [`DATA_SIZE0:0] register_r_ptr;
   reg [`DATA_SIZE0:0] register_r;
   wire [`DATA_SIZE0:0] register_out = //(reg_op == `REG_OP_CATCH_DATA) 

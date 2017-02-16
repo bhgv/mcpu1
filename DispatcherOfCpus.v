@@ -246,6 +246,8 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 						 || cpu_msg_in == `CPU_R_FORK_DONE
 						 || next_thread_r == 1
                    ;
+						 
+  wire run_next_cpu_from_loop;
 
   ThreadsManager trds_mngr (
                     .clk(clk),
@@ -272,6 +274,8 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 						  .chan_data_out(chan_data_in),
 						  
 						  .result_op_out(chan_thread_result_op_in),
+						  
+						  .run_next_cpu_from_loop(run_next_cpu_from_loop),
 
                     .rst(rst_out)
                     );
@@ -340,6 +344,9 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                                     ;
             
 
+reg [7:0] mem_op_timeout;
+
+
 
 always @(/*pos*/negedge clk) begin
   
@@ -392,6 +399,8 @@ always @(/*pos*/negedge clk) begin
 	 next_thread_r <= 0;
 	 
 	 ext_bus_allow <= 0;
+	 
+	 mem_op_timeout <= 0;
   end else /*if(ext_rst_e == 1)*/ begin
 //    if(read_q == 1 || write_q == 1)
 //      halt_q = 1;
@@ -479,6 +488,7 @@ always @(/*pos*/negedge clk) begin
         end
       end
       
+		
       `CTL_CPU_LOOP: begin
 		/**/
         read_dn_r <= 1'b 0; 
@@ -529,6 +539,7 @@ always @(/*pos*/negedge clk) begin
 		/**/
       end
       
+		
       `CTL_CPU_CMD: begin
 		  cpu_q_r <= 0;
 		  
@@ -547,8 +558,8 @@ always @(/*pos*/negedge clk) begin
         if(
           read_q == 1 &&
           mem_rd == 0 &&
-          mem_wr == 0 &&
-			 rw_halt_in == 0
+          mem_wr == 0 //&&
+			 //rw_halt_in == 0
         ) begin
 //!!!			 addr_out_r = addr_in;
 			 
@@ -563,13 +574,14 @@ always @(/*pos*/negedge clk) begin
 			 
 			 next_thread_r <= 0;
 			 
+			 mem_op_timeout <= 0;
 			 state_ctl <= `CTL_MEM_WORK;
         end else 
         if(
           write_q == 1 &&
           mem_rd == 0 &&
-          mem_wr == 0 &&
-			 rw_halt_in == 0
+          mem_wr == 0 //&&
+			 //rw_halt_in == 0
         ) begin
 //!!!			 addr_out_r = addr_in;
 			 
@@ -585,6 +597,7 @@ always @(/*pos*/negedge clk) begin
 			 
 			 next_thread_r <= 0;
 			 
+			 mem_op_timeout <= 0;
 			 state_ctl <= `CTL_MEM_WORK;
         end else 
         if(ext_cpu_e == 1) begin
@@ -604,7 +617,9 @@ always @(/*pos*/negedge clk) begin
                 new_cpu_restarted <= 0;
 
 					 next_thread_r <= 1;
-//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;                
+//                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
+
+                state_ctl <= `CTL_CPU_LOOP;
               end
             
               `CPU_R_END: begin
@@ -612,6 +627,7 @@ always @(/*pos*/negedge clk) begin
                 cpu_num_na <= cpu_num_na + 1;
 					 
 					 next_thread_r <= 0;
+					 state_ctl <= `CTL_CPU_LOOP;
               end
             
               `CPU_R_FORK_DONE: begin
@@ -619,6 +635,7 @@ always @(/*pos*/negedge clk) begin
 //                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
                 
                 //cpu_msg_r <= 0;
+					 state_ctl <= `CTL_CPU_LOOP;
               end
 				  
 				  `CPU_R_BREAK_THREAD: begin
@@ -628,24 +645,40 @@ always @(/*pos*/negedge clk) begin
                 thrd_cmd_r <= `THREAD_CMD_PAUSE;
 
                 next_thread_r <= 1;
+						
+						state_ctl <= `CTL_CPU_LOOP;
               end
 				  
-				  default: next_thread_r <= 0;
+				  default: begin
+				    next_thread_r <= 0;
+
+                //if(dispatcher_q == 1) begin
+                  state_ctl <= `CTL_CPU_LOOP;
+                //end else
+                ////if(mem_rd == 1 || mem_wr == 1) 
+                //begin
+                //  state_ctl <= `CTL_MEM_WORK;
+                //end
+              end
             
             endcase
 //          if(mem_rd == 1 || mem_wr == 1) begin
 //            state_ctl = `CTL_MEM_WORK;
 //          end else
 
-          if(dispatcher_q == 1) begin
-            state_ctl <= `CTL_CPU_LOOP;
-          end else
-			 //if(mem_rd == 1 || mem_wr == 1) 
-			 begin
-            state_ctl <= `CTL_MEM_WORK;
-          end
+//          if(dispatcher_q == 1) begin
+//            state_ctl <= `CTL_CPU_LOOP;
+//          end else
+//			 //if(mem_rd == 1 || mem_wr == 1) 
+//          begin
+//            state_ctl <= `CTL_MEM_WORK;
+//          end
           
         end
+		  //else
+		  //if(run_next_cpu_from_loop == 1) begin
+		  //  state_ctl <= `CTL_CPU_LOOP;
+		  //end
         else begin
 		  
 		    ext_read_q_r <= 0;
@@ -656,13 +689,15 @@ always @(/*pos*/negedge clk) begin
             if(thrd_cmd_r == `THREAD_CMD_NULL) begin
 				  cpu_msg_r <= 0; 
 				  
-              case(cpu_msg_in) //data_wire)              
+              case(cpu_msg_in) //data_wire)  				  
+`ifdef PAUSE_PROC_ENABLE
                 `CPU_R_STOP_THRD: begin
                   addr_thread_to_op_r <= addr_in;
                   addr_chan_to_op_r <= data_in;
 						
                   thrd_cmd_r <= `THREAD_CMD_STOP;
                 end
+`endif
                 
                 `CPU_R_FORK_THRD: begin
                   addr_thread_to_op_r <= addr_in;
@@ -717,14 +752,21 @@ always @(/*pos*/negedge clk) begin
 					 end
 					
 					 `THREAD_CMD_CHAN_SET,
-					 `THREAD_CMD_CHAN_GET,
-					 //`THREAD_CMD_THRD_ADDR,
-					 `THREAD_CMD_PAUSE
-					 //default
+					 `THREAD_CMD_CHAN_GET
 					 : begin
 					   //cpu_msg_r <= `CPU_R_STOP_DONE;
 					   thrd_cmd_r <= `THREAD_CMD_NULL;
 					 end
+					
+`ifdef PAUSE_PROC_ENABLE
+					 `THREAD_CMD_PAUSE
+					 : begin
+					   //cpu_msg_r <= `CPU_R_STOP_DONE;
+					   thrd_cmd_r <= `THREAD_CMD_NULL;
+						
+						state_ctl <= `CTL_CPU_LOOP;
+					 end
+`endif
 					
 					 `THREAD_CMD_THRD_ADDR
 					 : begin
@@ -738,6 +780,7 @@ always @(/*pos*/negedge clk) begin
         end
       end
 		
+		
 		`CTL_CHAN_RESULT_LOOP: begin
 		  if(chan_thread_result_op_in != 0 /*`CHAN_OP_NULL*/) begin
 		    cpu_msg_r <= chan_thread_result_op_in;
@@ -749,6 +792,7 @@ always @(/*pos*/negedge clk) begin
 		  end
 		end
       
+		
       `CTL_MEM_WORK: begin			
 		  
 		    // VV test!
@@ -767,20 +811,39 @@ always @(/*pos*/negedge clk) begin
 		  if(rw_halt_in == 1) begin
           mem_rd <= 0;
           mem_wr <= 0;
+			 
           ext_rw_halt_r <= 1;
 			 rw_halt_r <= 0; // test!
-          state_ctl <= `CTL_CPU_LOOP;
+			 
+			 bus_busy_r <= 0; //
+          state_ctl <= `CTL_MEM_WORK_FINISH; //`CTL_CPU_LOOP;
         end else
 		  if(ext_rw_halt_in == 1) begin
           mem_rd <= 0;
           mem_wr <= 0;
+			 
 			 rw_halt_r <= 1;       //!!
 			 ext_rw_halt_r <= 0; // test! 
-          state_ctl <= `CTL_CPU_LOOP;
+			 
+			 bus_busy_r <= 0; //
+          state_ctl <= `CTL_MEM_WORK_FINISH; //`CTL_CPU_LOOP;
         end else 
+		  
+        if(mem_op_timeout > 50) begin
+		    mem_op_timeout <= 0;
+			 
+			 bus_busy_r <= 0; //
+			 state_ctl <= `CTL_MEM_WORK_FINISH;
+			 
+          ext_rw_halt_r <= 1;
+			 rw_halt_r <= 1;     //!!
+        end else
+
 		  begin
           ext_rw_halt_r <= 0;
 			 rw_halt_r <= 0;     //!!
+			 
+			 mem_op_timeout <= mem_op_timeout + 1;
 //        end // test
 /**/
           /** // test
@@ -801,8 +864,8 @@ always @(/*pos*/negedge clk) begin
   //              state_ctl = `CTL_CPU_LOOP;
   //            end
   //        end
-
-          if(mem_rd == 1) begin            
+  
+          if(mem_rd == 1) begin
 
             if(bus_busy_r == 1) begin
               bus_busy_r <= 1'b 0; //z;
@@ -818,15 +881,16 @@ always @(/*pos*/negedge clk) begin
               addr_out_r <= ext_mem_addr_in; //mem_addr_tmp;
               data_r <= ext_mem_data_in; //mem[mem_addr_tmp];
               read_dn_r <= 1;
+              //bus_busy_r <= 0;
               bus_busy_r <= 1;
               
 				  mem_rd <= 0;
 				  
 				  mem_addr_tmp <= 0; //!!!
 				  
-              if(dispatcher_q == 1) begin
-                state_ctl <= `CTL_CPU_LOOP;
-              end
+              //if(dispatcher_q == 1) begin
+                state_ctl <= `CTL_MEM_WORK_FINISH; //`CTL_CPU_LOOP;
+              //end
 
 //            end else
 //            begin
@@ -850,6 +914,7 @@ always @(/*pos*/negedge clk) begin
               addr_out_r <= ext_mem_addr_in; //mem_addr_tmp;
               data_r <= ext_mem_data_in; //mem_data_tmp;
               write_dn_r <= 1;
+              //bus_busy_r <= 0;
               bus_busy_r <= 1;
 				  
 				  mem_addr_tmp <= 0;
@@ -857,26 +922,49 @@ always @(/*pos*/negedge clk) begin
 				  
 				  mem_wr <= 0;
               
-              if(dispatcher_q == 1) begin
-                state_ctl <= `CTL_CPU_LOOP;
-              end
+              //if(dispatcher_q == 1) begin
+                state_ctl <= `CTL_MEM_WORK_FINISH; //`CTL_CPU_LOOP;
+              //end
 
 //            end else
 //            begin
 //              ext_write_q_r = 1;
             end
           end
-          else
-          begin
-            if(dispatcher_q == 1) begin
-              state_ctl <= `CTL_CPU_LOOP;
-            end
-          end
+          //else
+          //begin
+          //  if(dispatcher_q == 1) begin
+          //    state_ctl <= `CTL_CPU_LOOP;
+          //  end
+          //end
 
         end // test
 
       end
 
+		
+		`CTL_MEM_WORK_FINISH: begin
+          ext_rw_halt_r <= 0;
+			 rw_halt_r <= 0;     //!!
+			 
+			 mem_op_timeout <= 0;
+//          if(
+//			   read_dn_r == 1 ||
+//			   write_dn_r == 1
+//			 ) begin
+              addr_out_r <= 0;
+              data_r <= 0;
+				  
+              write_dn_r <= 0;
+				  read_dn_r <= 0;
+              bus_busy_r <= 0;
+
+            //if(ext_cpu_e == 1) begin
+				  state_ctl <= `CTL_CPU_LOOP;
+            //end //else
+		end
+		
+		
       `CTL_CPU_EXT_BUS: begin
         if(ext_bus_q == 1'b 1) begin
           ext_bus_allow <= 1'b 1;

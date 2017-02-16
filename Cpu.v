@@ -196,7 +196,7 @@ BridgeToOutside outside_bridge (
 				
 //            .halt_q_in(halt_q),
 //            .halt_q(halt_q),
-//            .rw_halt(rw_halt), //(int_rw_halt),
+            .rw_halt(rw_halt_in), //(int_rw_halt),
 //            .rw_halt(rw_halt), //(int_rw_halt),
             
             .bus_busy_in(bus_busy_in),

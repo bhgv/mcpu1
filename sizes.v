@@ -31,8 +31,8 @@
 `define FLOAT_SIGN	31
 
 
-`define REG_IP  15
+//`define REG_IP  15
 
 
-`define THREAD_HEADER_SPACE  2
+//`define THREAD_HEADER_SPACE  2
 

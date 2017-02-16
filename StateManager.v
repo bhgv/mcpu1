@@ -273,6 +273,7 @@ module StateManager(
 /**/
 
 /**/
+`ifdef PAUSE_PROC_ENABLE
     if(thread_escape == 1'b 1) begin
 	   case(state)
 
@@ -393,6 +394,8 @@ module StateManager(
 		
       endcase
     end else 
+`endif
+
 /**/
 //	 begin
       

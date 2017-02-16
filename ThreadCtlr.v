@@ -204,12 +204,7 @@ module ThreadCtlr(
                   signal_sent == 0
                 ) begin
                   addr_r <= src0 + base_addr_data; //base_addr;
-                  data_r <= 
-						        //src1 == 0 
-								  //? 0 
-								  //: 
-								  src1 + base_addr_data
-								  ;
+                  data_r <= ( src1 == 0 ? src0 : src1 ) + base_addr_data;
                 
                   cpu_msg_r <= `CPU_R_FORK_THRD;
                   

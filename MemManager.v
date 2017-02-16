@@ -1031,7 +1031,7 @@ module MemManager (
 				
 				.addr_unmodificable_b(addr_unmodificable_b),
 				
-				.mem1sz(0),
+				.mem1sz(`THREAD_HEADER_SPACE),
 				
             .reg_op(mem1sz_op),
             

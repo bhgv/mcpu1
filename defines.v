@@ -1,9 +1,9 @@
 
 
-`define CPU_QUANTITY		2
+`define CPU_QUANTITY		4
 `define PROC_QUANTITY	7
 
-`define CLK_FREQ_PLL		50 * 1000000
+`define CLK_FREQ_PLL		90 * 1000000
 
 `define MAIN_CLK_FREQ	`CLK_FREQ_PLL / 2
 
@@ -35,9 +35,14 @@
 `define UNMODIFICABLE_ADDR_B	`VIDEO1_ADDR_B
 
 
+`define REG_IP  15
 
+`define THREAD_HEADER_SPACE  2
 
 
   `define RS232_DATA_ADDR		'h fffffff0
 
   `define RS232_BAUD_RATE	9600
+  
+  
+//`define PAUSE_PROC_ENABLE 1

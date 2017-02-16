@@ -36,6 +36,7 @@
 
 `define CTL_CPU_CMD     3
 `define CTL_MEM_WORK    4
+`define CTL_MEM_WORK_FINISH    6
 
 `define CTL_CHAN_RESULT_LOOP    5
 // AAA -- dispatcherOfCpus states
@@ -78,7 +79,7 @@
 
 `define ALU_BEGIN		12
 `define ALU_RESULTS	20
-`define ALU_CHAN_THREAD_ADDR_OUT	55
+`define ALU_CHAN_THREAD_ADDR_OUT	34
 
 //`define CHAN_WR_END	28
 //`define CHAN_RD		29

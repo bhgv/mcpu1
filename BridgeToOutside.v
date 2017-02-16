@@ -24,7 +24,7 @@ module BridgeToOutside (
             
 //            halt_q,
             cpu_ind_rel,
-//            rw_halt,
+            rw_halt,
             
             bus_busy_in,
             bus_busy_out,
@@ -89,6 +89,7 @@ module BridgeToOutside (
   input wire [`STATE_SIZE0:0] state;
   input wire [31:0] command;
   
+  input wire rw_halt;
   
   input wire no_data_new;
   input wire no_data_tick;
@@ -207,11 +208,12 @@ module BridgeToOutside (
   
   wire ext_next_cpu_e_stim =
             (
-              read_q == 1 || write_q == 1 
+//              read_q == 1 || write_q == 1 
+              rw_halt == 1 || read_dn == 1 || write_dn == 1 
 				  || chan_op == 1
             )
-            && disp_online_r
-            && ~ext_next_cpu_e_r
+            && disp_online_r == 1
+            //&& ~ext_next_cpu_e_r
             ;
 
   
@@ -317,9 +319,8 @@ module BridgeToOutside (
   
   
   
-  reg [7:0] no_data_cntr;
-  
-  
+`ifdef PAUSE_PROC_ENABLE
+  reg [7:0] no_data_cntr;  
   
   wire thread_escape_stim = //0;
   /**/
@@ -344,8 +345,9 @@ module BridgeToOutside (
 								//thread_escape == 1'b 0 //&&
 								;
   /**/
+`endif
   output reg thread_escape; // = thread_escape_stim;
-  
+
   
 //  wire is_ext_cpu_index_active = (ext_cpu_index & `CPU_ACTIVE) === `CPU_ACTIVE;
 //  wire is_cpu_index_active = (cpu_index_r & `CPU_ACTIVE) === `CPU_ACTIVE;
@@ -450,6 +452,8 @@ module BridgeToOutside (
   
   
   always @(posedge clk) begin
+
+`ifdef PAUSE_PROC_ENABLE
     if(rst_state >= 7) begin //!!!!!!!!!!!!!!!!!!!
 //!!!	   cpu_index_r <= cpu_index_int; //!!!!!!!!!!!!!!!!!!!
 	 thread_escape <= thread_escape_stim;
@@ -457,6 +461,7 @@ module BridgeToOutside (
 	 
 //	 thread_escape <= thread_escape_stim;
 //	 thread_escape <= thread_escape | thread_escape_stim;
+`endif
 	 
 //    clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
@@ -469,7 +474,7 @@ module BridgeToOutside (
 		 bus_busy_r <= 1'b 0; //z;
 		 
 		 if(ext_next_cpu_e_r == 1) begin
-	//      ext_next_cpu_e_r = 1'b 0; //z;
+	      ext_next_cpu_e_r = 1'b 0; //z;
 			disp_online_r <= 0;
 		 end 
 		 
@@ -521,7 +526,9 @@ module BridgeToOutside (
 		 //end //else
 
 //		 if(rst_state >= 7) begin
-		 
+
+
+`ifdef PAUSE_PROC_ENABLE
 //			if(no_data_exit_and_wait_begin_stim == 1'b 0)
 //			begin
 		 if(no_data_new == 1'b 1) begin
@@ -559,6 +566,9 @@ module BridgeToOutside (
        next_state_r <= thread_escape_stim; //1'b 0;
 //			next_state_r <= thread_escape_stim | no_data_exit_and_wait_begin_stim; //1'b 0;
        //end
+`else
+       next_state_r <= 0;
+`endif
 		 
 		 /** 
 		 else begin // no_data_exit_and_wait_begin_stim == 1
@@ -607,9 +617,12 @@ module BridgeToOutside (
 		cpu_index_set_r <= 0;
 		
 		no_data_exit_and_wait_begin <= 0;
+
+`ifdef PAUSE_PROC_ENABLE
 		no_data_cntr <= 0;
-		
 		//thread_escape <= 0;
+`endif
+		
 
 //      init_int = 1;
       
@@ -623,9 +636,11 @@ module BridgeToOutside (
 		  ext_next_cpu_e_r <= 1'b 0; //z;
       end 
 /**/
-      //thread_escape <= 1'b 0;
       no_data_exit_and_wait_begin <= 0;
+`ifdef PAUSE_PROC_ENABLE
       no_data_cntr <= 0;
+      //thread_escape <= 1'b 0;
+`endif
 		
 		addr_r <= 0;
 		data_r <= 0;
@@ -788,7 +803,8 @@ module BridgeToOutside (
       end else
 /**/
 
-      if(/* bus_busy_r != 1 */ bus_busy_in != 1 ) begin
+      //if(/* bus_busy_r != 1 */ bus_busy_in != 1 ) 
+		begin
 //      end else begin
 
 /*******
@@ -867,10 +883,10 @@ module BridgeToOutside (
             `READ_SRC0_P,
             `START_READ_CMD,
             `START_READ_CMD_P: begin
-                ext_dispatcher_q_r <= 1;
+                //ext_dispatcher_q_r <= 1;
                 cpu_msg_r <= 0; 
 
-                ext_next_cpu_e_r <= ext_next_cpu_e_stim;
+                //ext_next_cpu_e_r <= ext_next_cpu_e_stim;
 
                 //if(no_data_exit_and_wait_begin == 1) begin
                 //  next_state_r <= 1;
@@ -884,10 +900,10 @@ module BridgeToOutside (
             `WRITE_SRC1,
             `WRITE_SRC0,
             `WRITE_COND: begin
-              ext_dispatcher_q_r <= 1;
+              //ext_dispatcher_q_r <= 1;
               cpu_msg_r <= 0; 
 
-                ext_next_cpu_e_r <= ext_next_cpu_e_stim;
+                //ext_next_cpu_e_r <= ext_next_cpu_e_stim;
             end
             
             /** //!!!
@@ -969,12 +985,14 @@ module BridgeToOutside (
             end
 /**/
 
+`ifdef PAUSE_PROC_ENABLE
             `AUX_PRE_FINISH_BEGIN: begin
               ext_dispatcher_q_r <= 1;
               //cpu_msg_r <= 0; 
                 ext_next_cpu_e_r <= 1;
                 next_state_r <= 1;
             end
+`endif
 
             //`AFTER_MEM_SIZE_READ: begin
             //  ext_dispatcher_q_r <= 1;
@@ -1004,12 +1022,15 @@ module BridgeToOutside (
 			 
           case(state)
 /**
+//`ifndef PAUSE_PROC_ENABLE
             `START_BEGIN: begin
-              cpu_index_r = cpu_index_r | `CPU_ACTIVE;
+              //cpu_index_r = cpu_index_r | `CPU_ACTIVE;
             
 //              data_r = base_addr_r - 1;
               //read_dn_r = 1;
+				  next_state_r <= 1;
             end
+//`endif
 /**/
 
             `READ_MEM_SIZE_1,
@@ -1024,15 +1045,25 @@ module BridgeToOutside (
             `START_READ_CMD,
             `START_READ_CMD_P: begin
               cpu_msg_r <= 0; 
-              ext_dispatcher_q_r <= 1;
+              //ext_dispatcher_q_r <= 1;
 
               if(no_data_exit_and_wait_begin == 1) begin
                 next_state_r <= 1;
               end
 
+				  //if(
+				  //  disp_online_r == 1 &&
+				  // (
+					//   rw_halt == 1 ||
+					//	read_dn == 1 ||
+               //   write_dn == 1
+				  // )
+				  //) begin
                 ext_next_cpu_e_r <= ext_next_cpu_e_stim;
+              //end
             end
-            
+           
+			  
             /**/
             `ALU_BEGIN: begin
               cpu_msg_r <= 0; 
@@ -1045,8 +1076,7 @@ module BridgeToOutside (
                 
 //                next_state_r = 1;
                 ext_next_cpu_e_r <= 1;
-              end
-              else
+              end else
               if(
                 ext_cpu_msg_in == `CPU_R_STOP_DONE
 //                && ext_next_cpu_e_r !== 1
@@ -1061,6 +1091,7 @@ module BridgeToOutside (
             end
             /**/
 				
+				
             `ALU_RESULTS: begin
               if(cmd_code == `CMD_CHN) begin
                 ext_next_cpu_e_r <= 1;
@@ -1069,6 +1100,7 @@ module BridgeToOutside (
               end
             end
             
+				
             `WRITE_DST,
             `WRITE_DST_P,
             `WRITE_REG_IP,
@@ -1077,14 +1109,23 @@ module BridgeToOutside (
             `WRITE_SRC0,
             `WRITE_COND: begin
               cpu_msg_r <= 0; 
-              ext_dispatcher_q_r <= 1'b 1;
+              //ext_dispatcher_q_r <= 1'b 1;
 
-              ext_next_cpu_e_r <= ext_next_cpu_e_stim;
+				  //if(
+				  //  disp_online_r == 1 &&
+				  // (
+				  //   rw_halt == 1 ||
+				  //	read_dn == 1 ||
+              //    write_dn == 1
+				  // )
+				  //) begin
+                ext_next_cpu_e_r <= ext_next_cpu_e_stim;
+              //end
             end
-				
-				
-				
+
+
 /**/
+`ifdef PAUSE_PROC_ENABLE
             `BREAK_THREAD_SAVE_IP_AND_WAIT: begin
 //		        if(ext_cpu_msg_in == 0) begin
               if(disp_online_r == 1) begin
@@ -1113,6 +1154,7 @@ module BridgeToOutside (
               end
             end
 /**/
+
 
             `BREAK_THREAD_EXIT_AND_WAIT: begin
 //		        if(ext_cpu_msg_in == 0) begin
@@ -1160,13 +1202,16 @@ module BridgeToOutside (
             end
 /**/
 
+
             `AUX_PRE_FINISH_BEGIN: begin
 //              ext_dispatcher_q_r <= 1;
               cpu_msg_r <= 0; 
 
                 ext_next_cpu_e_r <= ext_next_cpu_e_stim;
             end
-            
+`endif
+
+				
             `FINISH_BEGIN: begin
                 cpu_msg_r <= 0; //cpu_msg_r ^ `CPU_R_END; //0;
                 //thread_escape <= 1'b 0;
@@ -1177,6 +1222,7 @@ module BridgeToOutside (
                 ext_next_cpu_e_r <= ext_next_cpu_e_stim;
             end
 
+				
             `FINISH_END: begin
               cpu_msg_r <= 0; 
               rst_state <= 1; //0; // = 1;
@@ -1191,6 +1237,7 @@ module BridgeToOutside (
             //  cpu_msg_r <= 0;
             //end
 
+				
             default: begin
               cpu_msg_r <= 0; 
               ext_dispatcher_q_r <= 1'b 0; //z;
