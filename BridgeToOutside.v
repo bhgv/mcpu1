@@ -320,14 +320,19 @@ module BridgeToOutside (
   
   
 `ifdef PAUSE_PROC_ENABLE
-  reg [7:0] no_data_cntr;  
-  
+  reg [7:0] no_data_cntr;
+`endif
+
   wire thread_escape_stim = //0;
+`ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
   /**/
                         //state != 0 &&
-//								rst_state >= 7 &&
-								
+//								rst_state >= 7 &&						
+`ifdef PAUSE_PROC_ENABLE
 								ext_cpu_msg_in == `CPU_R_BREAK_THREAD &&
+`else
+								ext_cpu_msg_in == `CPU_R_THREAD_ADDRESS &&
+`endif
 
 								addr_in == base_addr_r - `THREAD_HEADER_SPACE &&
 								(
@@ -343,9 +348,11 @@ module BridgeToOutside (
 
 								//no_data_exit_and_wait_begin == 1'b 0 //&&
 								//thread_escape == 1'b 0 //&&
+`else
+                        0
+`endif
 								;
   /**/
-`endif
   output reg thread_escape; // = thread_escape_stim;
 
   
@@ -453,15 +460,15 @@ module BridgeToOutside (
   
   always @(posedge clk) begin
 
-`ifdef PAUSE_PROC_ENABLE
+`ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
     if(rst_state >= 7) begin //!!!!!!!!!!!!!!!!!!!
 //!!!	   cpu_index_r <= cpu_index_int; //!!!!!!!!!!!!!!!!!!!
 	 thread_escape <= thread_escape_stim;
     end
+`endif
 	 
 //	 thread_escape <= thread_escape_stim;
 //	 thread_escape <= thread_escape | thread_escape_stim;
-`endif
 	 
 //    clk_oe = ~clk_oe;
 	 if(clk_oe == 0) begin
@@ -563,12 +570,11 @@ module BridgeToOutside (
       //  next_state_r <= 1'b 0;
       //end else
 
+`endif
+
        next_state_r <= thread_escape_stim; //1'b 0;
 //			next_state_r <= thread_escape_stim | no_data_exit_and_wait_begin_stim; //1'b 0;
        //end
-`else
-       next_state_r <= 0;
-`endif
 		 
 		 /** 
 		 else begin // no_data_exit_and_wait_begin_stim == 1

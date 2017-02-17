@@ -638,6 +638,7 @@ always @(/*pos*/negedge clk) begin
 					 state_ctl <= `CTL_CPU_LOOP;
               end
 				  
+`ifdef PAUSE_PROC_ENABLE
 				  `CPU_R_BREAK_THREAD: begin
                 addr_thread_to_op_r <= addr_in;
                 addr_chan_to_op_r <= data_in;
@@ -648,7 +649,8 @@ always @(/*pos*/negedge clk) begin
 						
 						state_ctl <= `CTL_CPU_LOOP;
               end
-				  
+`endif
+
 				  default: begin
 				    next_thread_r <= 0;
 
@@ -690,14 +692,12 @@ always @(/*pos*/negedge clk) begin
 				  cpu_msg_r <= 0; 
 				  
               case(cpu_msg_in) //data_wire)  				  
-`ifdef PAUSE_PROC_ENABLE
                 `CPU_R_STOP_THRD: begin
                   addr_thread_to_op_r <= addr_in;
                   addr_chan_to_op_r <= data_in;
 						
                   thrd_cmd_r <= `THREAD_CMD_STOP;
                 end
-`endif
                 
                 `CPU_R_FORK_THRD: begin
                   addr_thread_to_op_r <= addr_in;

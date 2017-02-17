@@ -273,7 +273,7 @@ module StateManager(
 /**/
 
 /**/
-`ifdef PAUSE_PROC_ENABLE
+`ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
     if(thread_escape == 1'b 1) begin
 	   case(state)
 
@@ -309,6 +309,7 @@ module StateManager(
 		endcase
 	 end else
 /**/
+`ifdef PAUSE_PROC_ENABLE
     if(no_data_exit_and_wait_begin == 1'b 1) begin
 	   case(state)
 //		  `START_READ_CMD_P,
@@ -395,6 +396,7 @@ module StateManager(
       endcase
     end else 
 `endif
+`endif // ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
 
 /**/
 //	 begin
