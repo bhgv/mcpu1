@@ -210,12 +210,13 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 
 /*  !!! */
   wire [`DATA_SIZE0:0] data_out = 
+/**
 //  assign data_wire = 
                                   //(cpu_msg === `CPU_R_FORK_DONE)
                                   ext_cpu_q === 1 ||
                                   (
-                                   (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg_in == `CPU_R_FORK_DONE)
-                                   || (/*state_ctl == `CTL_CPU_CMD &&*/ cpu_msg_in == `CPU_R_STOP_DONE)
+                                   (/*state_ctl == `CTL_CPU_CMD &&* / cpu_msg_in == `CPU_R_FORK_DONE)
+                                   || (/*state_ctl == `CTL_CPU_CMD &&* / cpu_msg_in == `CPU_R_STOP_DONE)
 //                                   || (state_ctl == `CTL_CPU_LOOP)
                                   )
                                   ? addr_chan_to_op_out
@@ -225,6 +226,8 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 											    : data_in //0
 											 )
 											 //: (data_r | data_in)
+/**/
+                                  data_r | data_in
                                   ;
 /**/
 
@@ -244,7 +247,8 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   wire next_thread =
                    cpu_msg_in == `CPU_R_START
 						 || cpu_msg_in == `CPU_R_FORK_DONE
-						 || next_thread_r == 1
+						 //|| cpu_msg_in == `CPU_R_THREAD_ADDRESS
+						 //|| next_thread_r == 1
                    ;
 						 
   wire run_next_cpu_from_loop;
@@ -528,6 +532,8 @@ always @(/*pos*/negedge clk) begin
               new_cpu_restarted <= 0;
             end
             addr_out_r <= next_proc; 
+				
+				data_r <= addr_chan_to_op_out;
                   
             cpu_q_r <= 1;
                   
@@ -554,6 +560,7 @@ always @(/*pos*/negedge clk) begin
 			 // AA test!
 			 
         addr_out_r <= 0; 
+		  //data_r <= 0;
         
         if(
           read_q == 1 &&
@@ -562,6 +569,7 @@ always @(/*pos*/negedge clk) begin
 			 //rw_halt_in == 0
         ) begin
 //!!!			 addr_out_r = addr_in;
+			 data_r <= 0;
 			 
           mem_addr_tmp <= addr_in;
           mem_rd <= 1;
@@ -584,6 +592,7 @@ always @(/*pos*/negedge clk) begin
 			 //rw_halt_in == 0
         ) begin
 //!!!			 addr_out_r = addr_in;
+			 data_r <= 0;
 			 
           mem_addr_tmp <= addr_in;
           mem_data_tmp <= data_in;
@@ -605,6 +614,8 @@ always @(/*pos*/negedge clk) begin
           ext_read_q_r <= 0;
 			 ext_write_q_r <= 0;
 			 
+			 data_r <= 0;
+			 
 			 cpu_msg_r <= 0;  // test!
           
             case(cpu_msg_in) //data_wire)
@@ -616,7 +627,7 @@ always @(/*pos*/negedge clk) begin
 
                 new_cpu_restarted <= 0;
 
-					 next_thread_r <= 1;
+					 next_thread_r <= 0; //1;
 //                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
 
                 state_ctl <= `CTL_CPU_LOOP;
@@ -631,9 +642,11 @@ always @(/*pos*/negedge clk) begin
               end
             
               `CPU_R_FORK_DONE: begin
-				    next_thread_r <= 1;
+				    next_thread_r <= 0; //1;
 //                thrd_cmd_r = `THREAD_CMD_GET_NEXT_STATE;
                 
+					 //data_r <= addr_chan_to_op_out;
+					 
                 //cpu_msg_r <= 0;
 					 state_ctl <= `CTL_CPU_LOOP;
               end
@@ -690,6 +703,8 @@ always @(/*pos*/negedge clk) begin
 
             if(thrd_cmd_r == `THREAD_CMD_NULL) begin
 				  cpu_msg_r <= 0; 
+			 
+              data_r <= 0;
 				  
               case(cpu_msg_in) //data_wire)  				  
                 `CPU_R_STOP_THRD: begin
@@ -741,12 +756,16 @@ always @(/*pos*/negedge clk) begin
 				  case(thrd_cmd_r)
 					 `THREAD_CMD_RUN: begin
 					   cpu_msg_r <= `CPU_R_FORK_DONE;
+						
+						data_r <= addr_chan_to_op_out;
 					  
 					   thrd_cmd_r <= `THREAD_CMD_NULL;
 					 end
 					
 					 `THREAD_CMD_STOP: begin
 					   cpu_msg_r <= `CPU_R_STOP_DONE;
+						
+						data_r <= addr_chan_to_op_out;
 					  
 					   thrd_cmd_r <= `THREAD_CMD_NULL;
 					 end
@@ -754,6 +773,8 @@ always @(/*pos*/negedge clk) begin
 					 `THREAD_CMD_CHAN_SET,
 					 `THREAD_CMD_CHAN_GET
 					 : begin
+					   data_r <= 0;
+						
 					   //cpu_msg_r <= `CPU_R_STOP_DONE;
 					   thrd_cmd_r <= `THREAD_CMD_NULL;
 					 end
@@ -764,6 +785,8 @@ always @(/*pos*/negedge clk) begin
 					   //cpu_msg_r <= `CPU_R_STOP_DONE;
 					   thrd_cmd_r <= `THREAD_CMD_NULL;
 						
+						data_r <= 0;
+						
 						state_ctl <= `CTL_CPU_LOOP;
 					 end
 `endif
@@ -772,6 +795,8 @@ always @(/*pos*/negedge clk) begin
 					 : begin
 					   //cpu_msg_r <= `CPU_R_STOP_DONE;
 					   thrd_cmd_r <= `THREAD_CMD_NULL;
+						
+						data_r <= 0;
 						
 						state_ctl <= `CTL_CHAN_RESULT_LOOP;
 					 end

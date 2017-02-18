@@ -1,7 +1,7 @@
 
 
-`define CPU_MSG_SIZE0 9
-`define CPU_MSG_SIZE 10
+`define CPU_MSG_SIZE0 7
+`define CPU_MSG_SIZE 8
 
 
 `define STATE_SIZE0 7

@@ -277,14 +277,14 @@ module StateManager(
     if(thread_escape == 1'b 1) begin
 	   case(state)
 
-/**/
+/**
 		  `WAIT_FOR_START: begin
 //	       state <= state + 1;
 		    next_state_dn_r <= ~next_state_dn_r;
 		  end
 /**/
 
-		  //`WAIT_FOR_START,
+		  `WAIT_FOR_START,
 		  `FINISH_BEGIN,
 		  `FINISH_END
 		  : begin

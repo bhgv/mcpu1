@@ -129,11 +129,12 @@
 `define CHN_OP_NULL 0
 `define CHN_OP_SEND 1
 `define CHN_OP_RECEIVE 2
-`define CHN_OP_DATA_RECEIVED 8'hc1
-`define CHN_OP_DATA_SENT 8'hc2
 
 `define CHN_OP_SEND_FREEZED 5
 `define CHN_OP_RECEIVE_FREEZED 6
+
+`define CHN_OP_DATA_RECEIVED 8'hc1
+`define CHN_OP_DATA_SENT 8'hc2
 
 `define CHN_OP_NO_RESULTS 8'hc0
 // AAA channels in-threadManager ops/states

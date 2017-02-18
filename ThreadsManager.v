@@ -64,8 +64,8 @@ parameter PROC_QUANTITY = 8;
   input wire [7:0] ctl_state;
   reg [7:0] ctl_state_int;
   
-  input wire [7:0] cpu_msg_in;
-  output wire [7:0] cpu_msg_out;
+  input wire [`CPU_MSG_SIZE0:0] cpu_msg_in;
+  output wire [`CPU_MSG_SIZE0:0] cpu_msg_out;
 
   reg [`DATA_SIZE0:0] next_proc_int_r;
 `ifdef USE_CLK_2F
@@ -285,6 +285,42 @@ parameter PROC_QUANTITY = 8;
 
 
 		    case(ctl_state_int)
+			   0: begin
+				  //run_next_cpu_from_loop <= 0;
+				  
+              //dbg <= 0;
+              if(
+				     ready_to_fork_thread == 1 || //next_thread == 1 ||
+					  (is_chn_proc == 1 && is_chn_data == 1) ||
+					  is_chn_rslt == 1
+				  ) begin
+
+                ready_to_fork_thread <= 0;
+
+                if(is_pproc == 1) begin
+				      {data_r_int, next_proc_int_r} <= pproc_r;
+                  
+						next_proc_ready <= 1;
+                  
+						aproc_tbl_addr <= aproc_e;
+                  //aproc_tbl[aproc_e] <= pproc_r; //{data_r_int, next_proc_int_r};
+                  
+				      //is_pproc <= 0;
+
+				      ctl_state_int <= `CTL_CPU_START_THREAD_ph01;
+//				      ctl_state_int <= `CTL_CPU_START_THREAD_ph1;
+                end else begin
+              
+//                  {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_i];
+						aproc_tbl_addr <= aproc_i;
+
+				      ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+//				      ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
+                end
+              end
+            end
+
+
 				`CTL_CPU_START_THREAD_ph01: begin
               //aproc_tbl[aproc_e] <= pproc_r; //{data_r_int, next_proc_int_r};
               aproc_tbl[aproc_tbl_addr] <= pproc_r; //{data_r_int, next_proc_int_r};
@@ -425,11 +461,13 @@ parameter PROC_QUANTITY = 8;
 						
                   ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 
-                        //aproc_i <= aproc_i_next;
-                        //aproc_tbl_addr <= aproc_i_next;
+                        /**
+                        aproc_i <= aproc_i_next;
+                        aproc_tbl_addr <= aproc_i_next;
 
-                        //next_proc_ready <= 0;
-                        //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+                        next_proc_ready <= 0;
+                        ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+								/**/
 					 end
 
 					   //is_chn_proc <= 0;
@@ -648,7 +686,7 @@ parameter PROC_QUANTITY = 8;
 						 
 						 is_sproc <= 0;
 						 
-						 ready_to_fork_thread <= 0;
+						 //ready_to_fork_thread <= 0;
 						 
 						 ctl_state_int <= `CTL_CPU_REMOVE_THREAD_ph10;
 					  end else begin
@@ -757,15 +795,15 @@ parameter PROC_QUANTITY = 8;
 									
                            ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
                          end else begin
-								   aproc_tbl_addr <= aproc_i_next;
+								   //aproc_tbl_addr <= aproc_i_next;
 								 
-							      next_proc_ready <= 0;
-								   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+							      //next_proc_ready <= 0;
+								   //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
 								 
-                           //next_proc_ready <= 1;
+                           next_proc_ready <= 1;
 									//run_next_cpu_from_loop <= 1;
 									
-                           //ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+                           ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
 							    end
 								 
                        //end else begin
@@ -1020,7 +1058,8 @@ parameter PROC_QUANTITY = 8;
 		  
 		    //run_next_cpu_from_loop <= 0;
 		  
-		    case(ctl_state_int)
+//		    case(ctl_state_int)
+/**
 			   0: begin
 				  //run_next_cpu_from_loop <= 0;
 				  
@@ -1055,6 +1094,7 @@ parameter PROC_QUANTITY = 8;
                 end
               end
             end
+/**/
 
 /**
             `CTL_CPU_MAIN_THREAD_PROCESSOR_0: begin
@@ -1184,7 +1224,7 @@ parameter PROC_QUANTITY = 8;
 		      end 
 /**/
 				
-		    endcase
+//		    endcase
 		  
 		  end
 		  
