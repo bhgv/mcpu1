@@ -38,7 +38,7 @@ module CpuCell(
             bus_busy_in,
 				bus_busy_out,
 				
-				disp_online,
+				//disp_online,
 				
 				addr_unmodificable_b,
             
@@ -134,7 +134,8 @@ module CpuCell(
   wire [31:0] command;
   
   
-  output wire disp_online;
+  //output 
+  wire disp_online;
           
           
   wire [`ADDR_SIZE0:0] base_addr;

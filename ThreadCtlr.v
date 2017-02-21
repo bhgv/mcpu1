@@ -138,8 +138,8 @@ module ThreadCtlr(
   
   wire [`DATA_SIZE0:0] data_for_stop_msg =
 						        src1 == 0 
-								  ? base_addr_data - `THREAD_HEADER_SPACE // 0 // ?????
-								  : src1 + base_addr_data - `THREAD_HEADER_SPACE
+								  ? src0 + base_addr_data //- `THREAD_HEADER_SPACE // 0 // ?????
+								  : src1 + base_addr_data //- `THREAD_HEADER_SPACE
 								  ;
   
   //reg clk_oe;
@@ -223,7 +223,7 @@ module ThreadCtlr(
  //                   cpu_msg_in_r = 1;
                   
                     if(cpu_msg_in == `CPU_R_FORK_DONE) begin
-//                      dst_r <= data_in;
+                      dst_r <= data_in;
 							 
                       signal_sent <= 0;
                       next_state_r <= 1;
@@ -244,7 +244,7 @@ module ThreadCtlr(
 //                  cpu_msg_r !== `CPU_R_FORK_THRD && 
                   signal_sent == 0
                 ) begin
-                  addr_r <= src0 + base_addr - `THREAD_HEADER_SPACE;
+                  addr_r <= src0 + base_addr_data; //base_addr - `THREAD_HEADER_SPACE;
                   data_r <= 
 						        data_for_stop_msg
 //						        src1 == 0 
@@ -272,7 +272,7 @@ module ThreadCtlr(
      //               cpu_msg_in_r = 1;
                   
                   if(cpu_msg_in == `CPU_R_STOP_DONE) begin
-//						  dst_r <= data_in;
+						  dst_r <= data_in;
 						  
                     signal_sent <= 0;
                     next_state_r <= 1;

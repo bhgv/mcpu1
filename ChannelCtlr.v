@@ -137,7 +137,7 @@ module ChannelCtlr(
   reg next_state_r;
   wire next_state = next_state_r;
   
-  reg [4:0] state_int;
+  reg [7:0] state_int;
   
   input wire rst;
   
@@ -209,7 +209,8 @@ module ChannelCtlr(
     if(chan_op == 1) begin
 	   chan_op <= 0;
       cpu_msg_pulse <= 0;
-    end else begin
+    end else 
+	 begin
 
 //      cpu_msg_r = 0;
     
@@ -391,6 +392,10 @@ module ChannelCtlr(
                           state_int <= 0;
                           next_state_r <= 1;
 								end
+								
+								//default: begin
+								//  state_int <= state_int + 1;
+								//end
 
                       endcase
 						  end

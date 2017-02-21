@@ -108,11 +108,15 @@ parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
   wire [`CPU_MSG_SIZE0:0] cpu_msg_in_a [0:CPU_QUANTITY - 1];
   wire [`CPU_MSG_SIZE0:0] cpu_msg_in_a_to_or [0:CPU_QUANTITY - 1];
 
-  wire [`CPU_MSG_SIZE0:0] ext_cpu_e_a [0:CPU_QUANTITY - 1];
-  wire [`CPU_MSG_SIZE0:0] ext_cpu_e_a_to_or [0:CPU_QUANTITY - 1];
+//  wire [`CPU_MSG_SIZE0:0] ext_cpu_e_a [0:CPU_QUANTITY - 1];
+//  wire [`CPU_MSG_SIZE0:0] ext_cpu_e_a_to_or [0:CPU_QUANTITY - 1];
 
-  wire [`CPU_MSG_SIZE0:0] dispatcher_q_a [0:CPU_QUANTITY - 1];
-  wire [`CPU_MSG_SIZE0:0] dispatcher_q_a_to_or [0:CPU_QUANTITY - 1];
+//  wire [`CPU_MSG_SIZE0:0] dispatcher_q_a [0:CPU_QUANTITY - 1];
+//  wire [`CPU_MSG_SIZE0:0] dispatcher_q_a_to_or [0:CPU_QUANTITY - 1];
+
+  wire [CPU_QUANTITY - 1:0] ext_cpu_e_a;
+
+  wire [CPU_QUANTITY - 1:0] dispatcher_q_a;
 
   
   
@@ -217,15 +221,17 @@ assign ext_rst_e = rst_w_e_a[CPU_QUANTITY-1];
   [`ADDR_SIZE0:0] cpu_cell_addr_in;
 
 
-  wire read_q_a[0:CPU_QUANTITY-1];
-  wire read_q_a_to_or[0:CPU_QUANTITY-1];
+//  wire read_q_a[0:CPU_QUANTITY-1];
+  wire [CPU_QUANTITY-1:0] read_q_a;
+//  wire read_q_a_to_or[0:CPU_QUANTITY-1];
   
   wire 
   //wor 
   cpu_cell_read_q;// = |read_q_a;
 
-  wire write_q_a[0:CPU_QUANTITY-1];
-  wire write_q_a_to_or[0:CPU_QUANTITY-1];
+//  wire write_q_a[0:CPU_QUANTITY-1];
+  wire [CPU_QUANTITY-1:0] write_q_a;
+//  wire write_q_a_to_or[0:CPU_QUANTITY-1];
   wire 
   //wor 
   cpu_cell_write_q;// = |write_q_a;
@@ -233,15 +239,17 @@ assign ext_rst_e = rst_w_e_a[CPU_QUANTITY-1];
 
 
 
-wire rw_halt_a[0:CPU_QUANTITY-1];
-wire rw_halt_a_to_or[0:CPU_QUANTITY-1];
+//wire rw_halt_a[0:CPU_QUANTITY-1];
+wire [CPU_QUANTITY-1:0]rw_halt_a;
+//wire rw_halt_a_to_or[0:CPU_QUANTITY-1];
 wire 
 //wor 
 cpu_cell_rw_halt_in;// = (|rw_halt_a) | DOC_rw_halt_out;
 wire cpu_cell_rw_halt_in_wire = cpu_cell_rw_halt_in;
 
-wire halt_q_a[0:CPU_QUANTITY-1];
-wire halt_q_a_to_or[0:CPU_QUANTITY-1];
+//wire halt_q_a[0:CPU_QUANTITY-1];
+wire [CPU_QUANTITY-1:0] halt_q_a;
+//wire halt_q_a_to_or[0:CPU_QUANTITY-1];
 wire 
 //wor 
 cpu_cell_halt_q_in;// = |halt_q_a;
@@ -250,16 +258,18 @@ wire cpu_cell_halt_q_in_wire = cpu_cell_halt_q_in;
 //wire ext_rw_halt;
 
 
-wire bus_busy_in_a[0:CPU_QUANTITY-1];
-wire bus_busy_in_a_to_or[0:CPU_QUANTITY-1];
+//wire bus_busy_in_a[0:CPU_QUANTITY-1];
+wire [CPU_QUANTITY-1:0] bus_busy_in_a;
+//wire bus_busy_in_a_to_or[0:CPU_QUANTITY-1];
 wire 
 //wor 
 bus_busy_out;// = ( |bus_busy_in_a ) | bus_busy;
 wire bus_busy_out_wire = bus_busy_out;
 
 
-wire want_write_out_a[0:CPU_QUANTITY-1];
-wire want_write_out_a_to_or[0:CPU_QUANTITY-1];
+//wire want_write_out_a[0:CPU_QUANTITY-1];
+wire [CPU_QUANTITY-1:0] want_write_out_a;
+//wire want_write_out_a_to_or[0:CPU_QUANTITY-1];
 wire 
 //wor 
 want_write_in;// = |want_write_out_a;
@@ -355,30 +365,30 @@ if(i > 0) begin:cpu_cell_or_buses_biger_0
   assign addr_in_a_to_or[i] = addr_in_a[i] | addr_in_a_to_or[i-1];
   assign cpu_msg_in_a_to_or[i] = cpu_msg_in_a[i] | cpu_msg_in_a_to_or[i-1];
 
-  assign ext_cpu_e_a_to_or[i] = ext_cpu_e_a[i] | ext_cpu_e_a_to_or[i-1];
-  assign dispatcher_q_a_to_or[i] = dispatcher_q_a[i] | dispatcher_q_a_to_or[i-1];
-  assign read_q_a_to_or[i] = read_q_a[i] | read_q_a_to_or[i-1];
-  assign write_q_a_to_or[i] = write_q_a[i] | write_q_a_to_or[i-1];
+//  assign ext_cpu_e_a_to_or[i] = ext_cpu_e_a[i] | ext_cpu_e_a_to_or[i-1];
+//  assign dispatcher_q_a_to_or[i] = dispatcher_q_a[i] | dispatcher_q_a_to_or[i-1];
+//  assign read_q_a_to_or[i] = read_q_a[i] | read_q_a_to_or[i-1];
+//  assign write_q_a_to_or[i] = write_q_a[i] | write_q_a_to_or[i-1];
 
-  assign rw_halt_a_to_or[i] = rw_halt_a[i] | rw_halt_a_to_or[i-1];
-  assign halt_q_a_to_or[i] = halt_q_a[i] | halt_q_a_to_or[i-1];
-  assign bus_busy_in_a_to_or[i] = bus_busy_in_a[i] | bus_busy_in_a_to_or[i-1];
-  assign want_write_out_a_to_or[i] = want_write_out_a[i] | want_write_out_a_to_or[i-1];
+//  assign rw_halt_a_to_or[i] = rw_halt_a[i] | rw_halt_a_to_or[i-1];
+//  assign halt_q_a_to_or[i] = halt_q_a[i] | halt_q_a_to_or[i-1];
+//  assign bus_busy_in_a_to_or[i] = bus_busy_in_a[i] | bus_busy_in_a_to_or[i-1];
+//  assign want_write_out_a_to_or[i] = want_write_out_a[i] | want_write_out_a_to_or[i-1];
 /**/
 end else begin:cpu_cell_or_buses_0
   assign data_in_a_to_or[0] = data_in_a[0];
   assign addr_in_a_to_or[0] = addr_in_a[0];
   assign cpu_msg_in_a_to_or[0] = cpu_msg_in_a[0];
 
-  assign ext_cpu_e_a_to_or[0] = ext_cpu_e_a[0];
-  assign dispatcher_q_a_to_or[0] = dispatcher_q_a[0];
-  assign read_q_a_to_or[0] = read_q_a[0];
-  assign write_q_a_to_or[0] = write_q_a[0];
+//  assign ext_cpu_e_a_to_or[0] = ext_cpu_e_a[0];
+//  assign dispatcher_q_a_to_or[0] = dispatcher_q_a[0];
+//  assign read_q_a_to_or[0] = read_q_a[0];
+//  assign write_q_a_to_or[0] = write_q_a[0];
 
-  assign rw_halt_a_to_or[0] = rw_halt_a[0];
-  assign halt_q_a_to_or[0] = halt_q_a[0];
-  assign bus_busy_in_a_to_or[0] = bus_busy_in_a[0];
-  assign want_write_out_a_to_or[0] = want_write_out_a[0];
+//  assign rw_halt_a_to_or[0] = rw_halt_a[0];
+//  assign halt_q_a_to_or[0] = halt_q_a[0];
+//  assign bus_busy_in_a_to_or[0] = bus_busy_in_a[0];
+//  assign want_write_out_a_to_or[0] = want_write_out_a[0];
 /**/
 end
 
@@ -425,15 +435,15 @@ assign cpu_cell_data_in = data_in_a_to_or[CPU_QUANTITY - 1];
 assign cpu_cell_addr_in = addr_in_a_to_or[CPU_QUANTITY - 1];
 assign cpu_msg_in = cpu_msg_in_a_to_or[CPU_QUANTITY - 1];
 
-assign ext_cpu_e = ext_cpu_e_a_to_or[CPU_QUANTITY - 1];
-assign dispatcher_q = dispatcher_q_a_to_or[CPU_QUANTITY - 1];
-assign cpu_cell_read_q = read_q_a_to_or[CPU_QUANTITY - 1];
-assign cpu_cell_write_q = write_q_a_to_or[CPU_QUANTITY - 1];
+assign ext_cpu_e = |ext_cpu_e_a; //ext_cpu_e_a_to_or[CPU_QUANTITY - 1];
+assign dispatcher_q = |dispatcher_q_a; //dispatcher_q_a_to_or[CPU_QUANTITY - 1];
+assign cpu_cell_read_q = |read_q_a; //read_q_a_to_or[CPU_QUANTITY - 1];
+assign cpu_cell_write_q = |write_q_a; //write_q_a_to_or[CPU_QUANTITY - 1];
 
-assign cpu_cell_rw_halt_in = rw_halt_a_to_or[CPU_QUANTITY - 1] | DOC_rw_halt_out;
-assign cpu_cell_halt_q_in = halt_q_a_to_or[CPU_QUANTITY - 1];
-assign bus_busy_out = bus_busy_in_a_to_or[CPU_QUANTITY - 1] | bus_busy;
-assign want_write_in = want_write_out_a_to_or[CPU_QUANTITY - 1];
+assign cpu_cell_rw_halt_in = |rw_halt_a | DOC_rw_halt_out; //rw_halt_a_to_or[CPU_QUANTITY - 1] | DOC_rw_halt_out;
+assign cpu_cell_halt_q_in = |halt_q_a; //halt_q_a_to_or[CPU_QUANTITY - 1];
+assign bus_busy_out = |bus_busy_in_a | bus_busy; //bus_busy_in_a_to_or[CPU_QUANTITY - 1] | bus_busy;
+assign want_write_in = |want_write_out_a; //want_write_out_a_to_or[CPU_QUANTITY - 1];
 /**/
 //assign cpu_cell_rw_halt_in = DOC_rw_halt_out;
 //assign bus_busy_out = bus_busy;

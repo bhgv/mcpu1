@@ -78,8 +78,8 @@ lpoo:
 //  stop_self;
 
   ip = z + [ip];
-  loop;
-//  msg;
+//  loop;
+  msg;
 
 
 /*

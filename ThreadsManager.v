@@ -281,8 +281,12 @@ parameter PROC_QUANTITY = 8;
 
 
 
-
-
+    if(
+        ready_to_fork_thread == 0 &&
+		  next_thread == 1
+	 ) begin
+      ready_to_fork_thread <= 1;
+    end else
 
 		    case(ctl_state_int)
 			   0: begin
@@ -290,9 +294,9 @@ parameter PROC_QUANTITY = 8;
 				  
               //dbg <= 0;
               if(
-				     ready_to_fork_thread == 1 || //next_thread == 1 ||
-					  (is_chn_proc == 1 && is_chn_data == 1) ||
-					  is_chn_rslt == 1
+				     ready_to_fork_thread == 1 //|| //next_thread == 1 ||
+					  //|| (is_chn_proc == 1 && is_chn_data == 1) //||
+					  //|| is_chn_rslt == 1
 				  ) begin
 
                 ready_to_fork_thread <= 0;
@@ -400,6 +404,8 @@ parameter PROC_QUANTITY = 8;
 						
 						next_proc_ready <= 1;
 						run_next_cpu_from_loop <= 1;
+						
+						//ready_to_fork_thread <= 0;
 
 				      ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER;
 				end
@@ -436,6 +442,7 @@ parameter PROC_QUANTITY = 8;
 						
 					   ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
 					 end else
+                /**/
 				    if(chn_seek_cntr == 0 /*&& chn_op_r_int == `CHN_OP_NULL*/) begin
 					   aproc_tbl_addr <= aproc_i_next;
 					   aproc_i <= aproc_i_next;
@@ -444,6 +451,7 @@ parameter PROC_QUANTITY = 8;
 
 					   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
 					 end else 
+                /**/
 					 begin
 				      //if(chn_op_r_int == `CHN_OP_NULL) begin
                     chn_data_tbl[aproc_tbl_addr] <= {chn_data_r, chn_number_r};
@@ -509,22 +517,23 @@ parameter PROC_QUANTITY = 8;
 //						    {chn_data_r, chn_number_r} == 
 						    //chn_number_r == chn_num_parsed
 						  ) begin
-						    chn_data_r <= chn_data_parsed;
-							 chn_op_r <= `CHN_OP_DATA_RECEIVED;
+						    //chn_data_r <= chn_data_parsed;
+							 chn_op_r <= `CHN_OP_NULL; //`CHN_OP_DATA_RECEIVED;
 							 
 							 //chn_seek_cntr <= 1;
-/*
-							 is_chn_rslt <= 1;
-							 
+/**/
                       chn_rslt_proc_r <= chn_proc_r;
                       chn_rslt_number_r <= chn_number_r;
 
                       chn_rslt_data_r <= chn_data_parsed;
-                      chn_rslt_op_r <= chn_op_r_int;
+                      chn_rslt_op_r <= `CHN_OP_DATA_RECEIVED; //chn_op_r_int;
 						
                       is_chn_data <= 0;
                       is_chn_proc <= 0;
-
+							 
+							 is_chn_rslt <= 1;
+							 
+/**
 					       //is_chn_proc <= 0;
 					       //is_chn_data <= 0;
 */
@@ -543,13 +552,27 @@ parameter PROC_QUANTITY = 8;
 //						    {chn_data_r, chn_number_r} == 
 						    //chn_number_r == chn_num_parsed
 						  ) begin
-						    chn_data_tbl[aproc_tbl_addr] <= {chn_data_r, chn_number_r};
-							 chn_data_r_int <= {chn_data_r, chn_number_r};
+						    //chn_data_tbl[aproc_tbl_addr] <= {chn_data_r, chn_number_r};
+							 //chn_data_r_int <= {chn_data_r, chn_number_r};
 							 
-							 chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_DATA_RECEIVED;
-							 chn_op_r_int <= `CHN_OP_DATA_RECEIVED;
+							 chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_NULL; //`CHN_OP_DATA_RECEIVED;
+							 chn_op_r_int <= `CHN_OP_NULL; //`CHN_OP_DATA_RECEIVED;
 							 
 							 chn_op_r <= `CHN_OP_DATA_SENT;
+/**/
+                      chn_rslt_proc_r <= {data_r_int, next_proc_int_r}; //chn_proc_r;
+                      chn_rslt_number_r <= chn_number_r;
+
+                      chn_rslt_data_r <= chn_data_r;
+                      chn_rslt_op_r <= `CHN_OP_DATA_RECEIVED; //chn_op_r_int;
+						
+                      is_chn_data <= 0;
+                      is_chn_proc <= 0;
+							 
+							 is_chn_rslt <= 1;
+							 
+/**/
+                      //chn_op_r <= `CHN_OP_DATA_SENT;
 						  end
 							 
 					       ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_0;
@@ -770,9 +793,9 @@ parameter PROC_QUANTITY = 8;
 
 							  //if(chn_proc_r == {data_r_int, next_proc_int_r}) begin
                          if(
-							        is_chn_rslt == 0 &&
-								     is_chn_data == 0 &&
-								     is_chn_proc == 0 //&&
+							        is_chn_rslt == 0 //&&
+								 //    is_chn_data == 0 &&
+								 //    is_chn_proc == 0 //&&
 									  //chn_proc_r == {data_r_int, next_proc_int_r}
                          ) begin
 					            chn_rslt_proc_r <= {data_r_int, next_proc_int_r}; //chn_proc_r_int;
@@ -795,15 +818,15 @@ parameter PROC_QUANTITY = 8;
 									
                            ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
                          end else begin
-								   //aproc_tbl_addr <= aproc_i_next;
+								   aproc_tbl_addr <= aproc_i_next;
 								 
-							      //next_proc_ready <= 0;
-								   //ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
+							      next_proc_ready <= 0;
+								   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
 								 
-                           next_proc_ready <= 1;
+                           //next_proc_ready <= 1;
 									//run_next_cpu_from_loop <= 1;
 									
-                           ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
+                           //ctl_state_int <= `CTL_CPU_MAIN_THREAD_PROCESSOR_FINALISER; //0;
 							    end
 								 
                        //end else begin
@@ -1046,9 +1069,9 @@ parameter PROC_QUANTITY = 8;
     end else begin
 
 
-      if(next_thread == 1) begin //thrd_cmd == `THREAD_CMD_GET_NEXT_STATE) begin
-        ready_to_fork_thread <= 1;
-      end //else 
+      //if(next_thread == 1) begin //thrd_cmd == `THREAD_CMD_GET_NEXT_STATE) begin
+      //  ready_to_fork_thread <= 1;
+      //end //else 
 		
 		begin
 
@@ -1241,12 +1264,16 @@ parameter PROC_QUANTITY = 8;
               if(is_pproc == 0) begin
 				    pproc_r <= {data_in, addr_in};
 					 is_pproc <= 1;
+					 
+					 //run_next_cpu_from_loop <= 1;
                 
-                data_r_int <= 32'h deadbeef; //-1;
-                thrd_rslt_r <= 1;
+                //data_r_int <= 32'h deadbeef; //-1;
+                thrd_rslt_r <= 0; //1;
+					 
+					 //ready_to_fork_thread <= 1; //??
               end else
               begin
-                data_r_int <= 0;
+                //data_r_int <= 0;
                 thrd_rslt_r <= 0;
               end
             end
@@ -1254,14 +1281,14 @@ parameter PROC_QUANTITY = 8;
             `THREAD_CMD_STOP: begin
 				
 				  if(is_sproc == 1) begin
-                data_r_int <= 0;
+                //data_r_int <= 0;
                 thrd_rslt_r <= 0;
 				  end else begin
 				    sproc_r <= {data_in, addr_in};
 					 sproc_finish_i_r <= aproc_i;
 					 is_sproc <= 1;
 					 
-                data_r_int <= 32'h beefdead; //-1;
+                //data_r_int <= 32'h beefdead; //-1;
                 thrd_rslt_r <= 1;
               end
               
@@ -1306,7 +1333,7 @@ parameter PROC_QUANTITY = 8;
 					 pause_proc_timeout_r <= PROC_QUANTITY; // * 2;
               end else
               begin
-                data_r_int <= 0;
+                //data_r_int <= 0;
                 thrd_rslt_r <= 0;
               end
             end
@@ -1323,10 +1350,10 @@ parameter PROC_QUANTITY = 8;
                 
                 //data_r_int <= 32'h deadbeef; //-1;
                 //thrd_rslt_r <= 1;
-              end else
-              begin
-                data_r_int <= 0;
-                thrd_rslt_r <= 0;
+              //end else
+              //begin
+              //  data_r_int <= 0;
+              //  thrd_rslt_r <= 0;
               end
 				  /**/
             end
@@ -1336,16 +1363,16 @@ parameter PROC_QUANTITY = 8;
               if(is_chn_proc == 0 && is_chn_data == 0) begin
 				    chn_op_r <= `CHN_OP_RECEIVE;
 				    //chn_number_r <= {data_in, addr_in};
-				    chn_data_r <= 32'hdeadbeef;
+				    //chn_data_r <= 32'hdeadbeef;
 				    chn_number_r <= addr_in;
 					 is_chn_data <= 1;
                 
                 //data_r_int <= 32'h deadbeef; //-1;
                 //thrd_rslt_r <= 0;
-              end else
-              begin
-                data_r_int <= 0;
-                thrd_rslt_r <= 0;
+              //end else
+              //begin
+              //  data_r_int <= 0;
+              //  thrd_rslt_r <= 0;
               end
 				  /**/
             end
@@ -1353,7 +1380,7 @@ parameter PROC_QUANTITY = 8;
             `THREAD_CMD_THRD_ADDR: begin
 				  /**/
               if(is_chn_proc == 0 && is_chn_data == 1 /*&& chn_seek_cntr == 1*/) begin
-				    chn_proc_r <= {data_in, addr_in};
+//				    chn_proc_r <= {data_in, addr_in};
 //					 is_chn_proc <= 1;
 					 
 					 if(is_chn_rslt == 1) begin
@@ -1365,6 +1392,8 @@ parameter PROC_QUANTITY = 8;
 						  //data_r <= chn_rslt_data_r;
 						  chan_data_r <= chn_rslt_data_r;
 						  result_op_r <= chn_rslt_op_r;
+						  
+						  //is_chn_data <= 0;
 
 						  is_chn_rslt <= 0;
                   end else begin
@@ -1373,19 +1402,24 @@ parameter PROC_QUANTITY = 8;
 					   is_chn_data <= 0;
 					   is_chn_proc <= 0;
 					 end else begin
-						result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+                  chn_proc_r <= {data_in, addr_in};
+
+                  result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
 						
 						chn_seek_cntr <= 1;
 
 					   is_chn_proc <= 1;
+						
+						ready_to_fork_thread <= 1; //??
 					 end
                 
                 //data_r_int <= 32'h deadbeef; //-1;
                 //thrd_rslt_r <= 0;
               end else
               begin
-                data_r_int <= 0;
-                thrd_rslt_r <= 0;
+                result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+//                data_r_int <= 0;
+//                thrd_rslt_r <= 0;
               end
 				  /**/
             end
