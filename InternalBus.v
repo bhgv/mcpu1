@@ -57,6 +57,8 @@ module InternalBus(
         cpu_msg_out,
 		  
 		  chan_op,
+		  
+		  chan_escape,
         
         disp_online,
         
@@ -84,7 +86,7 @@ module InternalBus(
   
   wire [3:0] cmd_code = command[31:28];
   
-    
+  
   input wire rst;
   
   input wire halt_q_in;
@@ -92,6 +94,7 @@ module InternalBus(
   input wire rw_halt_in;
   output wire rw_halt_out;
   
+  output wire chan_escape;
   
   input wire[`ADDR_SIZE0:0] addr_unmodificable_b;
   
@@ -558,6 +561,8 @@ module InternalBus(
 		  
 		  .chan_op(chan_op),
 		  .chan_wait_next_time(chan_wait_next_time),
+		  
+		  .chan_escape(chan_escape),
         
         .next_state(next_state_ch),
         

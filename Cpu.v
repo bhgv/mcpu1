@@ -178,6 +178,8 @@ module CpuCell(
   wire no_data_exit_and_wait_begin;
 
   wire thread_escape;
+  
+  wire chan_escape;
 
           
 /**/
@@ -194,6 +196,8 @@ BridgeToOutside outside_bridge (
             .command(command),
             
             .cpu_ind_rel(cpu_ind_rel),
+				
+				.chan_escape(chan_escape),
 				
 //            .halt_q_in(halt_q),
 //            .halt_q(halt_q),
@@ -295,6 +299,8 @@ BridgeToOutside outside_bridge (
             .chan_msg_strb_o(chan_msg_strb_o),
 				
 				.chan_op(chan_op),
+				
+				.chan_escape(chan_escape),
 
 //            .read_e(read_e),
 //            .write_e(write_e),

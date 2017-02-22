@@ -1404,7 +1404,7 @@ parameter PROC_QUANTITY = 8;
 					 end else begin
                   chn_proc_r <= {data_in, addr_in};
 
-                  result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+                  result_op_r <= `CPU_R_CHAN_OP_ACCEPTED; //CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
 						
 						chn_seek_cntr <= 1;
 

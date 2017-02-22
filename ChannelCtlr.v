@@ -40,6 +40,8 @@ module ChannelCtlr(
 		  
 		  chan_op,
 		  chan_wait_next_time,
+		  
+		  chan_escape,
 
         next_state,
         
@@ -151,6 +153,9 @@ module ChannelCtlr(
   
   reg signal_sent;
   
+  reg chan_escape_r;
+  output wire chan_escape = chan_escape_r;
+  
  /* 
   wire [`DATA_SIZE0:0] data_for_stop_msg =
 						        src1 == 0 
@@ -169,6 +174,8 @@ module ChannelCtlr(
       next_state_r <= 1'b 0;
 		
 		chan_msg_strb_o <= 1'b 0;
+		
+		chan_escape_r <= 0;
 
       //cpu_msg_r <= 0;
       //cpu_msg_pulse <= 0;
@@ -205,10 +212,13 @@ module ChannelCtlr(
 		state_int <= 0;
 		
 		chan_wait_next_time <= 0;
+		
+		chan_escape_r <= 0;
     end else //begin
     if(chan_op == 1) begin
 	   chan_op <= 0;
       cpu_msg_pulse <= 0;
+//		chan_escape_r <= 0;
     end else 
 	 begin
 
@@ -363,7 +373,21 @@ module ChannelCtlr(
                           //chan_op <= 0;
 
                           case(cpu_msg_in)
-                            0: begin
+                            //0: begin
+                            //end
+
+									 `CPU_R_CHAN_OP_ACCEPTED: begin
+                              //state_int <= 0;
+                              //next_state_r <= 1;
+										
+										//chan_wait_next_time <= 1;
+										
+                              chan_escape_r <= 1;
+										
+                              state_int <= 0;
+                              //next_state_r <= 1;
+										
+//										state_int <= 3;
                             end
 
                             `CPU_R_CHAN_NO_RESULTS: begin
@@ -447,7 +471,21 @@ module ChannelCtlr(
                           //chan_op <= 0;
 
                           case(cpu_msg_in)
-                            0: begin
+                            //0: begin
+                            //end
+
+									 `CPU_R_CHAN_OP_ACCEPTED: begin
+                              //state_int <= 0;
+                              //next_state_r <= 1;
+										
+										//chan_wait_next_time <= 1;
+										
+                              chan_escape_r <= 1;
+										
+                              state_int <= 0;
+                              //next_state_r <= 1;
+										
+//										state_int <= 3;
                             end
 
                             `CPU_R_CHAN_NO_RESULTS: begin

@@ -30,6 +30,7 @@
 `define CPU_R_CHAN_NO_RESULTS 8'hc0
 `define CPU_R_CHAN_RES_RD  8'hc1
 `define CPU_R_CHAN_RES_WR  8'hc2
+`define CPU_R_CHAN_OP_ACCEPTED 8'hc3
 
 `define CPU_R_CHAN_ESC  8'hce
 

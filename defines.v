@@ -1,6 +1,6 @@
 
 
-`define CPU_QUANTITY		3
+`define CPU_QUANTITY		2
 `define PROC_QUANTITY	7
 
 `define CLK_FREQ_PLL		50 * 1000000

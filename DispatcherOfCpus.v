@@ -245,10 +245,11 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
   
   reg next_thread_r;
   wire next_thread =
+                   cpu_msg_in == `CPU_R_END
                    //cpu_msg_in == `CPU_R_START
 						 //|| cpu_msg_in == `CPU_R_FORK_DONE
 						 
-						 state_ctl == `CTL_CPU_LOOP
+						 //state_ctl == `CTL_MEM_WORK_FINISH //CTL_CPU_LOOP
 						 //(
                    //  cpu_q_r == 1 &&
                    //  state_ctl == `CTL_CPU_CMD

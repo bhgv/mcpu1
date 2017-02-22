@@ -47,6 +47,8 @@ module BridgeToOutside (
             cond,
 				
 				chan_op,
+				
+				chan_escape,
             
             disp_online,
             
@@ -264,6 +266,7 @@ module BridgeToOutside (
                                 ext_cpu_msg_in == `CPU_R_FORK_DONE ||
                                 ext_cpu_msg_in == `CPU_R_STOP_DONE ||
                                 ext_cpu_msg_in == `CPU_R_CHAN_NO_RESULTS ||
+                                ext_cpu_msg_in == `CPU_R_CHAN_OP_ACCEPTED ||
                                 ext_cpu_msg_in == `CPU_R_CHAN_RES_RD ||
                                 ext_cpu_msg_in == `CPU_R_CHAN_RES_WR //||
                               )								
@@ -317,6 +320,8 @@ module BridgeToOutside (
   
   input wire chan_op;
   
+  input wire chan_escape;
+  
   
   
 `ifdef PAUSE_PROC_ENABLE
@@ -324,10 +329,13 @@ module BridgeToOutside (
 `endif
 
   wire thread_escape_stim = //0;
+//                        ext_cpu_msg_in == `CPU_R_CHAN_OP_ACCEPTED || 
+                        chan_escape | 
+								(
 `ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
   /**/
                         //state != 0 &&
-//								rst_state >= 7 &&						
+//								rst_state >= 7 &&	
 `ifdef PAUSE_PROC_ENABLE
 								ext_cpu_msg_in == `CPU_R_BREAK_THREAD &&
 `else
@@ -352,6 +360,7 @@ module BridgeToOutside (
 `else
                         0
 `endif
+                        )
 								;
   /**/
   output reg thread_escape; // = thread_escape_stim;

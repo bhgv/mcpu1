@@ -137,4 +137,7 @@
 `define CHN_OP_DATA_SENT 8'hc2
 
 `define CHN_OP_NO_RESULTS 8'hc0
+
+`define CHN_OP_ACCEPTED 8'hc3
+
 // AAA channels in-threadManager ops/states
