@@ -829,8 +829,12 @@ always @(/*pos*/negedge clk) begin
 			 
 			 bus_busy_r <= 1;
 			 
-		    state_ctl <= `CTL_CPU_LOOP;
-		  end
+          if(bus_busy_r == 1) begin
+		      state_ctl <= `CTL_CPU_LOOP;
+			 end
+		  end else begin
+		    bus_busy_r <= 0;
+        end
 		end
       
 		

@@ -217,7 +217,7 @@ module ChannelCtlr(
     end else //begin
     if(chan_op == 1) begin
 	   chan_op <= 0;
-      cpu_msg_pulse <= 0;
+      //cpu_msg_pulse <= 0;
 //		chan_escape_r <= 0;
     end else 
 	 begin
@@ -230,6 +230,8 @@ module ChannelCtlr(
 			 
           dst_h <= 0;
 			 dst_r <= 0;
+			 
+			 cpu_msg_pulse <= 0;
         end
 		  
 //		  `ALU_RESULTS: begin
@@ -521,6 +523,8 @@ module ChannelCtlr(
 							 //cpu_msg_r <= `CPU_R_CHAN_TST;
 							 dst_r <= src1 + base_addr_data;
 							 
+							 cpu_msg_pulse <= 0;
+							 
 							 chan_op <= 1;
 							 
 							 next_state_r <= 1;
@@ -557,6 +561,8 @@ module ChannelCtlr(
 						
 						  default: begin // ???
 						    next_state_r <= 1;
+							 
+							 cpu_msg_pulse <= 0;
 							 
 							 //cpu_msg_r <= {5'b 11110, regDen, regS0en, regS1en};
 							 //cpu_msg_pulse <= 1;
