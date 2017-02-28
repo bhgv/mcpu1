@@ -232,6 +232,8 @@ module ChannelCtlr(
 			 dst_r <= 0;
 			 
 			 cpu_msg_pulse <= 0;
+			 
+			 state_int <= 0;
         end
 		  
 //		  `ALU_RESULTS: begin
@@ -386,10 +388,10 @@ module ChannelCtlr(
 										
                               chan_escape_r <= 1;
 										
-                              state_int <= 0;
+                              //state_int <= 0;
                               //next_state_r <= 1;
 										
-//										state_int <= 3;
+										state_int <= 3;
                             end
 
                             `CPU_R_CHAN_NO_RESULTS: begin
@@ -484,10 +486,10 @@ module ChannelCtlr(
 										
                               chan_escape_r <= 1;
 										
-                              state_int <= 0;
+                              //state_int <= 0;
                               //next_state_r <= 1;
 										
-//										state_int <= 3;
+										state_int <= 3;
                             end
 
                             `CPU_R_CHAN_NO_RESULTS: begin
@@ -502,7 +504,7 @@ module ChannelCtlr(
                             //`CPU_R_CHAN_RES_RD: begin
                             `CPU_R_CHAN_RES_WR: begin
                             //default: begin
-                              state_int <= 0;
+                              //state_int <= 0;
                               next_state_r <= 1;
                             end
 

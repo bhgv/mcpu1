@@ -1,9 +1,9 @@
 
 
-`define CPU_QUANTITY		2
+`define CPU_QUANTITY		4
 `define PROC_QUANTITY	7
 
-`define CLK_FREQ_PLL		75 * 1000000
+`define CLK_FREQ_PLL		91 * 1000000
 
 `define MAIN_CLK_FREQ	`CLK_FREQ_PLL / 2
 
@@ -37,6 +37,7 @@
 
 `define REG_IP  15
 
+
 `define THREAD_HEADER_SPACE  2
 
 
@@ -46,5 +47,6 @@
   
   
 //`define PAUSE_PROC_ENABLE 1
+
 `define CHAN_OP_CPUS_TAIL_CUTOFF_ENABLE 1
 `define PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE 1
