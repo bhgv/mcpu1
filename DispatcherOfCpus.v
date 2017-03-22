@@ -368,7 +368,7 @@ reg [`ADDR_SIZE0:0] base_proc_tmp;
 reg [`ADDR_SIZE0:0] base_data_tmp;
 
 
-reg [7:0] mem_op_timeout;
+reg [15:0] mem_op_timeout;
 
 
 
@@ -643,6 +643,7 @@ always @(/*pos*/negedge clk) begin
 			 mem_op_timeout <= 0;
 			 state_ctl <= `CTL_MEM_WORK;
         end else 
+		  /**
 		  if(
 		    read_q == 1 ||
 			 write_q == 1
@@ -654,6 +655,7 @@ always @(/*pos*/negedge clk) begin
 			 bus_busy_r <= 0; //
           state_ctl <= `CTL_MEM_WORK_FINISH; //`CTL_CPU_LOOP;
         end else
+		  /**/
         if(ext_cpu_e == 1) begin
 //!!          ext_cpu_index_r = 0;
           ext_read_q_r <= 0;
@@ -910,7 +912,8 @@ always @(/*pos*/negedge clk) begin
           state_ctl <= `CTL_MEM_WORK_FINISH; //`CTL_CPU_LOOP;
         end else 
 		  
-        if(mem_op_timeout > 50) begin
+		  /**
+        if(mem_op_timeout == 220) begin
 		    mem_op_timeout <= 0;
 			 
 			 bus_busy_r <= 0; //
@@ -919,7 +922,8 @@ always @(/*pos*/negedge clk) begin
           ext_rw_halt_r <= 1;
 			 rw_halt_r <= 1;     //!!
         end else
-
+        /**/
+		  
 		  begin
           ext_rw_halt_r <= 0;
 			 rw_halt_r <= 0;     //!!

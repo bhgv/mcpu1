@@ -44,7 +44,7 @@ module ThreadsManager(
 						  run_next_cpu_from_loop,
                     
                     rst
-                      );
+                  );
 
 parameter PROC_QUANTITY = 8;
 
@@ -233,7 +233,7 @@ parameter PROC_QUANTITY = 8;
   reg next_proc_ready;
   output reg run_next_cpu_from_loop; // = next_proc_ready;
   
-  reg chn_seek_cntr;
+  reg [3:0] chn_seek_cntr;
   
   //reg [7:0] dbg;
 
@@ -294,7 +294,7 @@ parameter PROC_QUANTITY = 8;
 				  
               //dbg <= 0;
               if(
-				     ready_to_fork_thread //== 1 //|| //next_thread == 1 ||
+				     ready_to_fork_thread == 1 //|| //next_thread == 1 ||
 					  //|| (is_chn_proc == 1 && is_chn_data == 1) //||
 					  //|| is_chn_rslt == 1
 				  ) begin
@@ -431,6 +431,7 @@ parameter PROC_QUANTITY = 8;
 				`CTL_CPU_CHAN_OP_ph0: begin
 				  if(
 				    chn_proc_r == {data_r_int, next_proc_int_r} 
+				    || {`DATA_SIZE'b 0, chn_proc_r[`ADDR_SIZE0:0]} == {data_r_int, next_proc_int_r} 
 					 //&& chn_op_r_int == `CHN_OP_NULL
 				  ) begin
 				    /**
@@ -447,14 +448,14 @@ parameter PROC_QUANTITY = 8;
 					   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
 					 end else
                 /**/
-				    if(chn_seek_cntr == 0 /*&& chn_op_r_int == `CHN_OP_NULL*/) begin
+				    if(chn_seek_cntr != 4 /*&& chn_op_r_int == `CHN_OP_NULL*/) begin
 					   aproc_tbl_addr <= aproc_i_next;
 					   aproc_i <= aproc_i_next;
 
-					   chn_seek_cntr <= 1;
+					   chn_seek_cntr <= chn_seek_cntr + 1;
 
 					   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
-					 end else 
+					 end else
                 /**/
 					 begin
 				      //if(chn_op_r_int == `CHN_OP_NULL) begin

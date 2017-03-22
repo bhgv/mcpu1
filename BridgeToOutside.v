@@ -347,7 +347,8 @@ module BridgeToOutside (
 //								  ext_cpu_msg_in == `CPU_R_CHAN_SET ) && //need to send correct thread adresses with this message
 //								(cpu_ind_rel == 2'b 10 || cpu_ind_rel == 2'b 01) &&
 `endif
-								cpu_ind_rel == 2'b 10 &&
+								cpu_ind_rel == 2'b 10 //&&
+//								(^cpu_ind_rel) == 1'b1 &&
 //								disp_online_r == 0 &&
 
 /**
@@ -361,7 +362,7 @@ module BridgeToOutside (
                         ) &&
 /**/
 //                        ext_cpu_index[30:0] > cpu_index/*_r*/[30:0]
-								rst_state >= 7
+				//				rst_state >= 7
 
 								//no_data_exit_and_wait_begin == 1'b 0 //&&
 								//thread_escape == 1'b 0 //&&
@@ -479,11 +480,11 @@ module BridgeToOutside (
   always @(posedge clk) begin
 
 `ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
-    //if(rst_state >= 7) begin //!!!!!!!!!!!!!!!!!!!
+    if(rst_state >= 7) begin //!!!!!!!!!!!!!!!!!!!
 //!!!	   cpu_index_r <= cpu_index_int; //!!!!!!!!!!!!!!!!!!!
 //	 thread_escape <= thread_escape_stim;
-	 thread_escape <= thread_escape | thread_escape_stim;
-    //end
+      thread_escape <= thread_escape | thread_escape_stim;
+    end
 `endif
 	 
 //	 thread_escape <= thread_escape_stim;

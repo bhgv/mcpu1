@@ -201,6 +201,8 @@ module StateManager(
   reg condIsReaden;
   reg ipIsWriten;
   
+  //reg anyIsWriten;
+  
 /**
   wire isCndFillS1 = (&regCondFlags == 0 && regNumS1 == regNumCnd && is_cnd_read);
   wire isCndFillS0 = (&regCondFlags == 0 && regNumS0 == regNumCnd && is_cnd_read);
@@ -223,6 +225,8 @@ module StateManager(
       
       condIsReaden <= 0;
       ipIsWriten <= 0;
+		
+		//anyIsWriten <= 0;
       
       anti_continuous <= 1;
 		
@@ -274,7 +278,7 @@ module StateManager(
 
 /**/
 `ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
-    if(thread_escape == 1'b 1) begin
+    if(thread_escape == 1'b 1 && ipIsWriten == 1'b 0 /*&& anyIsWriten == 0*/) begin
 	   case(state)
 
 /**
@@ -501,6 +505,8 @@ module StateManager(
               state <= `ALU_BEGIN;
           end else begin
             state <= `WRITE_REG_IP;
+
+            ipIsWriten <= 1;
           end
 			 
 			 next_state_dn_r <= ~next_state_dn_r;
@@ -508,7 +514,7 @@ module StateManager(
         
 /**/
         `WRITE_REG_IP: begin
-          ipIsWriten <= 1;
+//          ipIsWriten <= 1;
           
 			 if(isCmdChanOp)
 			   state <= `WRITE_PREP;
@@ -551,6 +557,8 @@ module StateManager(
           end else 
           if(isIpSaveAllowed && cond == 0 && ~ipIsWriten && ~isCmdChanOp) begin
             state <= `WRITE_REG_IP;
+
+            ipIsWriten <= 1;
           end else
               
           if(&regS1Flags == 0) 
@@ -601,6 +609,8 @@ module StateManager(
           
           if(isIpSaveAllowed && cond == 0 && ~ipIsWriten && ~isCmdChanOp) begin
             state <= `WRITE_REG_IP;
+
+            ipIsWriten <= 1;
           end else
               
           if(&regS1Flags == 0) 
@@ -770,9 +780,11 @@ module StateManager(
         //end
         
         `ALU_RESULTS: begin
-		    if(isCmdChanOp)
-              state <= `WRITE_REG_IP;
-          else
+		    if(isCmdChanOp) begin
+            state <= `WRITE_REG_IP;
+
+            ipIsWriten <= 1;
+          end else
             state <= `WRITE_PREP;
 
 			 next_state_dn_r <= ~next_state_dn_r;
