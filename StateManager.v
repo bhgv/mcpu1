@@ -201,6 +201,8 @@ module StateManager(
   reg condIsReaden;
   reg ipIsWriten;
   
+  reg isChanAlu;
+  
   //reg anyIsWriten;
   
 /**
@@ -235,6 +237,8 @@ module StateManager(
 		isCmdChanOp <= 0;
 		
 		next_state_dn_r <= 0;
+		
+		isChanAlu <= 0;
     end
 //    else if(next_state != 1) begin
 //      anti_continuous = 1;
@@ -278,7 +282,7 @@ module StateManager(
 
 /**/
 `ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
-    if(thread_escape == 1'b 1 && ipIsWriten == 1'b 0 /*&& anyIsWriten == 0*/) begin
+    if(thread_escape == 1'b 1 && ipIsWriten == 1'b 0 && isChanAlu == 1'b 0 /*&& anyIsWriten == 0*/) begin
 	   case(state)
 
 /**
@@ -501,8 +505,10 @@ module StateManager(
 								|| (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 								|| (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 							 ) ? `FILL_DST_P : `READ_DST;
-            else
+            else begin
+              isChanAlu <= isCmdChanOp;
               state <= `ALU_BEGIN;
+            end
           end else begin
             state <= `WRITE_REG_IP;
 
@@ -538,8 +544,9 @@ module StateManager(
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
-          else
+          else begin
             state <= `ALU_BEGIN;
+          end
 			 
 			 next_state_dn_r <= ~next_state_dn_r;
         end
@@ -585,8 +592,10 @@ module StateManager(
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
-          else
+          else begin
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
+          end
         
 /*
 //          if(&regCondFlags == 0) begin
@@ -631,8 +640,10 @@ module StateManager(
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
-          else
+          else begin
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
+          end
 
 /*        
           if(cond == 0) begin
@@ -662,8 +673,10 @@ module StateManager(
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
-          else
+          else begin
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
+          end
 
           if(
 //            &regS1Flags == 0 &&
@@ -694,6 +707,7 @@ module StateManager(
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           else begin
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
 		    end
 			 
@@ -719,6 +733,7 @@ module StateManager(
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
           end else begin
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
           end
 			 
@@ -737,8 +752,10 @@ module StateManager(
 							 || (&regS1Flags == 0 && regNumD == regNumS1 && is_s1_read) 
 							 || (&regS0Flags == 0 && regNumD == regNumS0 && is_s0_read)
 						  ) ? `FILL_DST_P : `READ_DST;
-          else
+          else begin
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
+          end
 			 
 			 next_state_dn_r <= ~next_state_dn_r;
         end
@@ -751,6 +768,7 @@ module StateManager(
 //          if(regNumD == `REG_IP)
 //            state = `READ_DST_P;
 //          else
+            isChanAlu <= isCmdChanOp;
             state <= `ALU_BEGIN;
 			 
 			 next_state_dn_r <= ~next_state_dn_r;
