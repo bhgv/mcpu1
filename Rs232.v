@@ -7,6 +7,7 @@
 `define UART_WAIT_CMD  0
 `define UART_SEND_BYTE 1
 `define UART_RECEIVE_BYTE 2
+`define UART_NODATA_RESET 3
 
 
 module Rs232 (
@@ -24,6 +25,17 @@ module Rs232 (
   
   read_dn,
   write_dn,
+  
+ 				ext_chan_no_in,
+				ext_chan_no_out,
+				ext_chan_data_in,
+				ext_chan_data_out,
+				ext_chan_r_q,
+				ext_chan_w_q,
+				ext_chan_r_dn,
+				ext_chan_w_dn,
+				ext_chan_nodata_in,
+				ext_chan_nodata_out,
   
   halt_q,
   rw_halt_out,
@@ -49,6 +61,20 @@ module Rs232 (
   input wire rst;
 
   
+  input wire ext_chan_r_q;
+  input wire ext_chan_w_q;
+  output reg ext_chan_r_dn;
+  output reg ext_chan_w_dn;
+  
+  input wire [`ADDR_SIZE0:0] ext_chan_no_in;
+  output reg [`ADDR_SIZE0:0] ext_chan_no_out;
+  input wire [`DATA_SIZE0:0] ext_chan_data_in;
+  output reg [`DATA_SIZE0:0] ext_chan_data_out;
+  
+  input wire ext_chan_nodata_in;
+  output reg ext_chan_nodata_out;
+  
+  
   reg read_dn_r;
   output wire read_dn = read_dn_r;
   reg write_dn_r;
@@ -59,8 +85,10 @@ module Rs232 (
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_out = (
-                                   read_dn_r == 1
-											  || write_dn_r == 1
+                                   //read_dn_r == 1
+											  //|| write_dn_r == 1
+											  ext_chan_r_dn == 1
+											  || ext_chan_w_dn == 1
 											)
 											? addr_r
 											: 0
@@ -70,8 +98,10 @@ module Rs232 (
   output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_out = (
-                                   read_dn_r == 1
-											  || write_dn_r == 1
+                                   //read_dn_r == 1
+											  //|| write_dn_r == 1
+											  ext_chan_r_dn == 1
+											  || ext_chan_w_dn == 1
 											)
 											? data_r
 											: 0
@@ -79,6 +109,7 @@ module Rs232 (
   
   input wire read_q;
   input wire write_q;
+  
   
   output rw_halt_out;
   reg rw_halt_r;
@@ -96,7 +127,7 @@ module Rs232 (
   wire is_tx_busy;
   reg [7:0] tx_data;
   
-  reg [2:0] state;
+  reg [3:0] state;
   
 //  reg [`ADDR_SIZE0:0] tmp_addr;
 //  reg [`DATA_SIZE0:0] tmp_data;
@@ -320,6 +351,13 @@ async_receiver rx(
 		  
 		  rst_uart <= 1;
 		  
+		  ext_chan_nodata_out <= 0;
+			ext_chan_r_dn <= 0;
+			ext_chan_w_dn <= 0;
+  
+			ext_chan_no_out <= 0;
+			ext_chan_data_out <= 0;
+
 //		  rw_halt_r = 0;
 		  
 		end else begin //rst
@@ -338,35 +376,52 @@ async_receiver rx(
 		      write_dn_r <= 0;
 
 		      if(
+/*
 				  addr_in == RS232_DATA_ADDR 
 //				  && rw_halt_r != 1
 				  && (read_q == 1 || write_q == 1)
+*/
+					ext_chan_no_in == RS232_DATA_ADDR &&
+					(ext_chan_r_q == 1 || ext_chan_w_q == 1)
 				) begin
 			     //data_r = data_in;
-				  addr_r <= addr_in;
+				  addr_r <= /*addr_in*/ ext_chan_no_in;
+				  ext_chan_no_out <= ext_chan_no_in;
 		        
-				  if(write_q == 1) begin  
+				  if(/*write_q == 1*/ ext_chan_w_q == 1) begin  
 					 if(/*is_tx_busy == 0*/ is_tx_busy == 0 /*rw_halt_stim == 0*/) begin
-					   tx_data <= /*data_r*/data_in[7:0];
+					   tx_data <= /*data_r*/ /*data_in[7:0]*/ ext_chan_data_in[7:0];
 			         tx_start <= 1;
 						
-						data_r <= data_in;
+						data_r <= /*data_in*/ ext_chan_data_in;
+						
+						ext_chan_w_dn <= 1;
+						//ext_chan_no_out <= ext_chan_no_in;
 
 //			         write_dn_r = 1;
 
 				      state <= `UART_SEND_BYTE;
-				    end
-				  end else if(read_q == 1) begin
+				    end else begin
+					   ext_chan_nodata_out <= 1;
+				      state <= `UART_NODATA_RESET;
+					 end
+				  end else if(/*read_q == 1*/ ext_chan_r_q == 1) begin
 				    if(is_rx_buf == 1) begin
 //			         data_r = data_in;
 			         
-						data_r <= {`DATA_SIZE'h 0000000000000000, rx_buf};
+						/*data_r*/ ext_chan_data_out <= {`DATA_SIZE'h 0000000000000000, rx_buf};
 			 
                   is_rx_buf <= 0;
 						
+						ext_chan_r_dn <= 1;
+						//ext_chan_no_out <= ext_chan_no_in;
+
 						//read_dn_r = 1;
 
 				      state <= `UART_RECEIVE_BYTE;
+				    end else begin
+					   ext_chan_nodata_out <= 1;
+				      state <= `UART_NODATA_RESET;
 				    end
 				  end
 				  
@@ -388,10 +443,14 @@ async_receiver rx(
 
 //              tx_data = data_r[7:0];
 
+						ext_chan_w_dn <= 0;
+						ext_chan_no_out <= 0;
+						ext_chan_data_out <= 0;
+
 		        tx_start <= 0;
 //				  tx_data = 0;
 			 
-			     /*if(rw_halt_r == 0)*/ write_dn_r <= 1;
+//			     /*if(rw_halt_r == 0)*/ write_dn_r <= 1;
 				  
 				  state <= `UART_WAIT_CMD;
 //				end else begin
@@ -406,13 +465,22 @@ async_receiver rx(
 			  //   data_r = {`DATA_SIZE'h0000000000000000, rx_buf};
            //   is_rx_buf = 0;
 				  
-			     /*if(rw_halt_r == 0)*/ read_dn_r <= 1;
+//			     /*if(rw_halt_r == 0)*/ read_dn_r <= 1;
+				  
+				  ext_chan_no_out <= 0;
+				  ext_chan_data_out <= 0;
+				  ext_chan_r_dn <= 0;
 				  
 				  state <= `UART_WAIT_CMD;
 //				end else begin
 //				  rw_halt_r = 1;
 //				  state = `UART_WAIT_CMD;
 //				end
+			 end
+			 
+			 `UART_NODATA_RESET: begin				  
+				  ext_chan_nodata_out <= 0;
+				  state <= `UART_WAIT_CMD;
 			 end
 			 
 		  endcase

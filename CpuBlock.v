@@ -42,6 +42,17 @@ module CpuBlock(
 	 
     ext_bus_q,
     ext_bus_allow,
+	 
+				ext_chan_no_in,
+				ext_chan_no_out,
+				ext_chan_data_in,
+				ext_chan_data_out,
+				ext_chan_r_q,
+				ext_chan_w_q,
+				ext_chan_r_dn,
+				ext_chan_w_dn,
+				ext_chan_nodata_in,
+				ext_chan_nodata_out,
 
     rst_in,
 	 rst_out
@@ -91,6 +102,17 @@ parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
 	
 	input wire ext_bus_q;
 	output wire ext_bus_allow;
+	
+  input wire [`ADDR_SIZE0:0] ext_chan_no_in;
+  output wire [`ADDR_SIZE0:0] ext_chan_no_out;
+  input wire [`DATA_SIZE0:0] ext_chan_data_in;
+  output wire [`DATA_SIZE0:0] ext_chan_data_out;
+  output wire ext_chan_r_q;
+  output wire ext_chan_w_q;
+  input wire ext_chan_r_dn;
+  input wire ext_chan_w_dn;
+  input wire ext_chan_nodata_in;
+  output wire ext_chan_nodata_out;
 	
 	//-----------------------------------------------------
 
@@ -507,7 +529,18 @@ DispatcherOfCpus disp_1(
             .dispatcher_q(dispatcher_q),
 				
 				.ext_bus_q(ext_bus_q),
-				.ext_bus_allow(ext_bus_allow)
+				.ext_bus_allow(ext_bus_allow),
+				
+							.ext_chan_no_in(ext_chan_no_in),
+							.ext_chan_no_out(ext_chan_no_out),
+							.ext_chan_data_in(ext_chan_data_in),
+							.ext_chan_data_out(ext_chan_data_out),
+							.ext_chan_r_q(ext_chan_r_q),
+							.ext_chan_w_q(ext_chan_w_q),
+							.ext_chan_r_dn(ext_chan_r_dn),
+							.ext_chan_w_dn(ext_chan_w_dn),
+							.ext_chan_nodata_in(ext_chan_nodata_in),
+							.ext_chan_nodata_out(ext_chan_nodata_out)
           );
           
 defparam disp_1.CPU_QUANTITY = CPU_QUANTITY;

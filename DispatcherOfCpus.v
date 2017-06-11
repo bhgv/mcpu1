@@ -67,6 +67,17 @@ module DispatcherOfCpus(
             
             cpu_msg_in,
             cpu_msg_out,
+				
+				ext_chan_no_in,
+				ext_chan_no_out,
+				ext_chan_data_in,
+				ext_chan_data_out,
+				ext_chan_r_q,
+				ext_chan_w_q,
+				ext_chan_r_dn,
+				ext_chan_w_dn,
+				ext_chan_nodata_in,
+				ext_chan_nodata_out,
             
             dispatcher_q
           );
@@ -238,6 +249,17 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
                                   addr_out_r 
 											 | addr_in
                                 ;
+										  
+  input wire [`ADDR_SIZE0:0] ext_chan_no_in;
+  output wire [`ADDR_SIZE0:0] ext_chan_no_out;
+  input wire [`DATA_SIZE0:0] ext_chan_data_in;
+  output wire [`DATA_SIZE0:0] ext_chan_data_out;
+  output wire ext_chan_r_q;
+  output wire ext_chan_w_q;
+  input wire ext_chan_r_dn;
+  input wire ext_chan_w_dn;
+  input wire ext_chan_nodata_in;
+  output wire ext_chan_nodata_out;
 
   wire [`ADDR_SIZE0:0] chan_num_in;
   wire [`DATA_SIZE0:0] chan_data_in;
@@ -289,6 +311,17 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 						  .result_op_out(chan_thread_result_op_in),
 						  
 						  .run_next_cpu_from_loop(run_next_cpu_from_loop),
+						  
+							.ext_chan_no_in(ext_chan_no_in),
+							.ext_chan_no_out(ext_chan_no_out),
+							.ext_chan_data_in(ext_chan_data_in),
+							.ext_chan_data_out(ext_chan_data_out),
+							.ext_chan_r_q(ext_chan_r_q),
+							.ext_chan_w_q(ext_chan_w_q),
+							.ext_chan_r_dn(ext_chan_r_dn),
+							.ext_chan_w_dn(ext_chan_w_dn),
+							.ext_chan_nodata_in(ext_chan_nodata_in),
+							.ext_chan_nodata_out(ext_chan_nodata_out),
 
                     .rst(rst_out)
                     );

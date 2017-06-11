@@ -18,6 +18,7 @@ init{
 //	r0 c<- r11;
 
 //  [r4] = z + r10--; // uart out "b8"
+  r4 c<- r10--; // uart out "b8"
 
 //  r5 = fork [ip++] (r2);
 //  in;
@@ -30,25 +31,31 @@ init{
 //	r8 c<- r11;
 
 msg:
-  [r4] = z + r10; // uart out "b9"
+//  [r4] = z + r10; // uart out "b9"
 
 
 
 
 loop:
 /**/
-	r2 = z + [r4];
-	[r4] = z + r2;
+//	r2 = z + [r4];
+//	[r4] = z + r2;
+	r2 <-c r4;
+	r4 c<- r2;
 
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + [r4];
-	[r4] = z + r2;
+//	r2 = z + [r4];
+//	[r4] = z + r2;
+	r2 <-c r4;
+	r4 c<- r2;
 
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + [r4];
-	[r4] = z + r2;
+//	r2 = z + [r4];
+//	[r4] = z + r2;
+	r2 <-c r4;
+	r4 c<- r2;
 /**/
 //        r2 = z + [ip++];
 //        h'57;

@@ -500,6 +500,19 @@ defparam disp_1.PROC_QUANTITY = PROC_QUANTITY;
 
 /**/
 
+
+  wire [`ADDR_SIZE0:0] ext_chan_no_in;
+  wire [`ADDR_SIZE0:0] ext_chan_no_out;
+  wire [`DATA_SIZE0:0] ext_chan_data_in;
+  wire [`DATA_SIZE0:0] ext_chan_data_out;
+  wire ext_chan_r_q;
+  wire ext_chan_w_q;
+  wire ext_chan_r_dn;
+  wire ext_chan_w_dn;
+  wire ext_chan_nodata_in;
+  wire ext_chan_nodata_out;
+
+
 wire halt_q;
 wire ext_rw_halt;
 
@@ -532,6 +545,17 @@ CpuBlock block_of_cpus(
 	 
     .ext_bus_q(ext_bus_q),
     .ext_bus_allow(ext_bus_allow),
+	 
+    .ext_chan_no_in(ext_chan_no_in),
+    .ext_chan_no_out(ext_chan_no_out),
+    .ext_chan_data_in(ext_chan_data_in),
+    .ext_chan_data_out(ext_chan_data_out),
+    .ext_chan_r_q(ext_chan_r_q),
+    .ext_chan_w_q(ext_chan_w_q),
+    .ext_chan_r_dn(ext_chan_r_dn),
+    .ext_chan_w_dn(ext_chan_w_dn),
+	 .ext_chan_nodata_in(ext_chan_nodata_in),
+	 .ext_chan_nodata_out(ext_chan_nodata_out),
 
     .rst_in(~rst),
 	 .rst_out(rst_int)
@@ -639,6 +663,17 @@ ExternalSRAMInterface ext_ram_itf(
   
     .data_in(mem_data_out),
     .data_out(com_prt_data_out),
+	 
+    .ext_chan_no_in(ext_chan_no_out),
+    .ext_chan_no_out(ext_chan_no_in),
+    .ext_chan_data_in(ext_chan_data_out),
+    .ext_chan_data_out(ext_chan_data_in),
+    .ext_chan_r_q(ext_chan_r_q),
+    .ext_chan_w_q(ext_chan_w_q),
+    .ext_chan_r_dn(ext_chan_r_dn),
+    .ext_chan_w_dn(ext_chan_w_dn),
+	 .ext_chan_nodata_in(ext_chan_nodata_out),
+	 .ext_chan_nodata_out(ext_chan_nodata_in),
 
     .read_q(ext_read_q), //read_q),
     .write_q(ext_write_q), //write_q),
