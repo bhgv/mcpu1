@@ -387,11 +387,11 @@ parameter PROC_QUANTITY = 8;
 					  ext_chan_data_out <= 0;
 					  ext_chan_no_out <= 0;
 					  
-						 
+						/** 
 					  if(ext_chan_w_dn == 1) begin
 					    is_ext_chan_written <= 1;
 					    resp_ext_chan_no <= ext_chan_no_in;
-					    resp_ext_chan_data <= ext_chan_data_in;
+					    //resp_ext_chan_data <= ext_chan_data_in;
 					  end
 					  
 					  if(ext_chan_r_dn == 1) begin
@@ -399,7 +399,16 @@ parameter PROC_QUANTITY = 8;
 					    resp_ext_chan_no <= ext_chan_no_in;
 					    resp_ext_chan_data <= ext_chan_data_in;
 					  end
+						*/
+					  if((ext_chan_r_dn | ext_chan_w_dn) == 1) begin
+					    is_ext_chan_readen <= ext_chan_r_dn;
+					    is_ext_chan_written <= ext_chan_w_dn;
 
+					    resp_ext_chan_no <= ext_chan_no_in;
+					    resp_ext_chan_data <= ext_chan_data_in;
+					  end
+						
+						
 
 //                  {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_i];
                   {data_r_int, next_proc_int_r} <= aproc_tbl_item;
@@ -452,6 +461,9 @@ parameter PROC_QUANTITY = 8;
 //						 {data_r_int, next_proc_int_r} <= aproc_tbl[0]; //aproc_b];
                   {data_r_int, next_proc_int_r} <= aproc_tbl_item;
 						
+						chn_data_r_int <= chn_data_tbl_item;
+						chn_op_r_int <= chn_op_tbl_item;
+						
 						next_proc_ready <= 1;
 						run_next_cpu_from_loop <= 1;
 						
@@ -470,6 +482,9 @@ parameter PROC_QUANTITY = 8;
 				`CTL_CPU_REMOVE_THREAD_ph20: begin
 //						 {data_r_int, next_proc_int_r} <= aproc_tbl[aproc_e_minus_1];
 						 {data_r_int, next_proc_int_r} <= aproc_tbl_item;
+						 
+						 chn_data_r_int <= chn_data_tbl_item;
+						 chn_op_r_int <= chn_op_tbl_item;
 						 
 						 next_proc_ready <= 1;
 						 run_next_cpu_from_loop <= 1;
@@ -498,7 +513,7 @@ parameter PROC_QUANTITY = 8;
 					   ctl_state_int <= `CTL_CPU_GET_NEXT_FROM_LOOP_STORE_0;
 					 end else
                 /**/
-				    if(chn_seek_cntr != 4 /*&& chn_op_r_int == `CHN_OP_NULL*/) begin
+				    if(chn_seek_cntr < 3 /*&& chn_op_r_int == `CHN_OP_NULL*/) begin
 					   aproc_tbl_addr <= aproc_i_next;
 					   aproc_i <= aproc_i_next;
 
@@ -625,8 +640,8 @@ parameter PROC_QUANTITY = 8;
 						  //  //chn_number_r == chn_num_parsed
 						  //) 
 						  begin
-						    chn_data_tbl[aproc_tbl_addr] <= {chn_data_r, chn_number_r};
-							 chn_data_r_int <= {chn_data_r, chn_number_r};
+						    chn_data_tbl[aproc_tbl_addr][(`DATA_SIZE0+`ADDR_SIZE):`ADDR_SIZE] <= chn_data_r; //{chn_data_r, chn_number_r};
+							 chn_data_r_int[(`DATA_SIZE0+`ADDR_SIZE):`ADDR_SIZE] <= chn_data_r; // <= {chn_data_r, chn_number_r};
 							 
 							 chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_DATA_RECEIVED; //`CHN_OP_NULL; //
 							 chn_op_r_int <= `CHN_OP_DATA_RECEIVED; //`CHN_OP_NULL; //
@@ -818,9 +833,9 @@ parameter PROC_QUANTITY = 8;
 								  resp_ext_chan_no == chn_num_parsed //chn_data_r_int[`ADDR_SIZE0:0]
 								) begin
 								  chn_op_tbl[aproc_tbl_addr] <= `CHN_OP_DATA_RECEIVED;
-								  chn_data_tbl[aproc_tbl_addr] <= {resp_ext_chan_data, chn_num_parsed};
+								  chn_data_tbl[aproc_tbl_addr][(`DATA_SIZE0+`ADDR_SIZE):`ADDR_SIZE] <= resp_ext_chan_data; //{resp_ext_chan_data, chn_num_parsed};
 								  
-									chn_data_r_int <= {resp_ext_chan_data, chn_num_parsed};
+									chn_data_r_int[`DATA_SIZE0+`ADDR_SIZE:`ADDR_SIZE] <= resp_ext_chan_data; // <= {resp_ext_chan_data, chn_num_parsed};
 									chn_op_r_int <= `CHN_OP_DATA_RECEIVED;
 
 								  is_ext_chan_readen <= 0;
@@ -828,14 +843,16 @@ parameter PROC_QUANTITY = 8;
 								  //resp_ext_chan_no <= 0;
 								  //resp_ext_chan_data <= 0;
 								end else 
-								//if(is_ext_chan_readen == 0 && is_ext_chan_written == 0) 
 								begin
-								  {ext_chan_data_out, ext_chan_no_out} <= chn_data_r_int;
+								  if(is_ext_chan_readen == 0 && is_ext_chan_written == 0) begin
+								    //{ext_chan_data_out, ext_chan_no_out} <= chn_data_r_int;
+								    ext_chan_no_out <= chn_data_r_int[`ADDR_SIZE0:0];
 								
-								  //ext_chan_data_out <= chn_data_r;
-								  //ext_chan_no_out <= chn_number_r;
-								  //ext_chan_w_q <= (chn_op_r_int == `CHN_OP_SEND_FREEZED);
-								  ext_chan_r_q <= 1; //(chn_op_r_int == `CHN_OP_RECEIVE_FREEZED);
+								    //ext_chan_data_out <= chn_data_r;
+								    //ext_chan_no_out <= chn_number_r;
+								    //ext_chan_w_q <= (chn_op_r_int == `CHN_OP_SEND_FREEZED);
+								    ext_chan_r_q <= 1; //(chn_op_r_int == `CHN_OP_RECEIVE_FREEZED);
+								  end
 
 									//aproc_i <= aproc_i_next;
 									aproc_tbl_addr <= aproc_i_next;
@@ -862,14 +879,15 @@ parameter PROC_QUANTITY = 8;
 								  //resp_ext_chan_no <= 0;
 								  //resp_ext_chan_data <= 0;
 								end else 
-								//if(is_ext_chan_readen == 0 && is_ext_chan_written == 0) 
 								begin
-								  {ext_chan_data_out, ext_chan_no_out} <= chn_data_r_int;
+								  if(is_ext_chan_readen == 0 && is_ext_chan_written == 0) begin
+								    {ext_chan_data_out, ext_chan_no_out} <= chn_data_r_int;
 								
-								  //ext_chan_data_out <= chn_data_r;
-								  //ext_chan_no_out <= chn_number_r;
-								  ext_chan_w_q <= 1; //(chn_op_r_int == `CHN_OP_SEND_FREEZED);
-								  //ext_chan_r_q <= (chn_op_r_int == `CHN_OP_RECEIVE_FREEZED);
+								    //ext_chan_data_out <= chn_data_r;
+								    //ext_chan_no_out <= chn_number_r;
+								    ext_chan_w_q <= 1; //(chn_op_r_int == `CHN_OP_SEND_FREEZED);
+								    //ext_chan_r_q <= (chn_op_r_int == `CHN_OP_RECEIVE_FREEZED);
+								  end
 
 									//aproc_i <= aproc_i_next;
 									aproc_tbl_addr <= aproc_i_next;
@@ -1030,6 +1048,9 @@ parameter PROC_QUANTITY = 8;
 		      `CTL_CPU_REMOVE_THREAD_ph12: begin
               //aproc_tbl_item <= {data_r_int, next_proc_int_r};
               aproc_tbl[aproc_tbl_addr] <= {data_r_int, next_proc_int_r};
+				  
+					chn_data_tbl[aproc_tbl_addr] <= chn_data_r_int;
+					chn_op_tbl[aproc_tbl_addr] <= chn_op_r_int;
 				  
               //if(aproc_e > 1) begin 
               //  aproc_e <= aproc_e - 1;
@@ -1555,6 +1576,13 @@ parameter PROC_QUANTITY = 8;
                   end
 					   is_chn_data <= 0;
 					   is_chn_proc <= 0;
+					 /**
+					 end else if(ext_chan_r_dn == 1 || ext_chan_w_dn == 1) begin
+                  result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+					   
+					   is_chn_data <= 0;
+					   is_chn_proc <= 0;
+					 /**/
 					 end else begin
                   chn_proc_r <= {data_in, addr_in};
 
@@ -1572,6 +1600,10 @@ parameter PROC_QUANTITY = 8;
               end else
               begin
                 result_op_r <= `CPU_R_CHAN_NO_RESULTS; //`CHN_OP_NO_RESULTS;
+					 
+					 //is_chn_data <= 0;
+					 //is_chn_proc <= 0;
+					 
 //                data_r_int <= 0;
 //                thrd_rslt_r <= 0;
               end

@@ -210,14 +210,14 @@ module Top(
   wire [`ADDR_SIZE0:0] mem_addr_in = 
                                     int_mem_addr_out 
 												| ext_mem_addr_out
-												| com_prt_addr_out
+												//| com_prt_addr_out
 												| vga_addr_out
 												; //tmp_addr; 
 												
   wire [`DATA_SIZE0:0] mem_data_in = 
                                     int_mem_data_out 
 												| ext_mem_data_out
-												| com_prt_data_out
+												//| com_prt_data_out
 												| vga_data_out
 												; //tmp_data; 
   
@@ -233,19 +233,19 @@ module Top(
   wire mem_read_dn = 
                      int_mem_read_dn 
 							| ext_mem_read_dn
-							| com_prt_read_dn
+							//| com_prt_read_dn
 							| vga_read_dn
 							; //ext_read_dn_r;
 							
   wire mem_write_dn = 
                      int_mem_write_dn 
 							| ext_mem_write_dn
-							| com_prt_write_dn
+							//| com_prt_write_dn
 							| vga_write_dn
 							; //ext_write_dn_r;
    
 
-  wire rw_halt_rs232;
+  wire rw_halt_rs232 = 0;
   
   
   
@@ -658,11 +658,11 @@ ExternalSRAMInterface ext_ram_itf(
     .clk(clk_int),
     .clk_oe(clk_oe),
 
-    .addr_in(mem_addr_out),
-    .addr_out(com_prt_addr_out),
+//    .addr_in(mem_addr_out),
+//    .addr_out(com_prt_addr_out),
   
-    .data_in(mem_data_out),
-    .data_out(com_prt_data_out),
+//    .data_in(mem_data_out),
+//    .data_out(com_prt_data_out),
 	 
     .ext_chan_no_in(ext_chan_no_out),
     .ext_chan_no_out(ext_chan_no_in),
@@ -675,14 +675,14 @@ ExternalSRAMInterface ext_ram_itf(
 	 .ext_chan_nodata_in(ext_chan_nodata_out),
 	 .ext_chan_nodata_out(ext_chan_nodata_in),
 
-    .read_q(ext_read_q), //read_q),
-    .write_q(ext_write_q), //write_q),
+//    .read_q(ext_read_q), //read_q),
+//    .write_q(ext_write_q), //write_q),
   
-    .read_dn(com_prt_read_dn),
-    .write_dn(com_prt_write_dn),
+//    .read_dn(com_prt_read_dn),
+//    .write_dn(com_prt_write_dn),
 	 
-	 .halt_q(halt_q),
-	 .rw_halt_out(rw_halt_rs232),
+//	 .halt_q(halt_q),
+//	 .rw_halt_out(rw_halt_rs232),
 
     .RxD(RxD),
     .TxD(TxD),

@@ -3,68 +3,186 @@
 
 def main(){
 init{
+  \assign rs232 = r4;
+  \assign color_channel = r8;
+  
   r2 = h'0;
 
-  r4 = h'FFFFFFf0;//FFFFFFEE;
+  \rs232 = h'FFFFFFf0;//FFFFFFEE;
 
   r10 = h'b9;
   r11 = h'9b;
 
   r15 =h'10;
+  
+  r1 = 8;
 
-  r8 = 8;
+  \color_channel = 8;
+  
+  r12 = out_;
+  
 }
+//  r4 c<- r10--; // uart out "b8"
+  \rs232 c<- r10--; // uart out "b8"
+  
+hi:
+  r12 = z + [ip++];
+  out_;
+  
+  r3 = z + [ip++];
+  " !ih";
+  
+hello:
+  \rs232 c<- r3;
+  r3 = r3 >> r1;
+  if(r3) ip = z + [ip++];
+  hello;
+  
+  // input case: p, r, s, l
+  r3 <-c \rs232;
+  r3 = r3 & [ip++];
+  h'ff;
+  \rs232 c<- r3;
+  
+  r11 = z + [ip++];
+  case_table;
+  
+  \rs232 c<- r11;
+  
+test_cases:
+  r0 = z + [r11++];
+  \rs232 c<- r0;
+  
+  r0 = r0 & [ip++];
+  h'ff;
+  \rs232 c<- r0;
+  r10 = z + [r11++];
+  \rs232 c<- r10;
+  
+  \rs232 c<- r11; //[ip++];
+  if(r0) ip = z + [ip++];
+  test_cases_cmp;
+  
+  //1;
+  ip = z + [ip];
+  hi;
+  
+test_cases_cmp:
+  r0 = r0 - r3;
+  if(r0) ip = z + [ip++];
+  test_cases;
+  
+  \rs232 c<- r10;
+  ip = z + r10;
+  
+  
+  
+is_prog:
+//  r11 = r0 - [ip++];
+//  "p";
+//  if(r11) ip = z + [ip++];
+//  is_run;
+  
+  r11 = z + r12;
+  
+  r13 <-c \rs232;
+  \rs232 c<- r13;
+prog_loop:
+  [r11] <-c \rs232;
+  \rs232 c<- [r11++];
+  
+  r0 = r11 - r12;
+  r0 = r0 - r13;
+  if(r0) ip = z + [ip++];
+  prog_loop;
+  
+  r0 = z + [ip++];
+  13, 10, "ko";
+print_ok:
+  \rs232 c<- r0;
+  r0 = r0 >> r1;
+  if(r0) ip = z + [ip++];
+  print_ok;
 
-//	r0 c<- r11;
+  r0 = z + r12;
+start_addr:
+  \rs232 c<- r0;
+  r0 = r0 >> r1;
+  if(r0) ip = z + [ip++];
+  start_addr;
+  
+  ip = z + [ip];
+  hi;
 
-//  [r4] = z + r10--; // uart out "b8"
-  r4 c<- r10--; // uart out "b8"
+  
+is_run:
+//  r11 = r0 - [ip++];
+//  "r";
+//  if(r11) ip = z + [ip++];
+//  is_stop;
+  
+  \rs232 c<- [ip++];
+  out_;
+  
+  //r5 = fork r12 (r2);
+  r0 <-c \rs232;
+  r0 = r0 & [ip++];
+  h'ff;
+  
+  \rs232 c<- r0;
+  \rs232 c<- r2;
+  
+  r5 = fork r0 (r2);
+  
+  ip = z + [ip++];
+  hi;
+  
+  
+is_stop:
+//  r11 = r0 - [ip++];
+//  "s";
+//  if(r11) ip = z + [ip++];
+//  hi;
+  
+  //r5 = fork r12 (r2);
+  r0 <-c \rs232;
+  r5 = stop r0 (r2);
+  
+  ip = z + [ip];
+  hi;
+  
 
 //  r5 = fork [ip++] (r2);
 //  in;
 
-//  [r4] = z + r10++; // uart out "ba"
+//  [\rs232] = z + r10++; // uart out "ba"
 
-  r5 = fork [ip++] (r2);
-  out_;
-
-//	r8 c<- r11;
-
-msg:
-//  [r4] = z + r10; // uart out "b9"
+//  r5 = fork [ip++] (r2);
+//  out_;
 
 
 
 
 loop:
 /**/
-//	r2 = z + [r4];
-//	[r4] = z + r2;
-	r2 <-c r4;
-	r4 c<- r2;
+	r2 <-c \rs232;
+	\rs232 c<- r2;
+	r2 = r2 << r1;
 
-	r2 = r2 << [ip++];
-	8;
-//	r2 = z + [r4];
-//	[r4] = z + r2;
-	r2 <-c r4;
-	r4 c<- r2;
+	r0 <-c \rs232;
+	\rs232 c<- r0;
+        r2 = r2 + r0;
+	r2 = r2 << r1;
 
-	r2 = r2 << [ip++];
-	8;
-//	r2 = z + [r4];
-//	[r4] = z + r2;
-	r2 <-c r4;
-	r4 c<- r2;
+	r0 <-c \rs232;
+	\rs232 c<- r0;
+        r2 = r2 + r0;
 /**/
-//        r2 = z + [ip++];
-//        h'57;
 
-	r8 c<- r2;
-//	r8 c<- r11;
+	\color_channel c<- r2;
 
-//        ip = z + [ip]; // goto "loop" label
-//        loop;
+        ip = z + [ip]; // goto "loop" label
+        hi; //loop;
 
 
 
@@ -72,13 +190,13 @@ loop:
 
 
 stop_self:
-//  [r4] = z + r11; // uart out "9b"
+//  [\rs232] = z + r11; // uart out "9b"
 //  r2 = z + [ip++];
 //  0;
 
 //  r3 = stop r2 (r2);
 
-//  [r4] = z + r11; // uart out "9b"
+//  [\rs232] = z + r11; // uart out "9b"
 
 lpoo:
 //  ip = z + [ip++];// ? r0;
@@ -86,7 +204,21 @@ lpoo:
 
   ip = z + [ip];
 //  loop;
-  msg;
+  hi;
+  
+  
+  
+case_table:
+  "p";
+  is_prog;
+  "r";
+  is_run;
+  "s";
+  is_stop;
+  "l";
+  loop;
+  0;
+  0;
 
 
 /*
@@ -126,41 +258,42 @@ loop:
 
 def out_(){
 init{
-  r4 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
-  r3 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
+  \assign color_channel = r6;
+  \assign video_ram_begin = r7;
+  \assign video_ram_step = r5;
+  \assign video_ram_end = r13;
+  
+  \assign rs232 = r4;
+
+  \rs232 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
 
   r1 = 4;
 
-  r5 = h'12C00; // 640*480/4
-  r7 = h'80001;
+  \video_ram_step = h'12C00; // 640*480/4
+  \video_ram_begin = h'80001;
 
-  r10 = h'80001;
-  r11 = h'a5801;
   r2 = h'fa; //1024;
 
   r15 = h'10; //16;
 
-  r9 = h'80001;
   r12 = h'a5801;
-  r13 = h'cafff;//caf00; //h'CB000;
+  \video_ram_end = h'cafff;//caf00; //h'CB000;
 
-  r6 = 8;
+  \color_channel = 8;
 }
 
-//	r2 <-c r6;
+//	r2 <-c \color_channel;
 
 //var{
 //	tst;
 //}
 
-//        r1 = r1 + z;
-
 loop2:
 /**/
-	r8 = z + r7;
-	r9 = r8 + r5;
-	r10 = r9 + r5;
-	r11 = r10 + r5;
+	r8 = z + \video_ram_begin;
+	r9 = r8 + \video_ram_step;
+	r10 = r9 + \video_ram_step;
+	r11 = r10 + \video_ram_step;
 
 //	r2 <- r0;
 
@@ -170,35 +303,35 @@ vga_fill:
 	[r9++] = z + r2;
 	[r8++] = z + r2;
    
-	r14 = r13 - r11;
+	r14 = \video_ram_end - r11;
 
        if( r14 ) ip = z + [ip++]; //? r14;
        vga_fill;
-/**/
+/**
 
-//addr_out:
-//        [r4] = z + r11;
-//        r11 = r11 >> [ip++]; // uart out (echo)
-//        8;
-//        if( r11 ) ip = z + [ip++]; //? r11;
-//        addr_out;
+addr_out:
+        \rs232 c<- r11;
+        r11 = r11 >> [ip++]; // uart out (echo)
+        8;
+        if( r11 ) ip = z + [ip++]; //? r11;
+        addr_out;
 
 
-	r2 <-c r6;
+	r2 <-c \color_channel;
 
 /**
-	r2 = z + [r4];
-	[r4] = z + r2;
+	r2 = z + [\rs232];
+	[\rs232] = z + r2;
 
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + [r4];
-	[r4] = z + r2;
+	r2 = r2 + [\rs232];
+	[\rs232] = z + r2;
 
 	r2 = r2 << [ip++];
 	8;
-	r2 = r2 + [r4];
-	[r4] = z + r2;
+	r2 = r2 + [\rs232];
+	[\rs232] = z + r2;
 /**/
 
         ip = z + [ip]; // goto "loop" label

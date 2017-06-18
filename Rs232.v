@@ -84,27 +84,31 @@ module Rs232 (
   input wire [`ADDR_SIZE0:0] addr_in;
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
-  wire [`ADDR_SIZE0:0] addr_out = (
+  wire [`ADDR_SIZE0:0] addr_out = 
+//											(
                                    //read_dn_r == 1
 											  //|| write_dn_r == 1
-											  ext_chan_r_dn == 1
-											  || ext_chan_w_dn == 1
-											)
-											? addr_r
-											: 0
+//											  ext_chan_r_dn == 1
+//											  || ext_chan_w_dn == 1
+//											)
+//											? addr_r
+//											: 
+											  0
 											;
   
   input wire [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
-  wire [`DATA_SIZE0:0] data_out = (
+  wire [`DATA_SIZE0:0] data_out = 
+//											(
                                    //read_dn_r == 1
 											  //|| write_dn_r == 1
-											  ext_chan_r_dn == 1
-											  || ext_chan_w_dn == 1
-											)
-											? data_r
-											: 0
+//											  ext_chan_r_dn == 1
+//											  || ext_chan_w_dn == 1
+//											)
+//											? data_r
+//											: 
+											  0
 											;
   
   input wire read_q;
@@ -328,7 +332,7 @@ async_receiver rx(
 /**/
 
 
-        rw_halt_r <= rw_halt_stim;
+//        rw_halt_r <= rw_halt_stim;
 		  
 //      end // rst
 							 
@@ -358,7 +362,7 @@ async_receiver rx(
 			ext_chan_no_out <= 0;
 			ext_chan_data_out <= 0;
 
-//		  rw_halt_r = 0;
+		  rw_halt_r = 0;
 		  
 		end else begin //rst
 		  //tx_start = 0;
@@ -372,8 +376,8 @@ async_receiver rx(
 		    `UART_WAIT_CMD: begin
 			   rst_uart <= 0;
 				
-		      read_dn_r <= 0;
-		      write_dn_r <= 0;
+//		      read_dn_r <= 0;
+//		      write_dn_r <= 0;
 
 		      if(
 /*
@@ -385,7 +389,7 @@ async_receiver rx(
 					(ext_chan_r_q == 1 || ext_chan_w_q == 1)
 				) begin
 			     //data_r = data_in;
-				  addr_r <= /*addr_in*/ ext_chan_no_in;
+//				  addr_r <= /*addr_in*/ ext_chan_no_in;
 				  ext_chan_no_out <= ext_chan_no_in;
 		        
 				  if(/*write_q == 1*/ ext_chan_w_q == 1) begin  
@@ -393,7 +397,7 @@ async_receiver rx(
 					   tx_data <= /*data_r*/ /*data_in[7:0]*/ ext_chan_data_in[7:0];
 			         tx_start <= 1;
 						
-						data_r <= /*data_in*/ ext_chan_data_in;
+//						data_r <= /*data_in*/ ext_chan_data_in;
 						
 						ext_chan_w_dn <= 1;
 						//ext_chan_no_out <= ext_chan_no_in;

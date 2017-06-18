@@ -1,5 +1,7 @@
 COMPILER Asm
 
+   import math
+
    funcs = {}
    variables  = {}
    labels = {}
@@ -10,6 +12,16 @@ COMPILER Asm
    code = []
    #code_ip = 0
    
+   
+   
+   def number_of_bits(self, n):
+      import math
+      return int(math.log(n, 2)) + 1
+   
+   def number_of_bytes(self, n):
+      import math
+      return int(math.log(n, 256)) + 1
+      #return int((self.number_of_bits(n) + 7) / 8)
    
    
    def isNext(self, ch):
@@ -139,7 +151,10 @@ PRODUCTIONS
 				.
 
 
-  VarList<foo>			= identifier 					(. name = self.token.val .)
+  VarList<foo>			= 
+				//    RegAssignment<foo>
+				//  |
+				    identifier 					(. name = self.token.val .)
 				    ArraySize<out dims>				(. 
 										   #print name
 										   #print dims
@@ -188,7 +203,7 @@ PRODUCTIONS
 										      for i in xrange(0,15) :
 										         regs.append(0)
 										      regs.append(16)
-										      foo = {'fname': fname, 'f_ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, 'code': [], 'xref': {}, 'ip': 0, 'names': {}, 'foos': [], }
+										      foo = {'fname': fname, 'f_ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, 'code': [], 'xref': {}, 'ip': 0, 'names': {}, 'foos': [], 'assigns': {}, 'rassigns': {}, }
 										      self.funcs[fname] = foo
 										      self.curfunc = fname
 										.)
@@ -276,8 +291,10 @@ PRODUCTIONS
   CompoundStatement<fname, foo>	= 
 				"{" 
 				 ["init" "{" { 
-				   RegName< out r > "=" Const<out num, foo> 
-				   ";"						(. foo['regs'][r['r']] = num .)
+				      RegAssignment<foo> ";"
+				    |
+				      RegName< out r, foo > "=" Const<out num, foo> 
+				      ";"					(. foo['regs'][r['r']] = num .)
 				 } "}" ] 					(.
 										   for i in xrange(0, 16) :
 										      foo['code'].append(foo['regs'][i])
@@ -285,11 +302,38 @@ PRODUCTIONS
 										.)
 				 [ "var" "{" { LocalDeclaration<foo> } "}" ]
 				 { 
+				    RegAssignment<foo> ";" 
+				  |
 				    Statement<foo> 
 				  | Definition<fname, foo>
 				 } 
 				 "}" 
 				.
+
+
+  RegAssignment<foo> =
+				  "\\assign"
+				    identifier 					(. name = self.token.val .)
+				    "="
+				    RegName< out r, foo>			(.
+										   rn = r['r']
+										   if (not name in foo['assigns'].keys()) and (not rn in foo['rassigns'].keys()):
+										      foo['assigns'][name] = rn
+										      foo['rassigns'][rn] = name 
+										   else:
+										      self.SemErr( "Error: try to reassign '%s' from r%d to r%d" % (name, foo['assigns'][name], rn, ) )
+										.)
+				| 
+				  "\\unassign"
+				    identifier 					(. 
+										   name = self.token.val 
+										   if name in foo['assigns'].keys():
+										      rn = foo['assigns'][name]
+										      del foo['assigns'][name]
+										      del foo['rassigns'][rn] 
+										.)
+				.
+
 
 //  ContinueStatement    = "continue" ";" .
 
@@ -313,14 +357,12 @@ PRODUCTIONS
 /* LocalDeclarations */
 
   LocalDeclaration<foo>
-				= 
-//				identifier					(. 
-//										   name = self.token.val
-//										   idip = self.ip 
-//										.)
-//                          ( /*FunctionHeader<name> |*/ 
-				VarList<foo> 
-//						  ) 
+				=
+				( 
+				//   RegAssignment<foo>
+				//  |
+				    VarList<foo> 
+				)
 				";"  
 				.
 
@@ -335,32 +377,32 @@ PRODUCTIONS
 										   cond = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
 				(
-				   [ "if" "(" Cond<out cond> ")"  
+				   [ "if" "(" Cond<out cond, foo> ")"  
 				   ] 
-				   Dst<out dst> 
+				   Dst<out dst, foo> 
 				   (
 				      "="
 						(
-						    Src<out src0> 
+						    Src<out src0, foo> 
 						    Operation<out op> 
-						    Src<out src1>
+						    Src<out src1, foo>
 						  | "fork" 			(. op = 14 .)
-						    Src<out src0> 
-						    "(" Src<out src1> ")"
+						    Src<out src0, foo> 
+						    "(" Src<out src1, foo> ")"
 						  | "stop" 			(. op = 15 .)
-						    Src<out src0> 
-						    "(" Src<out src1> ")"
+						    Src<out src0, foo> 
+						    "(" Src<out src1, foo> ")"
 						)
-                                    | "<-c" Src<out src0>			(. 
+                                    | "<-c" Src<out src0, foo>			(. 
 										   op = 0
 										   src1 = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
-				    | "c<-" Src<out src1>			(.
+				    | "c<-" Src<out src1, foo>			(.
 										   op = 0
 										   src0 = dst
 										   dst = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
-                                    | "?c" Src<out src1>			(. 
+                                    | "?c" Src<out src1, foo>			(. 
 										   op = 0
 										   src0 = {'r': 0, 'rop': 3, 'isptr': 0}
 										.)
@@ -380,7 +422,7 @@ PRODUCTIONS
 										   #self.ip += 1
 										.)
 				.
-				
+
 //Conditional { AssignmentOperator Expression }.
 
   Operation<out op>		= 						(. op = 0 .)
@@ -449,10 +491,19 @@ PRODUCTIONS
 //				  | "->" identifier
 //				  | "++"
 //				  | "--"
+				  | "," Primary<out num2, foo>			(.
+										  #if num2 < 256:
+										  #   num = (num << 8) + num2
+										  #else:
+										  num = (num << (8 * self.number_of_bytes(num2))) + num2
+										  num = num & 0xffffffff
+										.)
 				} 
 				.
 
-  Primary<out num, foo>		= 						(. num = 0 .)
+  Primary<out num, foo>		= 						(.
+										  num = 0 
+										.)
 				(
 				    identifier 					(. 
 										   lbl = self.token.val
@@ -496,7 +547,11 @@ PRODUCTIONS
 				     }						(. foo['xref'][lbl].append(xref) .)
 				  | string					(.
 										   #print self.token.val
+										   s = self.token.val[1:-1]
 										   num = 0
+										   for c in s:
+										      num = (num << 8) + ord(c)
+										   num = num & 0xffffffff
 										.)
 				  | char 
 				  | hexnumber 				(. num = int( self.token.val[2:], 16 ) .)
@@ -518,31 +573,32 @@ PRODUCTIONS
 				.
 
 
-  Cond<out r>			= Src<out r> . 
+  Cond<out r, foo>		= Src<out r, foo> . 
 			/*( RegName | "[" RegName "]" ) . */
 
 
-  Dst<out r>			= Src<out r> .
+  Dst<out r, foo>		= Src<out r, foo> .
 
 
-  Src<out r>			= 						(. r = {'r': 0, 'rop': 3, 'isptr': 0} .)
+  Src<out r, foo>		= 						(. r = {'r': 0, 'rop': 3, 'isptr': 0} .)
 				( 
 				    ("Z" | "z")	
-				  | RegOp<out r>				(. r['isptr'] = 0 .)
-				  | "[" RegOp<out r> "]"			(. r['isptr'] = 1 .)
+				  | RegOp<out r, foo>				(. r['isptr'] = 0 .)
+				  | "[" RegOp<out r, foo> "]"			(. r['isptr'] = 1 .)
 				) 
 				.
 
 
-  RegOp<out r>			= 
-				RegName<out r> 					(. r['rop'] = 0 .)
+  RegOp<out r, foo>			= 
+				RegName<out r, foo> 				(. r['rop'] = 0 .)
 				[ 
 				    "++"					(. r['rop'] = 1 .)
 				  | "--"					(. r['rop'] = 2 .)
 				] 
 				.
 
-  RegName< out r >		= 						(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
+  RegName< out r, foo>		= 						(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
+				(
 				(
 				    "r0"					(. r['r'] = 0 .)
 				  | "r1"					(. r['r'] = 1 .)
@@ -560,7 +616,18 @@ PRODUCTIONS
 				  | "r13"					(. r['r'] = 13 .)
 				  | "r14"					(. r['r'] = 14 .)
 				  | ("r15" | "ip")				(. r['r'] = 15 .)
-				) 
+				) 						(. 
+										   if r['r'] in foo['rassigns']:
+										      self.SemErr( "Error: r%d should be used only by alias '%s' here" % (r['r'], foo['rassigns'][r['r']], ) )
+										.)
+				  | "\\" identifier 				(. 
+										   name = self.token.val 
+										   if name in foo['assigns']:
+										      r['r'] = foo['assigns'][name]
+										   else:
+										      self.SemErr( "Error: '%s' is not assigned to any register" % (name, ) )
+										.)
+				)
 				.
 
 

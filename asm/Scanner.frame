@@ -79,7 +79,7 @@ class Buffer( object ):
       if self.pos < self.bufLen:
          return self.buf[self.pos]
       else:
-         return Scanner.buffer.EOF
+         return self.buffer.EOF
 
    def getString( self, beg, end ):
       s = ''
