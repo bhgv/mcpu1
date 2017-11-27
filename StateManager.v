@@ -39,6 +39,7 @@ module StateManager(
 				no_data_exit_and_wait_begin,
 				
 				thread_escape,
+				chan_escape,
 				
 				chan_op,
 				chan_wait_next_time,
@@ -60,6 +61,7 @@ module StateManager(
   //                                   ;
   
   input wire thread_escape;
+  input wire chan_escape;
   
   input wire chan_op;
   input wire chan_wait_next_time;
@@ -282,7 +284,7 @@ module StateManager(
 
 /**/
 `ifdef PAUSE_OR_CHAN_OP_TAIL_CUTOFF_ENABLE
-    if(thread_escape == 1'b 1 && ipIsWriten == 1'b 0 && isChanAlu == 1'b 0 /*&& anyIsWriten == 0*/) begin
+    if(thread_escape == 1'b 1 && ipIsWriten == 1'b 0 && (isChanAlu == 1'b 0 || chan_escape == 1'b 1) /*&& anyIsWriten == 0*/) begin
 	   case(state)
 
 /**

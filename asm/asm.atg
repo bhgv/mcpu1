@@ -42,7 +42,7 @@ COMPILER Asm
          sz = self.addFooToCode(foo)
          self.code[sz_ip] = sz
       return sz
-										   
+
    
    def addFooToCode(self, foo):
       b_ip = self.ip
@@ -56,19 +56,19 @@ COMPILER Asm
          print nm
          o = foo['names'][nm]
          if o['type'] == 'foo' :
-	    if nm in foo['xref'] :
+            if nm in foo['xref'] :
                self.code.append(0)
                self.code.append(0)
                isz_ip = self.ip
                self.ip += 2
                #self.ip += 1
-	       ptlst = foo['xref'][nm]
-	       for pt in ptlst :
+               ptlst = foo['xref'][nm]
+               for pt in ptlst :
                   print "b_ip=%d, pt=%d, isz_ip=%d, old_code=%d" % (b_ip, pt, isz_ip, self.code[b_ip + pt], )
-	          self.code[b_ip + pt] += iip
+                  self.code[b_ip + pt] += iip
                isz = self.addFooToCode(o['foo'])
                print "isz=", isz, ", isz_ip=", isz_ip
-	       iip += isz
+               iip += isz
                self.code[isz_ip] = isz
                sz += isz
       print "sz=", sz
@@ -79,7 +79,24 @@ COMPILER Asm
       return self.code
       
       
-      
+   def calc_op(self, n1, op, n2):
+      if op == "+":
+         return n1 + n2
+      elif op == "-":
+         return n1 - n2
+      elif op == "*":
+         return n1 * n2
+      elif op == "/":
+         return n1 / n2
+      elif op == "%":
+         return n1 % n2
+      elif op == "|":
+         return n1 | n2
+      elif op == "&":
+         return n1 & n2
+      elif op == "^":
+         return n1 ^ n2
+
 
 CHARACTERS
   letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
@@ -312,7 +329,7 @@ PRODUCTIONS
 
 
   RegAssignment<foo> =
-				  "\\assign"
+				  "\\alias"
 				    identifier 					(. name = self.token.val .)
 				    "="
 				    RegName< out r, foo>			(.
@@ -324,7 +341,7 @@ PRODUCTIONS
 										      self.SemErr( "Error: try to reassign '%s' from r%d to r%d" % (name, foo['assigns'][name], rn, ) )
 										.)
 				| 
-				  "\\unassign"
+				  "\\unalias"
 				    identifier 					(. 
 										   name = self.token.val 
 										   if name in foo['assigns'].keys():
@@ -448,25 +465,55 @@ PRODUCTIONS
 
   Conditional<out num, foo>	= LogORExp<out num, foo> .
 
-  LogORExp<out num, foo>	= LogANDExp<out num, foo>   { "||" LogANDExp<out num, foo> } .
+  LogORExp<out num, foo>	= LogANDExp<out num, foo>   
+			    { "||" 						(. op = self.token.val .)
+			    LogANDExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  LogANDExp<out num, foo>	= InclORExp<out num, foo>   { "&&" InclORExp<out num, foo> }.
+  LogANDExp<out num, foo>	= InclORExp<out num, foo>   
+			    { "&&" 						(. op = self.token.val .)
+			    InclORExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    }.
 
-  InclORExp<out num, foo>	= ExclORExp<out num, foo>   { "|" ExclORExp<out num, foo> } .
+  InclORExp<out num, foo>	= ExclORExp<out num, foo>   
+			    { "|" 						(. op = self.token.val .)
+			    ExclORExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  ExclORExp<out num, foo>	= ANDExp<out num, foo>      { "^" ANDExp<out num, foo> } .
+  ExclORExp<out num, foo>	= ANDExp<out num, foo>      
+			    { "^" 						(. op = self.token.val .)
+			    ANDExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  ANDExp<out num, foo>	= EqualExp<out num, foo>    { "&" EqualExp<out num, foo> } .
+  ANDExp<out num, foo>	= EqualExp<out num, foo>    
+			    { "&" 						(. op = self.token.val .)
+			    EqualExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  EqualExp<out num, foo>	= RelationExp<out num, foo> { ( "==" | "!=" ) RelationExp<out num, foo> } .
+  EqualExp<out num, foo>	= RelationExp<out num, foo> 
+			    { ( "==" | "!=" ) 					(. op = self.token.val .)
+			    RelationExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  RelationExp<out num, foo>	= ShiftExp<out num, foo>    { ( "<" | ">" | "<=" | ">=" ) ShiftExp<out num, foo> }.
+  RelationExp<out num, foo>	= ShiftExp<out num, foo>    
+			    { ( "<" | ">" | "<=" | ">=" ) 			(. op = self.token.val .)
+			    ShiftExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    }.
 
-  ShiftExp<out num, foo>	= AddExp<out num, foo>      { ( "<<" | ">>" ) AddExp<out num, foo> } .
+  ShiftExp<out num, foo>	= AddExp<out num, foo>      
+			    { ( "<<" | ">>" ) 					(. op = self.token.val .)
+			    AddExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  AddExp<out num, foo>	= MultExp<out num, foo>     { ( "+" | "-" ) MultExp<out num, foo> } .
+  AddExp<out num, foo>	= MultExp<out num, foo>     
+			    { ( "+" | "-" ) 					(. op = self.token.val .)
+			    MultExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    } .
 
-  MultExp<out num, foo>	= CastExp<out num, foo>     { ( "*" | "/" | "%" ) CastExp<out num, foo> } .
+  MultExp<out num, foo>	= CastExp<out num, foo>     
+			    { ( "*" | "/" | "%" )				(. op = self.token.val .)
+			    CastExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			} .
 
   CastExp<out num, foo>	= UnaryExp<out num, foo> .
 

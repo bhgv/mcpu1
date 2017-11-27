@@ -1460,7 +1460,7 @@ parameter PROC_QUANTITY = 8;
                 thrd_rslt_r <= 0;
 				  end else begin
 				    sproc_r <= {data_in, addr_in};
-					 sproc_finish_i_r <= aproc_i;
+					 sproc_finish_i_r <= aproc_tbl_addr; //aproc_i;
 					 is_sproc <= 1;
 					 
                 //data_r_int <= 32'h beefdead; //-1;

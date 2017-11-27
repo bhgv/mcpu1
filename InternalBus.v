@@ -352,6 +352,7 @@ module InternalBus(
 //				.no_data_tick(no_data_tick),
 
 				.thread_escape(thread_escape),
+				.chan_escape(chan_escape),
 				
             .chan_op(chan_op),
 				.chan_wait_next_time(chan_wait_next_time),

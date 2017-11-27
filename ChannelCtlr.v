@@ -128,6 +128,14 @@ module ChannelCtlr(
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_in;
+  
+  wire [`ADDR_SIZE0:0] chan_no = 
+									  addr_r >= `EXTERNAL_CHANNELS_BEGIN &&
+									  addr_r <= `EXTERNAL_CHANNELS_END
+									  ? addr_r
+									  : addr_r + base_addr
+									  ;
+  
   wire [`ADDR_SIZE0:0] addr_out = 
 									  cpu_msg_pulse == 1
                              ? addr_r 
@@ -175,7 +183,7 @@ module ChannelCtlr(
 		
 		chan_msg_strb_o <= 1'b 0;
 		
-		chan_escape_r <= 0;
+		//chan_escape_r <= 0;
 
       //cpu_msg_r <= 0;
       //cpu_msg_pulse <= 0;
@@ -259,6 +267,12 @@ module ChannelCtlr(
         //    next_state_r <= 1;
          // end
         //end
+		  
+		  `FINISH_END: begin
+		    chan_escape_r <= 0;
+			 
+			 chan_wait_next_time <= 0;
+		  end
 
         `ALU_BEGIN: begin
           
@@ -397,8 +411,10 @@ module ChannelCtlr(
                             `CPU_R_CHAN_NO_RESULTS: begin
                               //state_int <= 0;
                               //next_state_r <= 1;
-										
+
 										chan_wait_next_time <= 1;
+
+                              //chan_escape_r <= 1;
 										
 										state_int <= 3;
                             end
@@ -408,7 +424,7 @@ module ChannelCtlr(
                             //default: begin
 									   dst_r <= data_in;
 										
-									   chan_wait_next_time <= 0;
+									   //chan_wait_next_time <= 0;
                               //state_int <= 0;
                               next_state_r <= 1;
                             end
@@ -497,6 +513,8 @@ module ChannelCtlr(
                               //next_state_r <= 1;
 										
 										chan_wait_next_time <= 1;
+
+                              //chan_escape_r <= 1;
 										
 										state_int <= 3;
                             end
@@ -504,6 +522,7 @@ module ChannelCtlr(
                             //`CPU_R_CHAN_RES_RD: begin
                             `CPU_R_CHAN_RES_WR: begin
                             //default: begin
+									   //chan_wait_next_time <= 0;
                               //state_int <= 0;
                               next_state_r <= 1;
                             end

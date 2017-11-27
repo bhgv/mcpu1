@@ -3,8 +3,8 @@
 
 def main(){
 init{
-  \assign rs232 = r4;
-  \assign color_channel = r8;
+  \alias rs232 = r4;
+  \alias color_channel = r8;
   
   r2 = h'0;
 
@@ -132,9 +132,11 @@ is_run:
   \rs232 c<- r0;
   \rs232 c<- r2;
   
-  r5 = fork r0 (r2);
+  //r5 = fork r0 (r2);
+  r5 = fork [ip++] (r2);
+  out_;
   
-  ip = z + [ip++];
+  ip = z + [ip];
   hi;
   
   
@@ -146,7 +148,9 @@ is_stop:
   
   //r5 = fork r12 (r2);
   r0 <-c \rs232;
-  r5 = stop r0 (r2);
+//  r5 = stop r0 (r2);
+  r5 = stop [ip++] (r2);
+  out_;
   
   ip = z + [ip];
   hi;
@@ -258,21 +262,23 @@ loop:
 
 def out_(){
 init{
-  \assign color_channel = r6;
-  \assign video_ram_begin = r7;
-  \assign video_ram_step = r5;
-  \assign video_ram_end = r13;
+  \alias color_channel = r6;
+  \alias video_ram_begin = r7;
+  \alias video_ram_step = r5;
+  \alias video_ram_end = r13;
   
-  \assign rs232 = r4;
+  \alias color = r2;
+  
+  \alias rs232 = r4;
 
   \rs232 = h'FFFFFFf0;//FFFFFFD6;//FFFFFFEE;
 
   r1 = 4;
 
-  \video_ram_step = h'12C00; // 640*480/4
+  \video_ram_step = h'12C00 - 150; // 640*480/4
   \video_ram_begin = h'80001;
 
-  r2 = h'fa; //1024;
+  \color = h'f7; //1024;
 
   r15 = h'10; //16;
 
@@ -282,7 +288,7 @@ init{
   \color_channel = 8;
 }
 
-//	r2 <-c \color_channel;
+//	\color <-c \color_channel;
 
 //var{
 //	tst;
@@ -295,20 +301,22 @@ loop2:
 	r10 = r9 + \video_ram_step;
 	r11 = r10 + \video_ram_step;
 
-//	r2 <- r0;
+//	\color <- r0;
 
 vga_fill:
-	[r11++] = z + r2;
-	[r10++] = z + r2;
-	[r9++] = z + r2;
-	[r8++] = z + r2;
+	[r11++] = z + \color;
+	[r10++] = z + \color;
+	[r9++] = z + \color;
+	[r8++] = z + \color;
    
 	r14 = \video_ram_end - r11;
 
        if( r14 ) ip = z + [ip++]; //? r14;
        vga_fill;
-/**
 
+	\color <-c \color_channel;
+
+/**
 addr_out:
         \rs232 c<- r11;
         r11 = r11 >> [ip++]; // uart out (echo)
@@ -317,28 +325,27 @@ addr_out:
         addr_out;
 
 
-	r2 <-c \color_channel;
 
 /**
-	r2 = z + [\rs232];
-	[\rs232] = z + r2;
+	\color = z + [\rs232];
+	[\rs232] = z + \color;
 
-	r2 = r2 << [ip++];
+	\color = \color << [ip++];
 	8;
-	r2 = r2 + [\rs232];
-	[\rs232] = z + r2;
+	\color = \color + [\rs232];
+	[\rs232] = z + \color;
 
-	r2 = r2 << [ip++];
+	\color = \color << [ip++];
 	8;
-	r2 = r2 + [\rs232];
-	[\rs232] = z + r2;
+	\color = \color + [\rs232];
+	[\rs232] = z + \color;
 /**/
 
-        ip = z + [ip]; // goto "loop" label
+        ip = z + [ip++]; // goto "loop" label
         loop2;
 
 
-        ip = z + [ip++]; // goto "begin" label
+        ip = z + [ip]; // goto "begin" label
         loop2;
 }
 
