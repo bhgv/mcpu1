@@ -69,46 +69,66 @@ module StateManager(
 
   input wire [31:0] command;  
   
- 
+ /**/
   wire [3:0] regNumS1;
-  assign regNumS1 = command[3:0];
+  //assign regNumS1 = command[3:0];
 
   wire [3:0] regNumS0;
-  assign regNumS0 = command[7:4];
+  //assign regNumS0 = command[7:4];
 
   wire [3:0] regNumD;
-  assign regNumD = command[11:8];
+  //assign regNumD = command[11:8];
 
   wire [3:0] regNumCnd;
-  assign regNumCnd = command[15:12];
+  //assign regNumCnd = command[15:12];
   
   
   wire isRegS1Ptr;
-  assign isRegS1Ptr = command[16];
+  //assign isRegS1Ptr = command[16];
   
   wire isRegS0Ptr;
-  assign isRegS0Ptr = command[17];
+  //assign isRegS0Ptr = command[17];
   
   wire isRegDPtr;
-  assign isRegDPtr = command[18];
+  //assign isRegDPtr = command[18];
   
   wire isRegCondPtr;
-  assign isRegCondPtr = command[19];
+  //assign isRegCondPtr = command[19];
   
   
   wire [1:0] regS1Flags;
-  assign regS1Flags = command[21:20];
+  //assign regS1Flags = command[21:20];
   
   wire [1:0] regS0Flags;
-  assign regS0Flags = command[23:22];
+  //assign regS0Flags = command[23:22];
   
   wire [1:0] regDFlags;
-  assign regDFlags = command[25:24];
+  //assign regDFlags = command[25:24];
   
   wire [1:0] regCondFlags;
-  assign regCondFlags = command[27:26];
+  //assign regCondFlags = command[27:26];
   
-  wire [3:0] cmd = command[31:28];
+  wire [3:0] cmd; // = command[31:28];
+  /**/
+ CommandWordParse cmd_wd_prc_2 (
+	.command_word(command),
+	.regNumS1(regNumS1),
+	.regNumS0(regNumS0),
+	.regNumD(regNumD),
+	.regNumCnd(regNumCnd),
+	.isRegS1Ptr(isRegS1Ptr),
+	.isRegS0Ptr(isRegS0Ptr),
+	.isRegDPtr(isRegDPtr),
+	.isRegCondPtr(isRegCondPtr),
+	.regS1Flags(regS1Flags),
+	.regS0Flags(regS0Flags),
+	.regDFlags(regDFlags),
+	.regCondFlags(regCondFlags),
+	.cmd_code(cmd)
+	);
+  
+  
+  
   reg isCmdChanOp;
 
   input wire [`DATA_SIZE0:0] cond;

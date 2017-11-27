@@ -1,6 +1,6 @@
 
 
-`define CPU_QUANTITY		3
+`define CPU_QUANTITY		2
 `define PROC_QUANTITY	7
 
 `define CLK_FREQ_PLL		80 * 1000000
@@ -35,7 +35,7 @@
 `define UNMODIFICABLE_ADDR_B	`VIDEO1_ADDR_B
 
 
-`define REG_IP  15
+`define REG_IP  7 //15
 
 
 `define THREAD_HEADER_SPACE  2
