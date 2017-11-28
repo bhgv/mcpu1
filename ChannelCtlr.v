@@ -59,7 +59,7 @@ module ChannelCtlr(
   
   
   
-  wire [3:0] cmd_code = command[31:28];
+  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
   
 
   //wire regS1en; // = ~(&command[21:20]);
@@ -157,7 +157,7 @@ module ChannelCtlr(
   
   output reg chan_wait_next_time;
 
-//  wire [3:0] cmd_code = command[31:28];
+//  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
   
   reg signal_sent;
   

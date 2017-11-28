@@ -102,7 +102,7 @@ module BridgeToOutside (
 //											;
   
   
-  wire [3:0] cmd_code = command[31:28];
+  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
   
 
   output [`ADDR_SIZE0:0] base_addr;

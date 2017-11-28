@@ -70,16 +70,16 @@ module StateManager(
   input wire [31:0] command;  
   
  /**/
-  wire [3:0] regNumS1;
+  wire [`CMD_BITS_PER_REG0:0] regNumS1;
   //assign regNumS1 = command[3:0];
 
-  wire [3:0] regNumS0;
+  wire [`CMD_BITS_PER_REG0:0] regNumS0;
   //assign regNumS0 = command[7:4];
 
-  wire [3:0] regNumD;
+  wire [`CMD_BITS_PER_REG0:0] regNumD;
   //assign regNumD = command[11:8];
 
-  wire [3:0] regNumCnd;
+  wire [`CMD_BITS_PER_REG0:0] regNumCnd;
   //assign regNumCnd = command[15:12];
   
   
@@ -108,8 +108,12 @@ module StateManager(
   wire [1:0] regCondFlags;
   //assign regCondFlags = command[27:26];
   
-  wire [3:0] cmd; // = command[31:28];
+  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd; // = command[31:28];
   /**/
+  
+  wire isCond;
+  wire isCondTrue;
+  
  CommandWordParse cmd_wd_prc_2 (
 	.command_word(command),
 	.regNumS1(regNumS1),
@@ -124,6 +128,8 @@ module StateManager(
 	.regS0Flags(regS0Flags),
 	.regDFlags(regDFlags),
 	.regCondFlags(regCondFlags),
+	.isCond(isCond),
+	.isCondTrue(isCondTrue),
 	.cmd_code(cmd)
 	);
   

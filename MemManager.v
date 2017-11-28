@@ -114,16 +114,16 @@ module MemManager (
   output wire [31:0] command_word;
 
  /**/
-  wire [3:0] regNumS1;
+  wire [`CMD_BITS_PER_REG0:0] regNumS1;
   //assign regNumS1 = command_word[3:0];
 
-  wire [3:0] regNumS0;
+  wire [`CMD_BITS_PER_REG0:0] regNumS0;
   //assign regNumS0 = command_word[7:4];
 
-  wire [3:0] regNumD;
+  wire [`CMD_BITS_PER_REG0:0] regNumD;
   //assign regNumD = command_word[11:8];
 
-  wire [3:0] regNumCnd;
+  wire [`CMD_BITS_PER_REG0:0] regNumCnd;
   //assign regNumCnd = command_word[15:12];
   
   
@@ -153,8 +153,12 @@ module MemManager (
   //assign regCondFlags = command_word[27:26];
   
   
-  wire [3:0] cmd_code; // = command_word[31:28];
+  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code; // = command_word[31:28];
  /**/
+ 
+  wire isCond;
+  wire isCondTrue;
+ 
  CommandWordParse cmd_wd_prc_1 (
 	.command_word(command_word),
 	.regNumS1(regNumS1),
@@ -169,6 +173,8 @@ module MemManager (
 	.regS0Flags(regS0Flags),
 	.regDFlags(regDFlags),
 	.regCondFlags(regCondFlags),
+	.isCond(isCond),
+	.isCondTrue(isCondTrue),
 	.cmd_code(cmd_code)
 	);
 

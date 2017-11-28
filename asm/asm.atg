@@ -96,6 +96,18 @@ COMPILER Asm
          return n1 & n2
       elif op == "^":
          return n1 ^ n2
+     
+     
+   def buildCmdCode(self, op, iscondtrue, iscond, cond, dst, src0, src1):
+      cmd = 0
+      cmd |= (cond['r'] << 12) | (cond['rop'] << 22) | (cond['isptr'] << 15)
+      cmd |= (dst['r'] << 8) | (dst['rop'] << 20) | (dst['isptr'] << 11)
+      cmd |= (src0['r'] << 4) | (src0['rop'] << 18) | (src0['isptr'] << 7)
+      cmd |= (src1['r'] << 0) | (src1['rop'] << 16) | (src1['isptr'] << 3)
+      cmd |= (iscond << 24) | (iscondtrue << 25)
+      cmd |= (op << 28)
+      return cmd
+
 
 
 CHARACTERS
@@ -391,10 +403,17 @@ PRODUCTIONS
 
   Expression<out cmd, foo>	= 						(. 
 										   cmd = 0 
-										   cond = {'r': 0, 'rop': 3, 'isptr': 0}
+										   cond = {'r': 0, 'rop': 3, 'isptr': 0, }
+										   iscond = 0
+										   iscondtrue = 0
 										.)
 				(
-				   [ "if" "(" Cond<out cond, foo> ")"  
+				   [ "if"					(. iscond = 1
+										   iscondtrue = 1
+										.)
+					[ "not"					(. iscondtrue = 0 .)
+					]
+					"(" Cond<out cond, foo> ")"  
 				   ] 
 				   Dst<out dst, foo> 
 				   (
@@ -425,11 +444,13 @@ PRODUCTIONS
 										.)
 				   )
 										(.
-										   cmd |= (cond['r'] << 12) | (cond['rop'] << 26) | (cond['isptr'] << 19)
-										   cmd |= (dst['r'] << 8) | (dst['rop'] << 24) | (dst['isptr'] << 18)
-										   cmd |= (src1['r'] << 0) | (src1['rop'] << 20) | (src1['isptr'] << 16)
-										   cmd |= (src0['r'] << 4) | (src0['rop'] << 22) | (src0['isptr'] << 17)
-										   cmd |= (op << 28)
+										   #cmd |= (cond['r'] << 12) | (cond['rop'] << 22) | (cond['isptr'] << 15)
+										   #cmd |= (dst['r'] << 8) | (dst['rop'] << 20) | (dst['isptr'] << 11)
+										   #cmd |= (src1['r'] << 0) | (src1['rop'] << 16) | (src1['isptr'] << 3)
+										   #cmd |= (src0['r'] << 4) | (src0['rop'] << 18) | (src0['isptr'] << 7)
+										   #cmd |= (iscond << 24) | (iscondtrue << 25)
+										   #cmd |= (op << 28)
+										   cmd = self.buildCmdCode(op, iscondtrue, iscond, cond, dst, src0, src1)
 										.)
 				 | Const<out num, foo>				(. cmd = num .)
 				)						(.
@@ -654,7 +675,8 @@ PRODUCTIONS
 				  | "r4"					(. r['r'] = 4 .)
 				  | "r5"					(. r['r'] = 5 .)
 				  | "r6"					(. r['r'] = 6 .)
-				  | "r7"					(. r['r'] = 7 .)
+				  | ("r7" | "ip")				(. r['r'] = 7 .)
+/*
 				  | "r8"					(. r['r'] = 8 .)
 				  | "r9"					(. r['r'] = 9 .)
 				  | "r10"					(. r['r'] = 10 .)
@@ -663,6 +685,7 @@ PRODUCTIONS
 				  | "r13"					(. r['r'] = 13 .)
 				  | "r14"					(. r['r'] = 14 .)
 				  | ("r15" | "ip")				(. r['r'] = 15 .)
+*/
 				) 						(. 
 										   if r['r'] in foo['rassigns']:
 										      self.SemErr( "Error: r%d should be used only by alias '%s' here" % (r['r'], foo['rassigns'][r['r']], ) )

@@ -78,7 +78,7 @@ module RegisterManager (
   input wire [`STATE_SIZE0:0] state;
   input wire [`SIZE_REG_OP-1:0] reg_op;
 
-  input wire [3:0] regNum;
+  input wire [`CMD_BITS_PER_REG0:0] regNum;
   
   
   input wire isRegPtr;  

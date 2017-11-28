@@ -30,8 +30,13 @@
 
 `define FLOAT_SIGN	31
 
+`define CMD_BITS_PER_REG	3
+`define CMD_BITS_PER_REG0	2
 
-//`define REG_IP  15
+`define CMD_BITS_PER_CMD_CODE		4
+`define CMD_BITS_PER_CMD_CODE0	3
+
+//`define REG_IP  7 //15
 
 
 //`define THREAD_HEADER_SPACE  2
