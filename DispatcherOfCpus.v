@@ -408,6 +408,7 @@ reg [15:0] mem_op_timeout;
 
 
 always @(/*pos*/negedge clk) begin
+//always @(posedge clk) begin
   
 //  clk_oe = ~clk_oe;
   
@@ -532,12 +533,12 @@ always @(/*pos*/negedge clk) begin
 			 // AA test!
 			 
 			 next_thread_r <= 0;
-			 
+/* //{} VVV from here
         if(cpu_msg_in == `CPU_R_RESET) begin 
           ext_cpu_index_r <= ext_cpu_index_r + 1;
 //          addr_out_r  <= 0; //; //???
         end
-        
+*/ //{} AAA
         ext_rst_b_r <= 0;
 		  
         if(ext_rst_e == 1) begin
@@ -548,9 +549,15 @@ always @(/*pos*/negedge clk) begin
           addr_out_r  <= 0; //; //???
           state_ctl <= `CTL_CPU_LOOP;
         end
+        else //{} VVV to here
+        if(cpu_msg_in == `CPU_R_RESET) begin 
+        	ext_cpu_index_r <= ext_cpu_index_r + 1;
+        	//          addr_out_r  <= 0; //; //???
+        end
+        //{} AAA
       end
-      
-		
+
+
       `CTL_CPU_LOOP: begin
 		/**/
         read_dn_r <= 1'b 0; 
@@ -571,14 +578,11 @@ always @(/*pos*/negedge clk) begin
         if(bus_busy_r == 0) begin
           if(ext_bus_q == 1'b 1) begin
             state_ctl <= `CTL_CPU_EXT_BUS;
-				
-			 end else 
-			 if(ext_cpu_e == 0)
-			 begin
+          end else if(ext_cpu_e == 0) begin
             if(cpu_num_na > 0 && new_cpu_restarted == 0) begin
               ext_cpu_index_r <= `CPU_NONACTIVE;
               new_cpu_restarted <= 1;
-				  
+
               //addr_out_r <= next_proc;
               //data_r <= addr_chan_to_op_out;
 
@@ -589,8 +593,8 @@ always @(/*pos*/negedge clk) begin
                 cpu_num <= 0;
                 ext_cpu_index_r <= 0 | `CPU_ACTIVE;
               end else begin
+              	ext_cpu_index_r <= (cpu_num + 1) | `CPU_ACTIVE;
                 cpu_num <= cpu_num + 1;
-                ext_cpu_index_r <= (cpu_num + 1) | `CPU_ACTIVE;
 //                cpu_num <= cpu_num_plus_1; //cpu_num + 1;
 //                ext_cpu_index_r <= cpu_num_plus_1 | `CPU_ACTIVE; //(cpu_num + 1) | `CPU_ACTIVE;
               end
@@ -598,23 +602,22 @@ always @(/*pos*/negedge clk) begin
               new_cpu_restarted <= 0;
             end
             addr_out_r <= next_proc; 
-				data_r <= addr_chan_to_op_out;
-            
+            data_r <= addr_chan_to_op_out;
+
             base_proc_tmp <= next_proc; 
-				base_data_tmp <= addr_chan_to_op_out;
-            
+            base_data_tmp <= addr_chan_to_op_out;
+
             cpu_q_r <= 1;
-            
+
             state_ctl <= `CTL_CPU_CMD;
           end
         end else begin
           //data_r <= 0;
-		    bus_busy_r <= 1'b 0;
-		  end
+          bus_busy_r <= 1'b 0;
+        end
 		/**/
       end
-      
-		
+
       `CTL_CPU_CMD: begin
 		  cpu_q_r <= 0;
 		  

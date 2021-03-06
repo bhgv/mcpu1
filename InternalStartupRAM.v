@@ -173,20 +173,20 @@ always @(posedge clk) begin
 	 
 //    ext_rw_busy = 0;
 	 
-	 bus_director <= 0;
+	bus_director <= 0;
 	 
-	 read_dn_r <= 0;
-	 write_dn_r <= 0;
+	read_dn_r <= 0;
+	write_dn_r <= 0;
 	 
 //	 data_r = 0; //`DATA_SIZE'h zzzz_zzzz_zzzz_zzzz;
 //	 addr_r = 0; //`ADDR_SIZE'h zzzz_zzzz_zzzz_zzzz;
 	 
 	 //mem[2 + 15] = `DATA_SIZE'h 10;
 	 
-	 tmp_addr <= 2 + 15;
-	 tmp_data <= 'h 10;
+	tmp_addr <= `THREAD_HEADER_SPACE + `REG_IP;
+	tmp_data <= `REG_IP + `THREAD_REGS_TO_CODE_SPACE;
 
-    mem_wrk_state <= `MEM_CTLR_WRITE; //`MEM_CTLR_WAIT;
+	mem_wrk_state <= `MEM_CTLR_WRITE; //`MEM_CTLR_WAIT;
   end else
   begin
 

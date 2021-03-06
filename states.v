@@ -52,60 +52,63 @@
 `define PREEXECUTE       4
 `define WRITE_REG_IP     5
 
-`define READ_MEM_SIZE_1 28
-`define READ_MEM_SIZE_2 29
+`define READ_MEM_SIZE_1  6
+`define READ_MEM_SIZE_2  7
 
-`define AFTER_MEM_SIZE_READ 30
+`define AFTER_MEM_SIZE_READ  8
 
 
 //`define BASE_ADDR_SET 3
 
-`define FILL_COND    23
-`define READ_COND    6
-`define READ_COND_P  7
+`define FILL_COND    9
+`define READ_COND   10
+`define READ_COND_P 11
+`define AFTER_READ_COND 12
+
 //`define READ_DATA  5
 
-`define FILL_SRC1    21
-`define READ_SRC1    8
-`define READ_SRC1_P  9
+`define FILL_SRC1   13
+`define READ_SRC1   14
+`define READ_SRC1_P 15
 
-`define FILL_SRC0    22
-`define READ_SRC0    10
-`define READ_SRC0_P  11
+`define FILL_SRC0    16
+`define READ_SRC0    17
+`define READ_SRC0_P  18
 
-`define FILL_DST_P   25
-`define READ_DST     26
-`define READ_DST_P   27
+`define FILL_DST_P   19
+`define READ_DST     20
+`define READ_DST_P   21
 
-`define ALU_BEGIN		12
-`define ALU_RESULTS	20
-`define ALU_CHAN_THREAD_ADDR_OUT	34
+`define ALU_BEGIN    22
+`define ALU_RESULTS  23
+`define ALU_CHAN_THREAD_ADDR_OUT 24
 
 //`define CHAN_WR_END	28
 //`define CHAN_RD		29
 
 //`define WRITE_DATA 7
-`define WRITE_PREP 13
+`define WRITE_PREP 25
 
-`define WRITE_DST  14
+`define WRITE_DST  26
 
-`define WRITE_COND 15
-`define WRITE_SRC1 16
-`define WRITE_SRC0 17
+`define WRITE_COND 27
+`define WRITE_SRC1 28
+`define WRITE_SRC0 29
 
-`define WRITE_DST_P  24
-
-
-`define AUX_PRE_FINISH_BEGIN 33
-
-`define FINISH_BEGIN 18
-`define FINISH_END   19
-
-`define BREAK_THREAD_SAVE_IP_AND_WAIT	31
-`define BREAK_THREAD_EXIT_AND_WAIT	32
+`define WRITE_DST_P  30
+`define WRITE_COND_P 31
 
 
-`define CPU_STATE_FIRST_EMPTY 35
+`define AUX_PRE_FINISH_BEGIN 32
+
+`define FINISH_BEGIN 33
+`define FINISH_END   34
+
+`define BREAK_THREAD_SAVE_IP_AND_WAIT	35
+`define BREAK_THREAD_EXIT_AND_WAIT	36
+
+
+`define CPU_STATE_FIRST_EMPTY 37
 // AAA -- CPU module states
 
 

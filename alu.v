@@ -11,6 +11,8 @@ module Alu(
         
         command,
         
+        cmd_code,
+        
         state,
         
         src1_in,
@@ -70,7 +72,8 @@ module Alu(
   input wire rst;
   
   
-  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
+//  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
+  input wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code;
   
   reg [1+2*`DATA_SIZE0:0] tmp64_r;
   reg [`DATA_SIZE0:0] tmp32_r;

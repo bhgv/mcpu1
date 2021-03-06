@@ -84,7 +84,7 @@ module InternalBus(
   output wire [31:0] command;
   
   
-  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
+//  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
   
   
   input wire rst;
@@ -258,6 +258,75 @@ module InternalBus(
   
   wire chan_wait_next_time;
   
+  
+  
+
+  wire [`CMD_BITS_PER_REG0:0] regNumS1;
+  //assign regNumS1 = command[3:0];
+
+  wire [`CMD_BITS_PER_REG0:0] regNumS0;
+  //assign regNumS0 = command[7:4];
+
+  wire [`CMD_BITS_PER_REG0:0] regNumD;
+  //assign regNumD = command[11:8];
+
+  wire [`CMD_BITS_PER_REG0:0] regNumCnd;
+  //assign regNumCnd = command[15:12];
+  
+  
+  wire isRegS1Ptr;
+  //assign isRegS1Ptr = command[16];
+  
+  wire isRegS0Ptr;
+  //assign isRegS0Ptr = command[17];
+  
+  wire isRegDPtr;
+  //assign isRegDPtr = command[18];
+  
+  wire isRegCondPtr;
+  //assign isRegCondPtr = command[19];
+  
+  
+  wire [1:0] regS1Flags;
+  //assign regS1Flags = command[21:20];
+  
+  wire [1:0] regS0Flags;
+  //assign regS0Flags = command[23:22];
+  
+  wire [1:0] regDFlags;
+  //assign regDFlags = command[25:24];
+  
+  wire [1:0] regCondFlags;
+  //assign regCondFlags = command[27:26];
+  
+  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd; // = command[31:28];
+  /**/
+  
+  wire isCond;
+  wire isCondTrue;
+  
+  CommandWordParse cmd_wd_prc_2 (
+  		.command_word(command),
+  		.regNumS1(regNumS1),
+  		.regNumS0(regNumS0),
+  		.regNumD(regNumD),
+  		.regNumCnd(regNumCnd),
+  		.isRegS1Ptr(isRegS1Ptr),
+  		.isRegS0Ptr(isRegS0Ptr),
+  		.isRegDPtr(isRegDPtr),
+  		.isRegCondPtr(isRegCondPtr),
+  		.regS1Flags(regS1Flags),
+  		.regS0Flags(regS0Flags),
+  		.regDFlags(regDFlags),
+  		.regCondFlags(regCondFlags),
+  		.isCond(isCond),
+  		.isCondTrue(isCondTrue),
+  		.cmd_code(cmd)
+  	);
+  
+  
+  
+  
 
 /**
   StartManager start_mng(
@@ -357,6 +426,24 @@ module InternalBus(
             .chan_op(chan_op),
 				.chan_wait_next_time(chan_wait_next_time),
 
+				// command word parse VV
+				.regNumS1(regNumS1),
+				.regNumS0(regNumS0),
+				.regNumD(regNumD),
+				.regNumCnd(regNumCnd),
+				.isRegS1Ptr(isRegS1Ptr),
+				.isRegS0Ptr(isRegS0Ptr),
+				.isRegDPtr(isRegDPtr),
+				.isRegCondPtr(isRegCondPtr),
+				.regS1Flags(regS1Flags),
+				.regS0Flags(regS0Flags),
+				.regDFlags(regDFlags),
+				.regCondFlags(regCondFlags),
+				.cmd(cmd),
+				.isCond(isCond),
+				.isCondTrue(isCondTrue),
+				// command word parse AA
+
             .rst(rst)
             );
             
@@ -445,7 +532,25 @@ module InternalBus(
 				.no_data_new(no_data_new),
 				.no_data_tick(no_data_tick),
 				.no_data_exit_and_wait_begin(no_data_exit_and_wait_begin),
-            
+
+				// command word parse VV
+				.regNumS1(regNumS1),
+				.regNumS0(regNumS0),
+				.regNumD(regNumD),
+				.regNumCnd(regNumCnd),
+				.isRegS1Ptr(isRegS1Ptr),
+				.isRegS0Ptr(isRegS0Ptr),
+				.isRegDPtr(isRegDPtr),
+				.isRegCondPtr(isRegCondPtr),
+				.regS1Flags(regS1Flags),
+				.regS0Flags(regS0Flags),
+				.regDFlags(regDFlags),
+				.regCondFlags(regCondFlags),
+				.cmd_code(cmd),
+				.isCond(isCond),
+				.isCondTrue(isCondTrue),
+				// command word parse AA
+
             .rst(rst)
             );
 /**/
@@ -472,7 +577,11 @@ module InternalBus(
         .dst_h_out(dst_h),
         
         .next_state(next_state_a),
-        
+
+        // command word parse VV
+        .cmd_code(cmd),
+        // command word parse AA
+
         .rst(rst)
         );
 /**/
@@ -514,7 +623,11 @@ module InternalBus(
 		  .cpu_msg_pulse(cpu_msg_pulse_t),
         
         .next_state(next_state_t),
-        
+
+        // command word parse VV
+        .cmd_code(cmd),
+        // command word parse AA
+
         .rst(rst)
         );
 /**/
@@ -566,7 +679,15 @@ module InternalBus(
 		  .chan_escape(chan_escape),
         
         .next_state(next_state_ch),
-        
+
+        // command word parse VV
+        .regS1Flags(regS1Flags),
+        .regS0Flags(regS0Flags),
+        .regDFlags(regDFlags),
+        .regCondFlags(regCondFlags),
+        .cmd_code(cmd),
+        // command word parse AA
+
         .rst(rst)
         );
 /**/

@@ -45,6 +45,12 @@ module ChannelCtlr(
 
         next_state,
         
+        regS1Flags,
+        regS0Flags,
+        regDFlags,
+        regCondFlags,
+        cmd_code,
+        
         rst
         );
         
@@ -57,25 +63,17 @@ module ChannelCtlr(
   
   input wire [31:0] command;
   
-  
-  
-  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
-  
-
-  //wire regS1en; // = ~(&command[21:20]);
-  wire regS1en = !(command[21] & command[20]);
-  
-  //wire regS0en; // = ~(&command[23:22]);
-  wire regS0en = !(command[23] & command[22]);
-  
-  //wire regDen; // = ~(&command[25:24]);
-  wire regDen = !(command[25] & command[24]);
-  
-  //wire regCnden; // = ~(&command[27:26]);
-  wire regCnden = !(command[27] & command[26]);
-  
-  
-  
+  /**/
+  input wire [1:0] regS1Flags;
+  input wire [1:0] regS0Flags;
+  input wire [1:0] regDFlags;  
+  input wire [1:0] regCondFlags;
+  input wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code; // = command[31:28];
+  /**/
+  wire regS1en = !(regS1Flags[1] & regS1Flags[0]);
+  wire regS0en = !(regS0Flags[1] & regS0Flags[0]);
+  wire regDen = !(regDFlags[1] & regDFlags[0]);
+  wire regCnden = !(regCondFlags[1] & regCondFlags[0]);
   
   input wire [`ADDR_SIZE0:0] base_addr;
   input wire [`ADDR_SIZE0:0] base_addr_data;
@@ -163,7 +161,9 @@ module ChannelCtlr(
   
   reg chan_escape_r;
   output wire chan_escape = chan_escape_r;
-  
+
+  wire [2:0] chan_cmd_type = {regDen, regS0en, regS1en};
+
  /* 
   wire [`DATA_SIZE0:0] data_for_stop_msg =
 						        src1 == 0 
@@ -295,7 +295,7 @@ module ChannelCtlr(
 //                ) begin
 
 /**/
-					   case({regDen, regS0en, regS1en}) //({&regDFlags, &regS0Flags, &regS1Flags})
+					   case(chan_cmd_type) //{regDen, regS0en, regS1en}) //({&regDFlags, &regS0Flags, &regS1Flags})
 						
 						/**/
 						  3'b 111: begin // resp <- chN <- query
@@ -523,7 +523,7 @@ module ChannelCtlr(
                             `CPU_R_CHAN_RES_WR: begin
                             //default: begin
 									   //chan_wait_next_time <= 0;
-                              //state_int <= 0;
+                              state_int <= 0;
                               next_state_r <= 1;
                             end
 

@@ -1,7 +1,11 @@
 
+`define RS232_INTERF_CHAN
+//`define EXTERNAL_SRAM_EN
+//`define VIDEO_640x480_RGB
 
-`define CPU_QUANTITY		2
-`define PROC_QUANTITY	7
+
+`define CPU_QUANTITY		5 //4
+`define PROC_QUANTITY	20 //7
 
 `define CLK_FREQ_PLL		80 * 1000000
 
@@ -35,15 +39,17 @@
 `define UNMODIFICABLE_ADDR_B	`VIDEO1_ADDR_B
 
 
-`define REG_IP  7 //15
+//`define REG_IP  15
+`define REG_IP  7
 
 
 `define THREAD_HEADER_SPACE  2
+`define THREAD_REGS_TO_CODE_SPACE  1
 
 
-  `define RS232_DATA_ADDR		'h fffffff0
+`define RS232_DATA_ADDR 'h fffffff0
 
-  `define RS232_BAUD_RATE	9600
+`define RS232_BAUD_RATE	9600
   
   
 //`define PAUSE_PROC_ENABLE 1

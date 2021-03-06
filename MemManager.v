@@ -82,7 +82,23 @@ module MemManager (
 				no_data_new,
 				no_data_tick,
 				no_data_exit_and_wait_begin,
-            
+
+				regNumS1,
+				regNumS0,
+				regNumD,
+				regNumCnd,
+				isRegS1Ptr,
+				isRegS0Ptr,
+				isRegDPtr,
+				isRegCondPtr,
+				regS1Flags,
+				regS0Flags,
+				regDFlags,
+				regCondFlags,
+				cmd_code,
+				isCond,
+				isCondTrue,
+				
             rst
             );
 				
@@ -114,71 +130,50 @@ module MemManager (
   output wire [31:0] command_word;
 
  /**/
-  wire [`CMD_BITS_PER_REG0:0] regNumS1;
-  //assign regNumS1 = command_word[3:0];
+  input wire [`CMD_BITS_PER_REG0:0] regNumS1;
+  //assign regNumS1 = command[3:0];
 
-  wire [`CMD_BITS_PER_REG0:0] regNumS0;
-  //assign regNumS0 = command_word[7:4];
+  input wire [`CMD_BITS_PER_REG0:0] regNumS0;
+  //assign regNumS0 = command[7:4];
 
-  wire [`CMD_BITS_PER_REG0:0] regNumD;
-  //assign regNumD = command_word[11:8];
+  input wire [`CMD_BITS_PER_REG0:0] regNumD;
+  //assign regNumD = command[11:8];
 
-  wire [`CMD_BITS_PER_REG0:0] regNumCnd;
-  //assign regNumCnd = command_word[15:12];
+  input wire [`CMD_BITS_PER_REG0:0] regNumCnd;
+  //assign regNumCnd = command[15:12];
   
   
-  wire isRegS1Ptr;
-  //assign isRegS1Ptr = command_word[16];
+  input wire isRegS1Ptr;
+  //assign isRegS1Ptr = command[16];
   
-  wire isRegS0Ptr;
-  //assign isRegS0Ptr = command_word[17];
+  input wire isRegS0Ptr;
+  //assign isRegS0Ptr = command[17];
   
-  wire isRegDPtr;
-  //assign isRegDPtr = command_word[18];
+  input wire isRegDPtr;
+  //assign isRegDPtr = command[18];
   
-  wire isRegCondPtr;
-  //assign isRegCondPtr = command_word[19];
-  
-  
-  wire [1:0] regS1Flags;
-  //assign regS1Flags = command_word[21:20];
-  
-  wire [1:0] regS0Flags;
-  //assign regS0Flags = command_word[23:22];
-  
-  wire [1:0] regDFlags;
-  //assign regDFlags = command_word[25:24];
-  
-  wire [1:0] regCondFlags;
-  //assign regCondFlags = command_word[27:26];
+  input wire isRegCondPtr;
+  //assign isRegCondPtr = command[19];
   
   
-  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code; // = command_word[31:28];
+  input wire [1:0] regS1Flags;
+  //assign regS1Flags = command[21:20];
+  
+  input wire [1:0] regS0Flags;
+  //assign regS0Flags = command[23:22];
+  
+  input wire [1:0] regDFlags;
+  //assign regDFlags = command[25:24];
+  
+  input wire [1:0] regCondFlags;
+  //assign regCondFlags = command[27:26];
+  
+  input wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code; // = command[31:28];
+  /**/
+  
+  input wire isCond;
+  input wire isCondTrue;
  /**/
- 
-  wire isCond;
-  wire isCondTrue;
- 
- CommandWordParse cmd_wd_prc_1 (
-	.command_word(command_word),
-	.regNumS1(regNumS1),
-	.regNumS0(regNumS0),
-	.regNumD(regNumD),
-	.regNumCnd(regNumCnd),
-	.isRegS1Ptr(isRegS1Ptr),
-	.isRegS0Ptr(isRegS0Ptr),
-	.isRegDPtr(isRegDPtr),
-	.isRegCondPtr(isRegCondPtr),
-	.regS1Flags(regS1Flags),
-	.regS0Flags(regS0Flags),
-	.regDFlags(regDFlags),
-	.regCondFlags(regCondFlags),
-	.isCond(isCond),
-	.isCondTrue(isCondTrue),
-	.cmd_code(cmd_code)
-	);
-
- 
   
 //  wire ifPtr;
   

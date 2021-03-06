@@ -12,6 +12,9 @@ COMPILER Asm
    code = []
    #code_ip = 0
    
+   MAX_REGS = 8
+   #MAX_REGS = 16
+   
    
    
    def number_of_bits(self, n):
@@ -144,12 +147,13 @@ IGNORE tab + eol + CHR(13)
 
 PRODUCTIONS
 
-  Asm				= 						(. entry = None .)
+  Asm
+				= 						(. entry = None .)
 				{ 
 				  Definition<None, None> 
 				} 
 				[
-				  "entry" ":" identifier 			(. entry = self.token.val .)
+				  "entry" ":" identifier (. entry = self.token.val .)
 				  "."
 				]
 				EOF 
@@ -167,7 +171,7 @@ PRODUCTIONS
   Definition<upperfname, upperfoo> 
 				= 
 				(
-				    "def" identifier				(. 
+				    "def" identifier	(. 
 										   name = self.token.val
 										   #if upperfname != None :
 										      #name = upperfname + '.' + name
@@ -180,11 +184,12 @@ PRODUCTIONS
 				.
 
 
-  VarList<foo>			= 
+  VarList<foo>
+			= 
 				//    RegAssignment<foo>
 				//  |
-				    identifier 					(. name = self.token.val .)
-				    ArraySize<out dims>				(. 
+				    identifier 			(. name = self.token.val .)
+				    ArraySize<out dims>	(. 
 										   #print name
 										   #print dims
 										   if dims['cnt'] == 0 :
@@ -195,11 +200,12 @@ PRODUCTIONS
 										.)
 				.
 
-  ArraySize<out dims>		= 						(. dims = {'size': 1, 'dim': [], 'cnt': 0, } .)
+  ArraySize<out dims>
+		= 								(. dims = {'size': 1, 'dim': [], 'cnt': 0, } .)
 				{ "[" (
-				     number 					(. i = int( self.token.val ) .)
+				     number 			(. i = int( self.token.val ) .)
 				   | hexnumber
-				  ) "]"						(.
+				  ) "]"					(.
 										   dims['size'] *= i
 										   dims['cnt']  += 1
 										   dims['dim'].append(i)
@@ -213,7 +219,8 @@ PRODUCTIONS
 				= FunctionHeader<out foo, fname> 
 				( 
 				  ";" 
-				| FunctionBody<fname, idip, foo> 		(.
+				| FunctionBody<fname, idip, foo>
+										(.
 										   if upperfoo != None :
 										      upperfoo['foos'].append(foo)
 										      upperfoo['names'][fname] = {'type': 'foo', 'ip': 0, 'foo': foo, }
@@ -224,14 +231,15 @@ PRODUCTIONS
 				.
 
   FunctionHeader<out foo, fname>
-				= "(" [ FormalParamList ] ")"			(.
+				= "(" [ FormalParamList ] ")"
+										(.
 										   if (fname in self.funcs) and self.funcs[fname]['f_ip'] != None:
 										      self.SemErr( "Error: dublicated function name '%s'" % (fname,) )
 										   else:
 										      regs = []
-										      for i in xrange(0,15) :
+										      for i in xrange(0,self.MAX_REGS-1) :
 										         regs.append(0)
-										      regs.append(16)
+										      regs.append(self.MAX_REGS)
 										      foo = {'fname': fname, 'f_ip': None, 'vars': {}, 'lbls': {}, 'regs': regs, 'code': [], 'xref': {}, 'ip': 0, 'names': {}, 'foos': [], 'assigns': {}, 'rassigns': {}, }
 										      self.funcs[fname] = foo
 										      self.curfunc = fname
@@ -239,7 +247,8 @@ PRODUCTIONS
 				.
 
   FunctionBody<fname, idip, foo> 
-				= CompoundStatement<fname, foo>			(. 
+				= CompoundStatement<fname, foo>
+										(. 
 										   #if (fname in self.funcs) and self.funcs[fname]['ip'] != None:
 										   #   print "// error dublicated function name"
 										   #else:
@@ -277,7 +286,8 @@ PRODUCTIONS
 
 /* Statements */
 
-  Statement<foo>		= 
+  Statement<foo>
+			= 
 				(
 				    IF(self.isNext(':')) Label<foo> 
 				  | AssignmentExpression<foo> 
@@ -291,8 +301,8 @@ PRODUCTIONS
 				) 
 				.
 
-  Label<foo>			= 
-				identifier					(. 
+  Label<foo>
+			= identifier				(. 
 										   lbl = self.token.val
 										.)
 				":"						(.
@@ -308,8 +318,9 @@ PRODUCTIONS
 /* There is no requirement that a switch statement be followed by a compound
    statement.  Actually labels may be even more general */
 
-  AssignmentExpression<foo>	= 
-				Expression<out cmd, foo> ";" 			(.
+  AssignmentExpression<foo>
+			= Expression<out cmd, foo> ";"
+										(.
 										   foo['code'].append(cmd)
 										   foo['ip'] += 1
 										.)
@@ -317,7 +328,8 @@ PRODUCTIONS
 
 //  BreakStatement       = "break" ";" .
 
-  CompoundStatement<fname, foo>	= 
+  CompoundStatement<fname, foo>
+			=
 				"{" 
 				 ["init" "{" { 
 				      RegAssignment<foo> ";"
@@ -325,7 +337,7 @@ PRODUCTIONS
 				      RegName< out r, foo > "=" Const<out num, foo> 
 				      ";"					(. foo['regs'][r['r']] = num .)
 				 } "}" ] 					(.
-										   for i in xrange(0, 16) :
+										   for i in xrange(0, self.MAX_REGS) :
 										      foo['code'].append(foo['regs'][i])
 										      foo['ip'] += 1
 										.)
@@ -340,7 +352,8 @@ PRODUCTIONS
 				.
 
 
-  RegAssignment<foo> =
+  RegAssignment<foo>
+			=
 				  "\\alias"
 				    identifier 					(. name = self.token.val .)
 				    "="
@@ -372,8 +385,8 @@ PRODUCTIONS
 
 //  IfStatement          = "if" "(" Expression ")" Statement [ "else" Statement ] .
 
-  NullStatement 		= 
-				";" 
+  NullStatement
+		=		";" 
 				.
 
 //  ReturnStatement      = "return" [ Expression ] ";" .
@@ -401,17 +414,18 @@ PRODUCTIONS
 
 //  ConstExpression      = Expression<out cmd> .
 
-  Expression<out cmd, foo>	= 						(. 
+  Expression<out cmd, foo>	= 			(. 
 										   cmd = 0 
 										   cond = {'r': 0, 'rop': 3, 'isptr': 0, }
 										   iscond = 0
 										   iscondtrue = 0
 										.)
 				(
-				   [ "if"					(. iscond = 1
-										   iscondtrue = 1
+				   [ "if"				(.
+										  iscond = 1
+										  iscondtrue = 1
 										.)
-					[ "not"					(. iscondtrue = 0 .)
+					[ "not"				(. iscondtrue = 0 .)
 					]
 					"(" Cond<out cond, foo> ")"  
 				   ] 
@@ -463,7 +477,8 @@ PRODUCTIONS
 
 //Conditional { AssignmentOperator Expression }.
 
-  Operation<out op>		= 						(. op = 0 .)
+  Operation<out op>
+			=								(. op = 0 .)
 				(
 				    "|"						(. op = 9 .)
 				  | "^"						(. op = 7 .)
@@ -488,52 +503,53 @@ PRODUCTIONS
 
   LogORExp<out num, foo>	= LogANDExp<out num, foo>   
 			    { "||" 						(. op = self.token.val .)
-			    LogANDExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    LogANDExp<out num2, foo> 	(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   LogANDExp<out num, foo>	= InclORExp<out num, foo>   
 			    { "&&" 						(. op = self.token.val .)
-			    InclORExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    InclORExp<out num2, foo> 	(. num = self.calc_op(num, op, num2) .)
 			    }.
 
   InclORExp<out num, foo>	= ExclORExp<out num, foo>   
 			    { "|" 						(. op = self.token.val .)
-			    ExclORExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    ExclORExp<out num2, foo> 	(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   ExclORExp<out num, foo>	= ANDExp<out num, foo>      
 			    { "^" 						(. op = self.token.val .)
-			    ANDExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    ANDExp<out num2, foo> 		(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   ANDExp<out num, foo>	= EqualExp<out num, foo>    
 			    { "&" 						(. op = self.token.val .)
-			    EqualExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    EqualExp<out num2, foo> 	(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   EqualExp<out num, foo>	= RelationExp<out num, foo> 
-			    { ( "==" | "!=" ) 					(. op = self.token.val .)
-			    RelationExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    { ( "==" | "!=" ) 			(. op = self.token.val .)
+			    RelationExp<out num2, foo> 	(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   RelationExp<out num, foo>	= ShiftExp<out num, foo>    
-			    { ( "<" | ">" | "<=" | ">=" ) 			(. op = self.token.val .)
-			    ShiftExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    { ( "<" | ">" | "<=" | ">=" )
+											(. op = self.token.val .)
+			    ShiftExp<out num2, foo> 	(. num = self.calc_op(num, op, num2) .)
 			    }.
 
   ShiftExp<out num, foo>	= AddExp<out num, foo>      
-			    { ( "<<" | ">>" ) 					(. op = self.token.val .)
-			    AddExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    { ( "<<" | ">>" ) 			(. op = self.token.val .)
+			    AddExp<out num2, foo> 		(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   AddExp<out num, foo>	= MultExp<out num, foo>     
-			    { ( "+" | "-" ) 					(. op = self.token.val .)
-			    MultExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    { ( "+" | "-" ) 			(. op = self.token.val .)
+			    MultExp<out num2, foo> 		(. num = self.calc_op(num, op, num2) .)
 			    } .
 
   MultExp<out num, foo>	= CastExp<out num, foo>     
-			    { ( "*" | "/" | "%" )				(. op = self.token.val .)
-			    CastExp<out num2, foo> 				(. num = self.calc_op(num, op, num2) .)
+			    { ( "*" | "/" | "%" )		(. op = self.token.val .)
+			    CastExp<out num2, foo> 		(. num = self.calc_op(num, op, num2) .)
 			} .
 
   CastExp<out num, foo>	= UnaryExp<out num, foo> .
@@ -550,7 +566,8 @@ PRODUCTIONS
                          | "sizeof" ( UnaryExp | "(" Type ")" ) .
    but this breaks it badly */
 
-  PostFixExp<out num, foo>	= 
+  PostFixExp<out num, foo>
+			=
 				Primary<out num, foo>
 				{ 
 //				    "[" Expression "]"
@@ -559,7 +576,8 @@ PRODUCTIONS
 //				  | "->" identifier
 //				  | "++"
 //				  | "--"
-				  | "," Primary<out num2, foo>			(.
+				  | "," Primary<out num2, foo>
+										(.
 										  #if num2 < 256:
 										  #   num = (num << 8) + num2
 										  #else:
@@ -569,11 +587,12 @@ PRODUCTIONS
 				} 
 				.
 
-  Primary<out num, foo>		= 						(.
+  Primary<out num, foo>
+			=							(.
 										  num = 0 
 										.)
 				(
-				    identifier 					(. 
+				     identifier			(. 
 										   lbl = self.token.val
 										   num = 0
 										   #if lbl in foo['lbls'] :
@@ -593,7 +612,7 @@ PRODUCTIONS
 										   if o_desc != None and o_desc['type'] == 'var' :
 										      o_dims = o_desc['dims']
 										.)
-				     { "["					(.
+				     { "["				(.
 										   if o_desc == None :
 										      self.SemErr( "Error: variable '%s' is not defined" % (lbl,) )
 										   #
@@ -604,7 +623,7 @@ PRODUCTIONS
 										      self.SemErr( "Error: variable '%s' has only %d dimensions" % (lbl, o_dims['cnt'], ) )
 										.)
 				          Const<out i, foo> 
-				        "]"					(.
+				       "]"				(.
 										   if o_dims['cnt'] > dim_cnt :
 										      if o_dims['dim'][dim_cnt] <= i :
 										         self.SemErr( "Error: variable '%s' has dimension %d  [0 .. %d], but [%d]" % (lbl, dim_cnt, o_dims['dim'][dim_cnt] - 1, i, ) )
@@ -612,8 +631,8 @@ PRODUCTIONS
 										      num += i
 										   dim_cnt += 1
 										.)
-				     }						(. foo['xref'][lbl].append(xref) .)
-				  | string					(.
+				  }						(. foo['xref'][lbl].append(xref) .)
+				  | string				(.
 										   #print self.token.val
 										   s = self.token.val[1:-1]
 										   num = 0
@@ -622,9 +641,9 @@ PRODUCTIONS
 										   num = num & 0xffffffff
 										.)
 				  | char 
-				  | hexnumber 				(. num = int( self.token.val[2:], 16 ) .)
-				  | binnumber 				(. num = int( self.token.val[2:], 2 ) .)
-				  | number 					(. num = int( self.token.val ) .)
+				  | hexnumber 			(. num = int( self.token.val[2:], 16 ) .)
+				  | binnumber 			(. num = int( self.token.val[2:], 2 ) .)
+				  | number 				(. num = int( self.token.val ) .)
 				  | "(" Conditional<out num, foo> ")" 
 				) 
 				.
@@ -648,24 +667,24 @@ PRODUCTIONS
   Dst<out r, foo>		= Src<out r, foo> .
 
 
-  Src<out r, foo>		= 						(. r = {'r': 0, 'rop': 3, 'isptr': 0} .)
+  Src<out r, foo>		= 						(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
 				( 
-				    ("Z" | "z")	
-				  | RegOp<out r, foo>				(. r['isptr'] = 0 .)
-				  | "[" RegOp<out r, foo> "]"			(. r['isptr'] = 1 .)
+				    ("Z" | "z")					(. r['rop'] = 3 .)
+				  | RegOp<out r, foo>			(. r['isptr'] = 0 .)
+				  | "[" RegOp<out r, foo> "]"	(. r['isptr'] = 1 .)
 				) 
 				.
 
 
   RegOp<out r, foo>			= 
-				RegName<out r, foo> 				(. r['rop'] = 0 .)
+				RegName<out r, foo> 			(. r['rop'] = 0 .)
 				[ 
-				    "++"					(. r['rop'] = 1 .)
-				  | "--"					(. r['rop'] = 2 .)
+				    "++"						(. r['rop'] = 1 .)
+				  | "--"						(. r['rop'] = 2 .)
 				] 
 				.
 
-  RegName< out r, foo>		= 						(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
+  RegName< out r, foo>		= 					(. r = {'r': 0, 'rop': 0, 'isptr': 0} .)
 				(
 				(
 				    "r0"					(. r['r'] = 0 .)
@@ -690,7 +709,7 @@ PRODUCTIONS
 										   if r['r'] in foo['rassigns']:
 										      self.SemErr( "Error: r%d should be used only by alias '%s' here" % (r['r'], foo['rassigns'][r['r']], ) )
 										.)
-				  | "\\" identifier 				(. 
+				  | "\\" identifier 	(. 
 										   name = self.token.val 
 										   if name in foo['assigns']:
 										      r['r'] = foo['assigns'][name]
@@ -699,6 +718,5 @@ PRODUCTIONS
 										.)
 				)
 				.
-
 
 END Asm.

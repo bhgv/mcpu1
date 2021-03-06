@@ -102,7 +102,7 @@ module BridgeToOutside (
 //											;
   
   
-  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
+  //wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
   
 
   output [`ADDR_SIZE0:0] base_addr;
@@ -502,12 +502,12 @@ module BridgeToOutside (
 
 		 if(ext_next_cpu_e_r == 1) begin
 		   if(disp_online_r == 1) begin
-			  disp_online_r <= 0;
-         end else begin
-	        ext_next_cpu_e_r <= 0; //disp_online_r; //1'b 0; //z;
-			end
+	         disp_online_r <= 0;
+           end else begin
+	         ext_next_cpu_e_r <= 0; //disp_online_r; //1'b 0; //z;
+	       end
 		 end 
-		 
+
 //		 no_data_exit_and_wait_begin <= 0;
 		 
 		 //if(next_state_r == 1'b 1) begin
@@ -1107,7 +1107,17 @@ module BridgeToOutside (
               //end
             end
            
-			  
+
+
+            `AFTER_READ_COND: begin
+              cpu_msg_r <= 0;
+
+              next_state_r = 1;
+              ext_next_cpu_e_r <= ext_next_cpu_e_stim;
+              //ext_next_cpu_e_r <= disp_online_r; //1;
+            end
+
+
             /**/
             `ALU_BEGIN: begin
               cpu_msg_r <= 0; 

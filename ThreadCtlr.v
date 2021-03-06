@@ -12,6 +12,7 @@ module ThreadCtlr(
         is_bus_busy,
         
         command,
+        cmd_code,
         
         base_addr,
         base_addr_data,
@@ -49,7 +50,8 @@ module ThreadCtlr(
   
   input wire [31:0] command;
   
-  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
+//  wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code = command[31:28];
+  input wire [`CMD_BITS_PER_CMD_CODE0:0] cmd_code;
   
   input wire [`ADDR_SIZE0:0] base_addr;
   input wire [`ADDR_SIZE0:0] base_addr_data;

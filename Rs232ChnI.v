@@ -10,8 +10,7 @@
 `define UART_NODATA_RESET 3
 
 
-
-module Rs232 (
+module Rs232ChnI (
   clk,
   clk_oe,
 
@@ -27,7 +26,6 @@ module Rs232 (
   read_dn,
   write_dn,
   
-`ifdef RS232_INTERF_CHAN
  				ext_chan_no_in,
 				ext_chan_no_out,
 				ext_chan_data_in,
@@ -38,7 +36,6 @@ module Rs232 (
 				ext_chan_w_dn,
 				ext_chan_nodata_in,
 				ext_chan_nodata_out,
-`endif
   
   halt_q,
   rw_halt_out,
@@ -64,7 +61,6 @@ module Rs232 (
   input wire rst;
 
   
-`ifdef RS232_INTERF_CHAN
   input wire ext_chan_r_q;
   input wire ext_chan_w_q;
   output reg ext_chan_r_dn;
@@ -77,7 +73,7 @@ module Rs232 (
   
   input wire ext_chan_nodata_in;
   output reg ext_chan_nodata_out;
-`endif  
+  
   
   reg read_dn_r;
   output wire read_dn = read_dn_r;
@@ -89,15 +85,6 @@ module Rs232 (
   output [`ADDR_SIZE0:0] addr_out;
   reg [`ADDR_SIZE0:0] addr_r;
   wire [`ADDR_SIZE0:0] addr_out = 
-`ifndef RS232_INTERF_CHAN
-											(
-                                   read_dn_r == 1
-											  //|| write_dn_r == 1
-											)
-											? addr_r
-											: 
-											  0
-`else
 //											(
                                    //read_dn_r == 1
 											  //|| write_dn_r == 1
@@ -107,22 +94,12 @@ module Rs232 (
 //											? addr_r
 //											: 
 											  0
-`endif
 											;
-
+  
   input wire [`DATA_SIZE0:0] data_in;
   output [`DATA_SIZE0:0] data_out;
   reg [`DATA_SIZE0:0] data_r;
   wire [`DATA_SIZE0:0] data_out = 
-`ifndef RS232_INTERF_CHAN
-											(
-                                   read_dn_r == 1
-											  //|| write_dn_r == 1
-											)
-											? data_r
-											: 
-											  0
-`else
 //											(
                                    //read_dn_r == 1
 											  //|| write_dn_r == 1
@@ -132,8 +109,7 @@ module Rs232 (
 //											? data_r
 //											: 
 											  0
-`endif
-									  ;
+											;
   
   input wire read_q;
   input wire write_q;
@@ -378,15 +354,13 @@ async_receiver rx(
 		  is_rx_buf <= 0;
 		  
 		  rst_uart <= 1;
-
-`ifdef RS232_INTERF_CHAN
+		  
 		  ext_chan_nodata_out <= 0;
 			ext_chan_r_dn <= 0;
 			ext_chan_w_dn <= 0;
   
 			ext_chan_no_out <= 0;
 			ext_chan_data_out <= 0;
-`endif
 
 		  rw_halt_r = 0;
 		  
@@ -402,62 +376,40 @@ async_receiver rx(
 		    `UART_WAIT_CMD: begin
 			   rst_uart <= 0;
 				
-`ifndef RS232_INTERF_CHAN
-		      read_dn_r <= 0;
-		      write_dn_r <= 0;
-`endif
+//		      read_dn_r <= 0;
+//		      write_dn_r <= 0;
 
 		      if(
-`ifndef RS232_INTERF_CHAN
+/*
 				  addr_in == RS232_DATA_ADDR 
 //				  && rw_halt_r != 1
 				  && (read_q == 1 || write_q == 1)
-`else
+*/
 					ext_chan_no_in == RS232_DATA_ADDR &&
 					(ext_chan_r_q == 1 || ext_chan_w_q == 1)
-`endif
 				) begin
-`ifndef RS232_INTERF_CHAN
-			     data_r = data_in;
-`else
+			     //data_r = data_in;
 //				  addr_r <= /*addr_in*/ ext_chan_no_in;
 				  ext_chan_no_out <= ext_chan_no_in;
-`endif
-
-`ifndef RS232_INTERF_CHAN
-				  if(write_q == 1) begin  
-`else
+		        
 				  if(/*write_q == 1*/ ext_chan_w_q == 1) begin  
-`endif
-                if(/*is_tx_busy == 0*/ is_tx_busy == 0 /*rw_halt_stim == 0*/) begin
-`ifndef RS232_INTERF_CHAN
-					   tx_data <= /*data_r*/data_in[7:0];
-`else
+					 if(/*is_tx_busy == 0*/ is_tx_busy == 0 /*rw_halt_stim == 0*/) begin
 					   tx_data <= /*data_r*/ /*data_in[7:0]*/ ext_chan_data_in[7:0];
-`endif
 			         tx_start <= 1;
 						
-`ifndef RS232_INTERF_CHAN
-						data_r <= data_in;
-`else
 //						data_r <= /*data_in*/ ext_chan_data_in;
 						
 						ext_chan_w_dn <= 1;
 						//ext_chan_no_out <= ext_chan_no_in;
-`endif						
+
 //			         write_dn_r = 1;
 
 				      state <= `UART_SEND_BYTE;
-`ifndef RS232_INTERF_CHAN
-				    end
-				  end else if(read_q == 1) begin
-`else
 				    end else begin
 					   ext_chan_nodata_out <= 1;
 				      state <= `UART_NODATA_RESET;
 					 end
 				  end else if(/*read_q == 1*/ ext_chan_r_q == 1) begin
-`endif
 				    if(is_rx_buf == 1) begin
 //			         data_r = data_in;
 			         

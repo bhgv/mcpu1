@@ -20,8 +20,16 @@
 
 
 module CpuBlock(
-    clk,
-    clk_oe,
+//    clk,
+//    clk_oe,
+	 
+    cpu_cell_clk_oe,
+	 cpu_cell_clk_int,
+    cpu_disp_clk_oe,
+	 cpu_disp_clk_int,
+//    mem_int_clk_oe,
+//	 mem_int_clk_int,
+	 
     clk_2f,
 
     addr_in,
@@ -64,11 +72,19 @@ parameter PROC_QUANTITY = `PROC_QUANTITY;
 parameter UNMODIFICABLE_ADDR_B = `UNMODIFICABLE_ADDR_B;
 
   
-	input wire clk;
+//	input wire clk;
+//	input wire clk_oe;
+
+    input wire cpu_cell_clk_oe;
+	 input wire cpu_cell_clk_int;
+    input wire cpu_disp_clk_oe;
+	 input wire cpu_disp_clk_int;
+//    input wire mem_int_clk_oe;
+//	 input wire mem_int_clk_int;
+
 	input wire rst_in;
 	output wire rst_out;
 	
-	input wire clk_oe;
 //	output wire clk_oe;
 
    input wire clk_2f;
@@ -298,7 +314,6 @@ want_write_in;// = |want_write_out_a;
 wire want_write_in_wire = want_write_in;// = |want_write_out_a;
 
 
-
 wire cpu_cell_read_dn;
 wire cpu_cell_write_dn;
 
@@ -312,10 +327,13 @@ for(i = 0; i < CPU_QUANTITY; i=i+1) begin:cpu_cell_gen
 /**/
 CpuCell cpu_cell //[CPU_QUANTITY-1:0] 
 (
-            .clk(clk),
-				.clk_oe(clk_oe),
+//            .clk(clk),
+//				.clk_oe(clk_oe),
 				.clk_2f(clk_2f),
-            
+
+            .clk(cpu_cell_clk_int),
+            .clk_oe(cpu_cell_clk_oe),
+
             .halt_q_in(cpu_cell_halt_q_in_wire),
             .halt_q_out(halt_q_a[i]),
             .rw_halt_in(cpu_cell_rw_halt_in_wire),
@@ -474,8 +492,12 @@ assign want_write_in = |want_write_out_a; //want_write_out_a_to_or[CPU_QUANTITY 
 
 /**/
 DispatcherOfCpus disp_1(
-            .clk(clk),
-				.clk_oe(clk_oe),
+//            .clk(clk),
+//				.clk_oe(clk_oe),
+
+            .clk(cpu_disp_clk_int),
+				.clk_oe(cpu_disp_clk_oe),
+
 				.clk_2f(clk_2f),
 				
             .rst_in(rst_in),

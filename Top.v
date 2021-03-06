@@ -5,7 +5,6 @@
 
 `include "defines.v"
 
-
 /**
 `define MEM_CTLR_WAIT               0
 
@@ -21,19 +20,24 @@
 
 module Top(
 	clk,
-	
+
+`ifdef EXTERNAL_SRAM_EN
 	ext_mem_addr,
 	ext_mem_data,
-	
+`endif
+
+`ifdef VIDEO_640x480_RGB
 	video1_addr,
 	video1_data,
-	
+`endif
+
 //	ext_read_q,
 //   ext_write_q,
 	
 //	ext_read_dn,
 //	ext_write_dn,
-	
+
+`ifdef EXTERNAL_SRAM_EN
 	prg_ba,
 	prg_bb,
 	prg_bc,
@@ -46,16 +50,17 @@ module Top(
 	prg_oe,
 	
 	prg_we,
-	
-	video1_oe,
-	
-	video1_we,
+`endif
 
-	
+`ifdef VIDEO_640x480_RGB
+	video1_oe,
+	video1_we,
+`endif
+
 	TxD,
 	RxD,
-	
-	
+
+`ifdef VIDEO_640x480_RGB
 	pix_clk,
 	de,
 	
@@ -71,10 +76,11 @@ module Top(
 	vga1_we_,
 	vga2_oe_,
 	vga2_we_,
-	
+
 	vga1_ce1,
 	vga1_ce2,
 	vga1_ce3,
+`endif
 	
 	tst1_out,
 	
@@ -119,22 +125,31 @@ module Top(
 	output wire ext_bus_allow_led;
 
 	wire rst_int;
+	wire rst_out_freqman;
 	
 	input wire stop_btn;
 	
 	wire clk_pll;
 	
 	wire clk_oe_pll;
-	wire clk_oe;// = clk_oe_pll;
+//	wire clk_oe;// = clk_oe_pll;
 
 `ifdef IS_USE_PLL
-	wire clk_int;// = clk;
+//	wire clk_int;// = clk;
 	wire clk_50mhz;// = clk_oe;
 `else
-	wire clk_int; // = clk;
+//	wire clk_int; // = clk;
 	wire clk_50mhz = clk;
 `endif
-	
+
+   wire cpu_cell_clk_oe;
+   wire cpu_cell_clk_int;
+   wire cpu_disp_clk_oe;
+   wire cpu_disp_clk_int;
+   wire mem_int_clk_oe;
+   wire mem_int_clk_int;
+
+`ifdef EXTERNAL_SRAM_EN
 	output wire prg_ba;// = 0;
 	output wire prg_bb;// = 0;
 	output wire prg_bc;// = 0;
@@ -147,8 +162,9 @@ module Top(
 	output wire prg_oe;// = prg_oe_r;
 	
 	output wire prg_we;// = prg_we_r;
-	
-	
+`endif
+
+`ifdef VIDEO_640x480_RGB
 	output wire video1_oe;
 	output wire video1_we;
 	
@@ -156,9 +172,8 @@ module Top(
 	output wire vga1_ce1;
 	output wire vga1_ce2;
 	output wire vga1_ce3;
+`endif
 
-
-	
 	output wire TxD;
 	input wire RxD;
 
@@ -171,54 +186,62 @@ module Top(
 //  trior [`DATA_SIZE0:0] data_in; // = data_wire_r;
 //  wire [`DATA_SIZE0:0] data_out; // = data_wire_r;
   
-  
-  
+
   wire [`ADDR_SIZE0:0] com_prt_addr_out;
   wire [`DATA_SIZE0:0] com_prt_data_out;
   
   wire com_prt_read_dn;
   wire com_prt_write_dn;
   
-  
+`ifdef VIDEO_640x480_RGB
   wire [`ADDR_SIZE0:0] vga_addr_out;
   wire [`DATA_SIZE0:0] vga_data_out;
   
   wire vga_read_dn;
   wire vga_write_dn;
-  
-  
-  
-  
+
   output [`ADDR_SIZE0:0] video1_addr;
   wire [`ADDR_SIZE0:0] video1_addr;
   
   inout [`DATA_SIZE0:0] video1_data;
   tri [`DATA_SIZE0:0] video1_data;
-  
-  
-  
-    
+`endif  
+
   wire [`ADDR_SIZE0:0] int_mem_addr_out;
   wire [`DATA_SIZE0:0] int_mem_data_out;
 
+`ifdef EXTERNAL_SRAM_EN
   wire [`ADDR_SIZE0:0] ext_mem_addr_out;
   wire [`DATA_SIZE0:0] ext_mem_data_out;
+`endif
 
   wire [`ADDR_SIZE0:0] mem_addr_out;
   wire [`DATA_SIZE0:0] mem_data_out;
 
   wire [`ADDR_SIZE0:0] mem_addr_in = 
-                                    int_mem_addr_out 
+                                    int_mem_addr_out
+`ifdef EXTERNAL_SRAM_EN
 												| ext_mem_addr_out
-												//| com_prt_addr_out
+`endif
+`ifndef RS232_INTERF_CHAN
+												| com_prt_addr_out
+`endif
+`ifdef VIDEO_640x480_RGB
 												| vga_addr_out
+`endif
 												; //tmp_addr; 
 												
   wire [`DATA_SIZE0:0] mem_data_in = 
                                     int_mem_data_out 
+`ifdef EXTERNAL_SRAM_EN
 												| ext_mem_data_out
-												//| com_prt_data_out
+`endif
+`ifndef RS232_INTERF_CHAN
+												| com_prt_data_out
+`endif
+`ifdef VIDEO_640x480_RGB
 												| vga_data_out
+`endif
 												; //tmp_data; 
   
 //  reg ext_read_dn_r;
@@ -227,21 +250,35 @@ module Top(
   wire int_mem_read_dn; // | ext_mem_read_dn;
   wire int_mem_write_dn; // | ext_mem_write_dn;
 
+`ifdef EXTERNAL_SRAM_EN
   wire ext_mem_read_dn;
   wire ext_mem_write_dn;
+`endif
 
   wire mem_read_dn = 
                      int_mem_read_dn 
+`ifdef EXTERNAL_SRAM_EN
 							| ext_mem_read_dn
-							//| com_prt_read_dn
+`endif
+`ifndef RS232_INTERF_CHAN
+							| com_prt_read_dn
+`endif
+`ifdef VIDEO_640x480_RGB
 							| vga_read_dn
+`endif
 							; //ext_read_dn_r;
 							
   wire mem_write_dn = 
                      int_mem_write_dn 
+`ifdef EXTERNAL_SRAM_EN
 							| ext_mem_write_dn
-							//| com_prt_write_dn
+`endif
+`ifndef RS232_INTERF_CHAN
+							| com_prt_write_dn
+`endif
+`ifdef VIDEO_640x480_RGB
 							| vga_write_dn
+`endif
 							; //ext_write_dn_r;
    
 
@@ -259,9 +296,7 @@ module Top(
   
 
 //  wire bus_busy; // = bus_busy_r;
-  
-  
- 
+
 //  wire [31:0] command 
                     /*= {
                     4'h 0,  //command code
@@ -294,22 +329,15 @@ module Top(
  
   wire ext_read_q;
   wire ext_write_q;
-  
+
+`ifdef EXTERNAL_SRAM_EN
   output [`ADDR_SIZE0:0] ext_mem_addr; 
   wire [`ADDR_SIZE0:0] ext_mem_addr;
-	
-  
 
   inout [`DATA_SIZE0:0] ext_mem_data; 
   tri [`DATA_SIZE0:0] ext_mem_data;
-	
-	
-	
-	
-	
-	
-	
-	
+`endif
+
 /**
   wire ext_rst_b; // = rst;
   wire ext_rst_e; // = ext_rst_e_r;
@@ -523,8 +551,16 @@ assign ext_bus_allow_led = ext_bus_allow;
 
 
 CpuBlock block_of_cpus(
-    .clk(clk_int),
-    .clk_oe(clk_oe),
+//    .clk(clk_int),
+//    .clk_oe(clk_oe),
+
+    .cpu_cell_clk_oe(cpu_cell_clk_oe),
+	 .cpu_cell_clk_int(cpu_cell_clk_int),
+    .cpu_disp_clk_oe(cpu_disp_clk_oe),
+	 .cpu_disp_clk_int(cpu_disp_clk_int),
+//    .mem_int_clk_oe(mem_int_clk_oe),
+//	 .mem_int_clk_int(mem_int_clk_int),
+
 	 .clk_2f(clk_pll),
 
     .addr_in(mem_addr_in),
@@ -557,7 +593,7 @@ CpuBlock block_of_cpus(
 	 .ext_chan_nodata_in(ext_chan_nodata_in),
 	 .ext_chan_nodata_out(ext_chan_nodata_out),
 
-    .rst_in(~rst),
+    .rst_in(rst_out_freqman), //(~rst),
 	 .rst_out(rst_int)
 );
 
@@ -565,9 +601,12 @@ CpuBlock block_of_cpus(
 
 /**/
 InternalStartupRAM int_ram(
-	.clk(clk_int),
-	.clk_oe(clk_oe),
-	
+//	.clk(clk_int),
+//	.clk_oe(clk_oe),
+
+   .clk_oe(mem_int_clk_oe),
+   .clk(mem_int_clk_int),
+
 //	.data_in(ext_mem_data_out),
 //	.data_out(ext_mem_data_in),
 
@@ -599,6 +638,7 @@ defparam int_ram.INTERNAL_MEM_FILE = INTERNAL_MEM_FILE;
 
 
 /**/
+`ifdef EXTERNAL_SRAM_EN
 ExternalSRAMInterface ext_ram_itf(
 	.clk(clk_int),
 	.clk_oe(clk_oe),
@@ -649,21 +689,31 @@ ExternalSRAMInterface ext_ram_itf(
   
 //  defparam ext_ram_itf.VIDEO1_ADDR_B = VIDEO1_ADDR_B;
 //  defparam ext_ram_itf.VIDEO1_ADDR_E = VIDEO1_ADDR_E;
+`endif
 /**/
 
 
 
 /**/
+
+`ifdef RS232_INTERF_CHAN
+  Rs232ChnI com_itf (
+`else
   Rs232 com_itf (
-    .clk(clk_int),
-    .clk_oe(clk_oe),
+`endif
+ //   .clk(clk_int),
+ //   .clk_oe(clk_oe),
 
-//    .addr_in(mem_addr_out),
-//    .addr_out(com_prt_addr_out),
+   .clk_oe(mem_int_clk_oe),
+   .clk(mem_int_clk_int),
+
+`ifndef RS232_INTERF_CHAN
+    .addr_in(mem_addr_out),
+    .addr_out(com_prt_addr_out),
   
-//    .data_in(mem_data_out),
-//    .data_out(com_prt_data_out),
-	 
+    .data_in(mem_data_out),
+    .data_out(com_prt_data_out),
+`else	 
     .ext_chan_no_in(ext_chan_no_out),
     .ext_chan_no_out(ext_chan_no_in),
     .ext_chan_data_in(ext_chan_data_out),
@@ -674,15 +724,18 @@ ExternalSRAMInterface ext_ram_itf(
     .ext_chan_w_dn(ext_chan_w_dn),
 	 .ext_chan_nodata_in(ext_chan_nodata_out),
 	 .ext_chan_nodata_out(ext_chan_nodata_in),
+`endif
 
-//    .read_q(ext_read_q), //read_q),
-//    .write_q(ext_write_q), //write_q),
+`ifndef RS232_INTERF_CHAN
+    .read_q(ext_read_q), //read_q),
+    .write_q(ext_write_q), //write_q),
   
-//    .read_dn(com_prt_read_dn),
-//    .write_dn(com_prt_write_dn),
+    .read_dn(com_prt_read_dn),
+    .write_dn(com_prt_write_dn),
 	 
-//	 .halt_q(halt_q),
-//	 .rw_halt_out(rw_halt_rs232),
+	 .halt_q(halt_q),
+	 .rw_halt_out(rw_halt_rs232),
+`endif
 
     .RxD(RxD),
     .TxD(TxD),
@@ -752,17 +805,26 @@ ExternalSRAMInterface ext_ram_itf(
 
   FrequencyManager fm (
     .clk(clk_pll),
-    .clk_oe(clk_oe),
-	 .clk_int(clk_int),
+
+//    .clk_oe(clk_oe),
+//	 .clk_int(clk_int),
+
+    .cpu_cell_clk_oe(cpu_cell_clk_oe),
+	 .cpu_cell_clk_int(cpu_cell_clk_int),
+    .cpu_disp_clk_oe(cpu_disp_clk_oe),
+	 .cpu_disp_clk_int(cpu_disp_clk_int),
+    .mem_int_clk_oe(mem_int_clk_oe),
+	 .mem_int_clk_int(mem_int_clk_int),
 	 
 	 .clk25mhz(clk25mhz),
 	 
-	 .rst(rst_int)
+	 .rst_in(~rst),  //(rst_int)
+	 .rst_out(rst_out_freqman),
   );
 
 
 
-
+`ifdef VIDEO_640x480_RGB
   output wire pix_clk;
   output wire de;
 
@@ -780,9 +842,12 @@ ExternalSRAMInterface ext_ram_itf(
 //  inout tri [3:0] b;
 
   RGB_640x480 vga(
-		 .clk(clk_int),
-		 .clk_oe(clk_oe),
-		 
+//		 .clk(clk_int),
+//		 .clk_oe(clk_oe),
+
+		 .clk_oe(mem_int_clk_oe),
+		 .clk(mem_int_clk_int),
+
 		 .clk_video(clk25mhz), //clk_50mhz), //~clk_25mhz),
 		 
 		 .pix_clk(pix_clk),
@@ -802,8 +867,7 @@ ExternalSRAMInterface ext_ram_itf(
 		 .vga2_oe_(vga2_oe_),
 		 .vga2_we_(vga2_we_),
 		 
-		 
-		 
+
 		 .data_in(mem_data_out),
 		 .data_out(vga_data_out),
 		 
@@ -836,9 +900,7 @@ ExternalSRAMInterface ext_ram_itf(
 		
 		defparam vga.VIDEO_MEM_B = VIDEO1_ADDR_B;
 		defparam vga.VIDEO_MEM_E = VIDEO1_ADDR_E;
-
-
-
+`endif
 
 
 /**
