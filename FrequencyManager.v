@@ -100,6 +100,7 @@ module FrequencyManager(
 		    rst_cntr <= rst_cntr + 1;
 		  else
 		    rst_out <= 0;
+//		    rst_cntr <= 0;
 		end
 
 	   if(cntr >= `FREQ_VIDEO_DIVIDER ) begin
